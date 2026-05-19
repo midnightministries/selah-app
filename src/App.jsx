@@ -1175,10 +1175,18 @@ export default function App() {
   const [age, setAge] = useState(() => localStorage.getItem("selah_age") || "Prefer not to say");
   const [clockFmt, setClockFmt] = useState(() => localStorage.getItem("selah_clock_fmt") || "12");
   const [timezone, setTimezone] = useState(() => localStorage.getItem("selah_timezone") || "device");
-  const [form, setForm] = useState({
-    locationType:"Home", otherLocation:"",
-    startBook:"Genesis", startChapter:"", startVerse:"",
-    endBook:"Genesis", endChapter:"", endVerse:"", notes:""
+  const [form, setForm] = useState(() => {
+    try {
+      const last = JSON.parse(localStorage.getItem('selah_last_position') || '{}');
+      return {
+        locationType: last.locationType || 'Home', otherLocation: '',
+        startBook: last.endBook || last.startBook || 'Genesis',
+        startChapter: last.endChapter || '',
+        startVerse: last.endVerse || '',
+        endBook: last.endBook || last.startBook || 'Genesis',
+        endChapter: '', endVerse: '', notes: ''
+      };
+    } catch { return { locationType:'Home', otherLocation:'', startBook:'Genesis', startChapter:'', startVerse:'', endBook:'Genesis', endChapter:'', endVerse:'', notes:'' }; }
   });
   const [useGps, setUseGps] = useState(true);
   const [sessionPhoto, setSessionPhoto] = useState(null);
@@ -1265,6 +1273,7 @@ export default function App() {
       const raw = data.content?.find(b=>b.type==="text")?.text||"";
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
       const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender };
+      try { localStorage.setItem('selah_last_position', JSON.stringify({ endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse })); } catch {}
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
     } catch { setError("Connection failed. Check your signal and try again."); }
