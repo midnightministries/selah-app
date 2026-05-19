@@ -417,7 +417,7 @@ function MMFooter() {
       background:"linear-gradient(to top, rgba(10,8,4,0.98) 70%, rgba(10,8,4,0))",
       paddingTop:18, paddingBottom:10,
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"none"
+      pointerEvents:"auto"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
