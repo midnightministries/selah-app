@@ -7,18 +7,24 @@ exports.handler = async (event) => {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
+    console.log("ERROR: No API key found");
     return { statusCode: 500, body: JSON.stringify({ error: "API key not configured." }) };
   }
 
+  console.log("API key found, length:", apiKey.length);
+
   try {
-    const { system, message } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const { system, message } = body;
 
     const payload = JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-opus-4-5",
       max_tokens: 1000,
       system: system,
       messages: [{ role: "user", content: message }]
     });
+
+    console.log("Calling Anthropic API, message length:", message?.length);
 
     const data = await new Promise((resolve, reject) => {
       const req = https.request({
@@ -33,20 +39,29 @@ exports.handler = async (event) => {
         }
       }, (res) => {
         let body = "";
+        console.log("Anthropic status:", res.statusCode);
         res.on("data", chunk => body += chunk);
-        res.on("end", () => resolve(JSON.parse(body)));
+        res.on("end", () => {
+          console.log("Anthropic response length:", body.length);
+          try { resolve(JSON.parse(body)); }
+          catch(e) { reject(new Error("JSON parse failed: " + body.slice(0,200))); }
+        });
       });
-      req.on("error", reject);
+      req.on("error", (e) => { console.log("Request error:", e.message); reject(e); });
       req.write(payload);
       req.end();
     });
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      },
       body: JSON.stringify(data)
     };
   } catch (err) {
+    console.log("CATCH ERROR:", err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Server error: " + err.message })
