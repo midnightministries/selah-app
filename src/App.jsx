@@ -831,7 +831,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
   );
 }
 
-function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm }) {
+function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterChange }) {
   const now = new Date();
   const [calView, setCalView] = useState("month");
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -851,8 +851,16 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm }) {
 
   function handleDayClick(date) {
     const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-    setSelectedDate(date);
-    setSelectedSession(sessionMap[key] || null);
+    const isSameDay = selectedDate && selectedDate.getFullYear()===date.getFullYear() && selectedDate.getMonth()===date.getMonth() && selectedDate.getDate()===date.getDate();
+    if (isSameDay) {
+      setSelectedDate(null);
+      setSelectedSession(null);
+      if (onFilterChange) onFilterChange(null);
+    } else {
+      setSelectedDate(date);
+      setSelectedSession(sessionMap[key] || null);
+      if (onFilterChange) onFilterChange(date);
+    }
   }
 
   function DayCell({ date, label }) {
@@ -860,17 +868,20 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm }) {
     const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
     const hasSession = !!sessionMap[key];
     const isToday = date.getDate()===now.getDate() && date.getMonth()===now.getMonth() && date.getFullYear()===now.getFullYear();
+    const isSelected = selectedDate && date.getFullYear()===selectedDate.getFullYear() && date.getMonth()===selectedDate.getMonth() && date.getDate()===selectedDate.getDate();
+    const todayDimmed = selectedDate && !isSelected && isToday;
+    const bg = isSelected ? "rgba(201,168,76,0.05)" : isToday && !todayDimmed ? "rgba(201,168,76,0.08)" : "transparent";
+    const border = isSelected ? "1px solid rgba(201,168,76,0.85)" : isToday && todayDimmed ? "1px solid rgba(201,168,76,0.12)" : isToday ? "1px solid rgba(201,168,76,0.2)" : "1px solid transparent";
+    const numColor = isSelected ? "#c9a84c" : hasSession ? "#c9a84c" : isToday ? "#6a5a30" : "#3a3010";
     return (
       <div onClick={()=>handleDayClick(date)}
         style={{textAlign:"center",padding:"6px 2px",borderRadius:4,position:"relative",cursor:"pointer",
-          background:isToday?"rgba(201,168,76,0.08)":"transparent",
-          border:isToday?"1px solid rgba(201,168,76,0.2)":"1px solid transparent",
-          transition:"background 0.15s"}}
-        onMouseOver={e=>e.currentTarget.style.background="rgba(201,168,76,0.07)"}
-        onMouseOut={e=>{ if(!isToday) e.currentTarget.style.background="transparent"; }}>
+          background:bg, border:border, transition:"all 0.2s"}}
+        onMouseOver={e=>{ if(!isSelected&&!isToday) e.currentTarget.style.background="rgba(201,168,76,0.05)"; }}
+        onMouseOut={e=>{ if(!isSelected&&!isToday) e.currentTarget.style.background="transparent"; }}>
         {label && <div style={{fontFamily:"'Cinzel',serif",fontSize:7,color:"#3a3010",letterSpacing:"0.06em",marginBottom:1}}>{label}</div>}
-        <span style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:hasSession?"#c9a84c":isToday?"#6a5a30":"#3a3010"}}>{date.getDate()}</span>
-        {hasSession && <div style={{width:4,height:4,borderRadius:2,background:"#c9a84c",margin:"2px auto 0",opacity:0.9}}/>}
+        <span style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:numColor}}>{date.getDate()}</span>
+        {hasSession && <div style={{width:4,height:4,borderRadius:2,background:"#c9a84c",margin:"2px auto 0",opacity:isSelected?1:0.9}}/>}
       </div>
     );
   }
@@ -1247,6 +1258,7 @@ export default function App() {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
   }
   const [calJumpId, setCalJumpId] = useState(null);
+  const [filterDate, setFilterDate] = useState(null);
   const sessionRefs = useRef({});
   const timerRef = useRef(null);
   const photoInputRef = useRef(null);
@@ -1714,7 +1726,7 @@ export default function App() {
         {/* ══ HISTORY ══ */}
         {view === "history" && (
           <div className="fade-in">
-            <SessionCalendar sessions={sessions} onDaySelect={handleCalendarDay} alarms={alarms} onSaveAlarm={handleSaveAlarm}/>
+            <SessionCalendar sessions={sessions} onDaySelect={handleCalendarDay} alarms={alarms} onSaveAlarm={handleSaveAlarm} onFilterChange={setFilterDate}/>
             {sessions.length === 0 ? (
               <div style={{textAlign:"center",padding:"30px 0"}}>
                 <div style={{color:"#2e2408",marginBottom:12,display:"flex",justifyContent:"center"}}><BookIcon/></div>
@@ -1723,7 +1735,13 @@ export default function App() {
             ) : (
               <>
                 <StatsStrip sessions={sessions}/>
-                {sessions.map(s=>(
+                {filterDate && (
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,padding:"6px 10px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:5}}>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase"}}>Showing: {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][filterDate.getMonth()]} {filterDate.getDate()}</p>
+                    <button onClick={()=>setFilterDate(null)} style={{background:"transparent",border:"none",color:"#4a3e1a",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Show All</button>
+                  </div>
+                )}
+                {(filterDate ? sessions.filter(s => { const d=new Date(s.startTime); return d.getFullYear()===filterDate.getFullYear()&&d.getMonth()===filterDate.getMonth()&&d.getDate()===filterDate.getDate(); }) : sessions).map(s=>(
                   <div key={s.id} className="hist-card" ref={el=>{ if(el) sessionRefs.current[s.id]=el; }}>
                     {s.photoData && (
                       <div style={{height:90,overflow:"hidden",position:"relative"}}>
