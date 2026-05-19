@@ -2030,14 +2030,9 @@ export default function App() {
         <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(10,8,4,0.92)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
           onClick={()=>setEggOpen(null)}>
           <div style={{background:"#0e0c06",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
-            onClick={e=>e.stopPropagation()}
-            onTouchStart={e=>{ e.currentTarget._touchY = e.touches[0].clientY; }}
-            onTouchMove={e=>{ e.stopPropagation(); }}
-            onTouchEnd={e=>{ const dy = e.changedTouches[0].clientY - e.currentTarget._touchY; if(dy > 60) setEggOpen(null); }}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-              <div style={{width:36,height:3,background:"#2e2408",borderRadius:2}}/>
-              <button onClick={()=>setEggOpen(null)} style={{background:"transparent",border:"none",color:"#4a3e1a",fontSize:20,cursor:"pointer",padding:"0 4px",lineHeight:1,marginLeft:"auto"}}>×</button>
-            </div>
+            onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:3,background:"#2e2408",borderRadius:2,margin:"0 auto 24px"}}/>
+            <button onClick={()=>setEggOpen(null)} style={{position:"fixed",top:16,right:16,zIndex:500,background:"rgba(14,12,6,0.9)",border:"1px solid #2e2408",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a5a30",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
 
             {eggOpen === "cross" && (
               <>
