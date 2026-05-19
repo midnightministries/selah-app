@@ -410,7 +410,7 @@ function loadSessions() { try { return JSON.parse(localStorage.getItem(STORAGE_K
 function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(s)); } catch {} }
 
 // ── Midnight Ministries footer (always visible) ──
-function MMFooter({ onEggOpen }) {
+function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
@@ -430,7 +430,7 @@ function MMFooter({ onEggOpen }) {
           </filter>
         </defs>
       </svg>
-      <span onClick={()=>onEggOpen("mm")} style={{
+      <span onClick={()=>{ if(onHomeView) onEggOpen("mm"); }} style={{
         fontFamily:"'Cinzel',serif",
         fontSize:12,
         letterSpacing:"0.22em",
@@ -439,7 +439,7 @@ function MMFooter({ onEggOpen }) {
         textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",
         filter:"url(#chalk-mm)",
         paddingBottom:1,
-        cursor:"pointer",
+        cursor:onHomeView?"pointer":"default",
         pointerEvents:"all"
       }}>
         MIDNIGHT MINISTRIES
@@ -1418,7 +1418,7 @@ export default function App() {
               <SettingsIcon/>
             </button>
           )}
-          <div style={{position:"absolute",left:6,top:39,cursor:"pointer"}} onClick={()=>setEggOpen("cross")}>
+          <div style={{position:"absolute",left:6,top:39,cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
             <CrossIcon size={30} glow={false}/>
           </div>
           <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",cursor:"pointer"}}>SELAH</h1>
@@ -2022,7 +2022,7 @@ export default function App() {
 
       </div>
 
-      <MMFooter onEggOpen={setEggOpen}/>
+      <MMFooter onEggOpen={setEggOpen} onHomeView={view==="home"}/>
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
 
       {/* ══ EASTER EGG SHEETS ══ */}
@@ -2030,8 +2030,13 @@ export default function App() {
         <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(10,8,4,0.92)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
           onClick={()=>setEggOpen(null)}>
           <div style={{background:"#0e0c06",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{width:36,height:3,background:"#2e2408",borderRadius:2,margin:"0 auto 24px"}}/>
+            onClick={e=>e.stopPropagation()}
+            onTouchStart={e=>{ e._touchY = e.touches[0].clientY; }}
+            onTouchEnd={e=>{ if(e.changedTouches[0].clientY - e._touchY > 60) setEggOpen(null); }}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+              <div style={{width:36,height:3,background:"#2e2408",borderRadius:2}}/>
+              <button onClick={()=>setEggOpen(null)} style={{background:"transparent",border:"none",color:"#4a3e1a",fontSize:20,cursor:"pointer",padding:"0 4px",lineHeight:1,marginLeft:"auto"}}>×</button>
+            </div>
 
             {eggOpen === "cross" && (
               <>
