@@ -14,7 +14,7 @@ exports.handler = async (event) => {
     const { system, message } = JSON.parse(event.body);
 
     const payload = JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-opus-4-5",
       max_tokens: 800,
       system: system,
       messages: [{ role: "user", content: message }]
@@ -34,7 +34,10 @@ exports.handler = async (event) => {
       }, (res) => {
         let body = "";
         res.on("data", chunk => body += chunk);
-        res.on("end", () => resolve(JSON.parse(body)));
+        res.on("end", () => {
+          try { resolve(JSON.parse(body)); }
+          catch(e) { reject(new Error("Parse failed: " + body.slice(0,200))); }
+        });
       });
       req.on("error", reject);
       req.write(payload);
@@ -43,7 +46,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
       body: JSON.stringify(data)
     };
   } catch (err) {

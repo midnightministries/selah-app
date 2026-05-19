@@ -1298,7 +1298,7 @@ export default function App() {
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
       setAnswerFeedback(Array.isArray(parsed)?parsed:[]);
       setFeedbackSubmitted(true);
-    } catch { setAnswerFeedback([]); }
+    } catch(e) { setAnswerFeedback([]); setFeedbackSubmitted(true); }
     setFeedbackLoading(false);
   }
 
