@@ -634,6 +634,25 @@ function AnswerInput({ value, onChange, feedback }) {
 
 // ── Stats strip for history view ────────────────────────────────────────
 function StatsStrip({ sessions }) {
+  const totalMins = sessions.reduce((a, s) => a + Math.round((new Date(s.endTime) - new Date(s.startTime)) / 60000), 0);
+  const totalTime = totalMins < 60 ? totalMins + "m" : Math.floor(totalMins / 60) + "h";
+  const uniqueBooks = new Set(sessions.map(s => s.startBook)).size;
+  const stats = [["Sessions", sessions.length], ["Books", uniqueBooks], ["Time", totalTime]];
+  return (
+    <div style={{ display:"flex",background:"#141008",border:"1px solid #252010",borderRadius:7,overflow:"hidden",marginBottom:18 }}>
+      {stats.map(([l, v], i) => (
+        <div key={l} style={{ flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid #252010":"none" }}>
+          <p style={{ fontFamily:"'Cinzel',serif",fontSize:16,color:"#c9a84c",fontWeight:600 }}>{v}</p>
+          <p style={{ fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3 }}>{l}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+// ── Stats strip ──────────────────────────────────────────────────────────
+function StatsStrip({ sessions }) {
   const totalMins = sessions.reduce((a,s) => a + Math.round((new Date(s.endTime)-new Date(s.startTime))/60000), 0);
   const totalTime = totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h";
   const uniqueBooks = new Set(sessions.map(s=>s.startBook)).size;
@@ -1050,7 +1069,7 @@ function AboutScreen({ onBack }) {
           </div>
 
           {[
-            ["02. Set Your Location", "Pick where you are. Home, vehicle, church, field; whatever is true. GPS tags the session if you allow it. That data never leaves your device."],
+            ["02. Set Your Location", "Pick where you are. Home, vehicle, church, field — whatever is true. GPS tags the session if you allow it. That data never leaves your device."],
             ["03. Log Your Start", "Choose the book, chapter, and verse where you are opening. Tap Open His Word. The session clock starts. Put the phone down."],
           ].map(([title,body]) => (
             <div key={title} className="card">
@@ -1100,7 +1119,7 @@ function AboutScreen({ onBack }) {
           </Section>
 
           <Section label="10. The Log">
-            <P mb={0}>Every session is saved. The calendar shows which days you were in His Word. Gold dot means a session. Tap any day, session or not, to open it.</P>
+            <P mb={0}>Every session is saved. The calendar shows which days you were in His Word. Gold dot means a session. Tap any day — session or not — to open it.</P>
           </Section>
 
           <div style={{textAlign:"center",paddingTop:8,paddingBottom:16}}>
@@ -1250,16 +1269,20 @@ export default function App() {
   }
 
   async function endSession() {
-    if (!form.endChapter) { setError("Log where you finished."); return; }
+    if (!form.endChapter) { setError("Set where you finished."); return; }
     setError(""); setLoading(true);
     const endTime = new Date().toISOString();
     const passage = `${activeSession.startBook} ${activeSession.startChapter}${activeSession.startVerse?":"+activeSession.startVerse:""} through ${form.endBook} ${form.endChapter}${form.endVerse?":"+form.endVerse:""}`;
     const depth = getDepthLevel(sessions);
     const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust. Never go below their demonstrated level. Aim one step ahead.`;
     try {
-      const resp = await fetch("/.netlify/functions/generate", {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ system:SYSTEM_PROMPT + "\n\n" + versionNote, message:"Passage read: "+passage })
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514", max_tokens:1000,
+          system:SYSTEM_PROMPT + "\n\n" + versionNote,
+          messages:[{role:"user",content:`Passage read: ${passage}`}]
+        })
       });
       const data = await resp.json();
       const raw = data.content?.find(b=>b.type==="text")?.text||"";
@@ -1267,7 +1290,7 @@ export default function App() {
       const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender };
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
-    } catch { setError("Connection failed. Check your signal and try again."); }
+    } catch { setError("Could not generate notes. Check your connection."); }
     setLoading(false);
   }
 
@@ -1280,9 +1303,13 @@ export default function App() {
     }).join("\n\n");
     const payload = "Passage: "+(activeSession?.passage||"")+"\n\nQuestions and answers:\n"+qLines;
     try {
-      const resp = await fetch("/.netlify/functions/feedback", {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ system:FEEDBACK_PROMPT, message:payload })
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514", max_tokens:800,
+          system:FEEDBACK_PROMPT,
+          messages:[{role:"user",content:payload}]
+        })
       });
       const data = await resp.json();
       const raw = data.content?.find(b=>b.type==="text")?.text||"[]";
@@ -1406,7 +1433,7 @@ export default function App() {
                   <div style={{color:useGps?"#c9a84c":"#3a3010"}}><ShieldIcon/></div>
                   <div>
                     <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",color:useGps?"#6a5a30":"#3a3010"}}>Tag GPS Location</p>
-                    <p style={{fontSize:13,color:"#3a3010",marginTop:2}}>{useGps?"Stored on device only. Never shared.":"Location will not be recorded"}</p>
+                    <p style={{fontSize:13,color:"#3a3010",marginTop:2}}>{useGps?"Stored on device only — never shared":"Location will not be recorded"}</p>
                   </div>
                 </div>
                 <div onClick={()=>setUseGps(v=>!v)} style={{width:40,height:22,borderRadius:11,cursor:"pointer",flexShrink:0,background:useGps?"#c9a84c":"#252010",border:`1px solid ${useGps?"#c9a84c":"#3a3010"}`,position:"relative",transition:"background 0.2s,border-color 0.2s"}}>
@@ -1434,7 +1461,7 @@ export default function App() {
 
             {error && <p style={{color:"#a04030",fontSize:15,marginBottom:12,fontStyle:"italic"}}>{error}</p>}
             <button className="btn-primary" onClick={startSession} disabled={locLoading}>
-              {locLoading ? "Finding location..." : "Open His Word"}
+              {locLoading ? "Getting Location..." : "Open His Word"}
             </button>
           </div>
         )}
@@ -1498,7 +1525,7 @@ export default function App() {
             {error && <p style={{color:"#a04030",fontSize:15,marginBottom:12,fontStyle:"italic"}}>{error}</p>}
             {loading ? (
               <div style={{textAlign:"center",padding:"28px 0"}}>
-                <p className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.18em"}}>READING HIS WORD...</p>
+                <p className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.18em"}}>PROCESSING PASSAGE...</p>
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
