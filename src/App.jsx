@@ -1322,6 +1322,12 @@ export default function App() {
     setCalJumpId(sessionId);
   }
 
+  function toggleSession(id) {
+    const y = window.scrollY;
+    setExpandedSession(prev => prev === id ? null : id);
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" })));
+  }
+
   function deleteSession(id) {
     setSessions(prev=>prev.filter(s=>s.id!==id));
     if (expandedSession===id) setExpandedSession(null);
@@ -1748,7 +1754,7 @@ export default function App() {
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent,rgba(14,12,6,0.85))"}}/>
                       </div>
                     )}
-                    <div className="hist-head" onClick={()=>setExpandedSession(expandedSession===s.id?null:s.id)}>
+                    <div className="hist-head" onClick={()=>toggleSession(s.id)}>
                       <div style={{flex:1,minWidth:0}}>
                         <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"#c9a84c",marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.passage}</p>
                         <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",color:"#4a3e1a",fontSize:12,alignItems:"center"}}>
