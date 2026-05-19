@@ -430,7 +430,7 @@ function MMFooter() {
           </filter>
         </defs>
       </svg>
-      <span style={{
+      <span onClick={()=>setEggOpen("mm")} style={{
         fontFamily:"'Cinzel',serif",
         fontSize:12,
         letterSpacing:"0.22em",
@@ -438,7 +438,9 @@ function MMFooter() {
         color:"#c8bfa0",
         textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",
         filter:"url(#chalk-mm)",
-        paddingBottom:1
+        paddingBottom:1,
+        cursor:"pointer",
+        pointerEvents:"all"
       }}>
         MIDNIGHT MINISTRIES
       </span>
@@ -1210,6 +1212,7 @@ export default function App() {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [alarms, setAlarms] = useState(() => { try { return JSON.parse(localStorage.getItem("selah_alarms")||"{}"); } catch { return {}; } });
+  const [eggOpen, setEggOpen] = useState(null); // "mm" | "cross" | null
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
 
@@ -1246,7 +1249,19 @@ export default function App() {
   }, [calJumpId]);
 
   function resetForm() {
-    setForm({ locationType:"Home",otherLocation:"",startBook:"Genesis",startChapter:"",startVerse:"",endBook:"Genesis",endChapter:"",endVerse:"",notes:"" });
+    try {
+      const last = JSON.parse(localStorage.getItem("selah_last_position") || "{}");
+      setForm({
+        locationType: "Home", otherLocation: "",
+        startBook: last.endBook || last.startBook || "Genesis",
+        startChapter: last.endChapter || "",
+        startVerse: last.endVerse || "",
+        endBook: last.endBook || last.startBook || "Genesis",
+        endChapter: "", endVerse: "", notes: ""
+      });
+    } catch {
+      setForm({ locationType:"Home",otherLocation:"",startBook:"Genesis",startChapter:"",startVerse:"",endBook:"Genesis",endChapter:"",endVerse:"",notes:"" });
+    }
     setResult(null); setActiveSession(null); setError(""); setSessionPhoto(null); setQuestionAnswers({}); setAnswerFeedback([]); setFeedbackSubmitted(false);
   }
 
@@ -1403,7 +1418,7 @@ export default function App() {
               <SettingsIcon/>
             </button>
           )}
-          <div style={{position:"absolute",left:6,top:39}}>
+          <div style={{position:"absolute",left:6,top:39,cursor:"pointer"}} onClick={()=>setEggOpen("cross")}>
             <CrossIcon size={30} glow={false}/>
           </div>
           <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",cursor:"pointer"}}>SELAH</h1>
@@ -1995,6 +2010,10 @@ export default function App() {
                 Clear All Sessions
               </button>
             </div>
+            <div className="card" style={{textAlign:"center",paddingTop:20,paddingBottom:20}}>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:10}}>Contact Midnight Ministries</p>
+              <a href="mailto:midnightministries.co@gmail.com" style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#c9a84c",textDecoration:"none",letterSpacing:"0.04em"}}>midnightministries.co@gmail.com</a>
+            </div>
             <div style={{textAlign:"center",paddingTop:8}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
             </div>
@@ -2005,6 +2024,61 @@ export default function App() {
 
       <MMFooter/>
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
+
+      {/* ══ EASTER EGG SHEETS ══ */}
+      {eggOpen && (
+        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(10,8,4,0.92)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
+          onClick={()=>setEggOpen(null)}>
+          <div style={{background:"#0e0c06",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:3,background:"#2e2408",borderRadius:2,margin:"0 auto 24px"}}/>
+
+            {eggOpen === "cross" && (
+              <>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:8}}>John 19:30</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:19,color:"#c9a84c",lineHeight:1.6,marginBottom:24,borderLeft:"2px solid rgba(201,168,76,0.3)",paddingLeft:14}}>
+                  "When he had received the drink, Jesus said, 'It is finished.' With that, he bowed his head and gave up his spirit."
+                </p>
+                {[
+                  ["One word in Greek. Tetelestai.", "In the first century this word was stamped on debt certificates when a debt had been paid in full. Not reduced. Not deferred. Not restructured. Cancelled. The creditor could not come back. The obligation was gone."],
+                  ["He said it once.", "He did not whisper it. He said it with what breath he had left, which means it cost him something to say it. He chose to spend his last breath on a declaration, not a plea. Not a question. A statement of completion."],
+                  ["Everything the Law required, he met.", "Every sin ever committed, he covered. Every wall between man and God, he removed. He did not do most of it. He did not do enough of it. He finished it."],
+                  ["The cross is not a symbol.", "It is a receipt. You are not working toward something he left undone. You are standing on something he completed. That changes what prayer is. That changes what failure is. That changes what you owe."],
+                ].map(([head, body], i) => (
+                  <div key={i} style={{marginBottom:20}}>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>{head}</p>
+                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.75}}>{body}</p>
+                  </div>
+                ))}
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"#c8bfa0",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:28,textAlign:"center"}}>Tetelestai. It is finished. Walk like it.</p>
+              </>
+            )}
+
+            {eggOpen === "mm" && (
+              <>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:8}}>Matthew 3:11</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:19,color:"#c9a84c",lineHeight:1.6,marginBottom:24,borderLeft:"2px solid rgba(201,168,76,0.3)",paddingLeft:14}}>
+                  "I baptize you with water for repentance, but he who is coming after me is mightier than I, whose sandals I am not worthy to carry. He will baptize you with the Holy Spirit and with fire."
+                </p>
+                {[
+                  ["Three baptisms. Not one.", "Water is the first. John administered it. It is public. It is real. It marks a turning from what you were toward what you are becoming. But John said plainly, water is not the end. Water is the gate."],
+                  ["The Holy Spirit is the second.", "This is not a feeling. This is the in-dwelling presence of God himself taking residence in a man. The Spirit does not visit. The Spirit occupies. He becomes your counsel, your correction, your compass. Without this baptism you are religious. With it you are alive."],
+                  ["Fire is the third.", "This is the one most avoid. Fire does not comfort. Fire consumes. It burns what cannot survive the kingdom. It refines what can. Every forge season, every loss, every stripping away of what you thought you were, that is fire doing its work."],
+                  ["You do not survive fire.", "What was pretending to be you does not survive fire. What is actually you, what He put in you, what is made of Him, that comes out stronger. The verse ends there. No explanation. No comfort. Just a promise and a warning dressed as the same sentence."],
+                ].map(([head, body], i) => (
+                  <div key={i} style={{marginBottom:20}}>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>{head}</p>
+                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.75}}>{body}</p>
+                  </div>
+                ))}
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"#c8bfa0",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:28,textAlign:"center"}}>He does not ask which one you want.</p>
+              </>
+            )}
+
+            <button onClick={()=>setEggOpen(null)} style={{width:"100%",marginTop:24,padding:"12px",background:"transparent",border:"1px solid #2e2408",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:10,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
