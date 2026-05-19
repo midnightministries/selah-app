@@ -831,7 +831,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
   );
 }
 
-function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterChange }) {
+function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterChange, activeDate }) {
   const now = new Date();
   const [calView, setCalView] = useState("month");
   const [calYear, setCalYear] = useState(now.getFullYear());
@@ -840,6 +840,9 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
     const d = new Date(); d.setDate(d.getDate() - d.getDay()); d.setHours(0,0,0,0); return d;
   });
   const [selectedDate, setSelectedDate] = useState(null);
+  useEffect(() => {
+    if (activeDate) setSelectedDate(activeDate);
+  }, [activeDate ? activeDate.getTime() : 0]);
   const [selectedSession, setSelectedSession] = useState(null);
 
   const sessionMap = {};
@@ -1383,7 +1386,7 @@ export default function App() {
 
       <div style={{position:"fixed",inset:0,pointerEvents:"none",opacity:0.5,zIndex:0,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px"}}>
+      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
@@ -1681,8 +1684,8 @@ export default function App() {
 
         {/* ══ HISTORY ══ */}
         {view === "history" && (
-          <div className="fade-in">
-            <SessionCalendar sessions={sessions} onDaySelect={handleCalendarDay} alarms={alarms} onSaveAlarm={handleSaveAlarm} onFilterChange={setFilterDate}/>
+          <div className="fade-in" style={{overflowAnchor:"none"}}>
+            <SessionCalendar sessions={sessions} onDaySelect={handleCalendarDay} alarms={alarms} onSaveAlarm={handleSaveAlarm} onFilterChange={setFilterDate} activeDate={filterDate}/>
             {sessions.length === 0 ? (
               <div style={{textAlign:"center",padding:"30px 0"}}>
                 <div style={{color:"#2e2408",marginBottom:12,display:"flex",justifyContent:"center"}}><BookIcon/></div>
