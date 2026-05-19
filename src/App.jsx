@@ -884,9 +884,12 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm }) {
     <button onClick={onClick} style={{background:active?"rgba(201,168,76,0.12)":"transparent",border:`1px solid ${active?"#c9a84c":"#2e2408"}`,borderRadius:4,padding:"4px 12px",fontFamily:"'Cinzel',serif",fontSize:9,color:active?"#c9a84c":"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>{children}</button>
   );
 
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
   return (
     <>
-      <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,padding:"14px 12px",marginBottom:18}}>
+      <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,padding:"14px 12px",marginBottom:selectedDate?8:18}}>
         <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>
           <ToggleBtn active={calView==="month"} onClick={()=>setCalView("month")}>Month</ToggleBtn>
           <ToggleBtn active={calView==="week"} onClick={()=>setCalView("week")}>Week</ToggleBtn>
@@ -940,16 +943,50 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm }) {
         })()}
       </div>
 
-      {selectedDate && (
-        <DayModal
-          date={selectedDate}
-          session={selectedSession}
-          onClose={()=>setSelectedDate(null)}
-          onSessionClick={(id)=>{ onDaySelect(id); }}
-          alarms={alarms}
-          onSaveAlarm={onSaveAlarm}
-        />
-      )}
+      {selectedDate && (() => {
+        const now = new Date(); now.setHours(0,0,0,0);
+        const d = new Date(selectedDate); d.setHours(0,0,0,0);
+        const isToday = d.getTime() === now.getTime();
+        const isPast = d.getTime() < now.getTime();
+        const isFuture = d.getTime() > now.getTime();
+        const vKey = selectedDate.toISOString().slice(0,10);
+        const verse = isPast ? VERSES_PAST[vKey.split("").reduce((a,ch)=>a+ch.charCodeAt(0),0)%VERSES_PAST.length]
+                   : isToday ? VERSES_TODAY[vKey.split("").reduce((a,ch)=>a+ch.charCodeAt(0),0)%VERSES_TODAY.length]
+                   : VERSES_FUTURE[vKey.split("").reduce((a,ch)=>a+ch.charCodeAt(0),0)%VERSES_FUTURE.length];
+        return (
+          <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,padding:"16px 14px",marginBottom:18}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:2}}>{dayNames[selectedDate.getDay()]}</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#c9a84c"}}>{months[selectedDate.getMonth()]} {selectedDate.getDate()}, {selectedDate.getFullYear()}</p>
+              </div>
+              <button onClick={()=>setSelectedDate(null)} style={{background:"transparent",border:"none",color:"#3a3010",fontSize:18,cursor:"pointer",padding:"4px 8px",lineHeight:1}}>×</button>
+            </div>
+            {selectedSession ? (
+              <div style={{background:"#1a1208",border:"1px solid #2e2408",borderRadius:6,padding:"12px 14px",cursor:"pointer"}}
+                onClick={()=>{ onDaySelect(selectedSession.id); setSelectedDate(null); }}>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#c9a84c",marginBottom:5}}>{selectedSession.passage}</p>
+                <div style={{display:"flex",gap:10,color:"#4a3e1a",fontSize:12,flexWrap:"wrap"}}>
+                  <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatTime(selectedSession.startTime)}</span>
+                  <span>{elapsed(selectedSession.startTime, selectedSession.readingEndTime||selectedSession.endTime)} reading</span>
+                  {selectedSession.locationType && <span>{selectedSession.locationType}</span>}
+                </div>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Tap to open session</p>
+              </div>
+            ) : (
+              <div style={{padding:"4px 0"}}>
+                {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:10}}>His Word is still here. Today can still be the day.</p>}
+                {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3a18",lineHeight:1.6,marginBottom:10}}>His Word was here. He was not absent.</p>}
+                {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:10}}>His Word will be here. So will He.</p>}
+                <div style={{borderLeft:"2px solid #2e2408",paddingLeft:12}}>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#6a5a30",lineHeight:1.65,fontStyle:"italic",marginBottom:4}}>"{verse.text}"</p>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.08em"}}>{verse.ref}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </>
   );
 }
@@ -1272,7 +1309,7 @@ export default function App() {
       const data = await resp.json();
       const raw = data.content?.find(b=>b.type==="text")?.text||"";
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
-      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender };
+      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender };
       try { localStorage.setItem('selah_last_position', JSON.stringify({ endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse })); } catch {}
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
@@ -1327,7 +1364,7 @@ export default function App() {
     <div style={{minHeight:"100vh",background:"#0e0c06",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#0e0c06;overscroll-behavior:none;}*{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#0e0c06;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
         input,select,textarea{background:#161208;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
@@ -1464,7 +1501,7 @@ export default function App() {
                 <div style={{display:"flex",alignItems:"center",gap:8,color:"#6a5a30",fontSize:13}}>
                   <ClockIcon/><span>{formatTime(activeSession.startTime)}</span>
                   <span className="pulse" style={{color:"#c9a84c",fontSize:10}}>●</span>
-                  <span style={{color:"#8a7a4a"}}>{activeMins}m</span>
+                  <span style={{color:"#8a7a4a"}}>{activeMins}m in His Word</span>
                 </div>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase"}}>{activeSession.locationType}</span>
               </div>
@@ -1519,7 +1556,7 @@ export default function App() {
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                <button className="btn-primary" onClick={endSession}>Close Session</button>
+                <button className="btn-primary" onClick={endSession}>End Reading</button>
                 <button className="btn-ghost" onClick={()=>{ resetForm(); setView("home"); }}>Abandon</button>
               </div>
             )}
@@ -1551,7 +1588,7 @@ export default function App() {
                     <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",lineHeight:1.3}}>{activeSession.passage}</p>
                   </div>
                   <div style={{textAlign:"right",fontSize:12,color:"#4a3e1a",flexShrink:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",marginBottom:5}}><ClockIcon/>{elapsed(activeSession.startTime,activeSession.endTime)}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",marginBottom:5}}><ClockIcon/>{elapsed(activeSession.startTime,activeSession.readingEndTime||activeSession.endTime)} reading</div>
                     <div style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase"}}>{activeSession.locationType}</div>
                   </div>
                 </div>
@@ -1670,7 +1707,7 @@ export default function App() {
               </div>
             )}
 
-            <button className="btn-primary" onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
+            <button className="btn-primary" onClick={()=>{ resetForm(); setView("home"); }}>Close Session</button>
           </div>
         )}
 
@@ -1699,7 +1736,7 @@ export default function App() {
                         <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"#c9a84c",marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.passage}</p>
                         <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",color:"#4a3e1a",fontSize:12,alignItems:"center"}}>
                           <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatDate(s.startTime)}</span>
-                          <span>{elapsed(s.startTime,s.endTime)}</span>
+                          <span>{elapsed(s.startTime,s.readingEndTime||s.endTime)} reading</span>
                           {s.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3}}><PinIcon/>{s.geoLabel}</span>}
                           {s.bibleVersion && <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.08em"}}>{s.bibleVersion}</span>}
                         </div>
