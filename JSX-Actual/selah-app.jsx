@@ -634,6 +634,25 @@ function AnswerInput({ value, onChange, feedback }) {
 
 // ── Stats strip for history view ────────────────────────────────────────
 function StatsStrip({ sessions }) {
+  const totalMins = sessions.reduce((a, s) => a + Math.round((new Date(s.endTime) - new Date(s.startTime)) / 60000), 0);
+  const totalTime = totalMins < 60 ? totalMins + "m" : Math.floor(totalMins / 60) + "h";
+  const uniqueBooks = new Set(sessions.map(s => s.startBook)).size;
+  const stats = [["Sessions", sessions.length], ["Books", uniqueBooks], ["Time", totalTime]];
+  return (
+    <div style={{ display:"flex",background:"#141008",border:"1px solid #252010",borderRadius:7,overflow:"hidden",marginBottom:18 }}>
+      {stats.map(([l, v], i) => (
+        <div key={l} style={{ flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid #252010":"none" }}>
+          <p style={{ fontFamily:"'Cinzel',serif",fontSize:16,color:"#c9a84c",fontWeight:600 }}>{v}</p>
+          <p style={{ fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3 }}>{l}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+// ── Stats strip ──────────────────────────────────────────────────────────
+function StatsStrip({ sessions }) {
   const totalMins = sessions.reduce((a,s) => a + Math.round((new Date(s.endTime)-new Date(s.startTime))/60000), 0);
   const totalTime = totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h";
   const uniqueBooks = new Set(sessions.map(s=>s.startBook)).size;
