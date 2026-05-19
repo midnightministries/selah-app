@@ -410,7 +410,7 @@ function loadSessions() { try { return JSON.parse(localStorage.getItem(STORAGE_K
 function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(s)); } catch {} }
 
 // ── Midnight Ministries footer (always visible) ──
-function MMFooter() {
+function MMFooter({ onEggOpen }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
@@ -430,7 +430,7 @@ function MMFooter() {
           </filter>
         </defs>
       </svg>
-      <span onClick={()=>setEggOpen("mm")} style={{
+      <span onClick={()=>onEggOpen("mm")} style={{
         fontFamily:"'Cinzel',serif",
         fontSize:12,
         letterSpacing:"0.22em",
@@ -2022,7 +2022,7 @@ export default function App() {
 
       </div>
 
-      <MMFooter/>
+      <MMFooter onEggOpen={setEggOpen}/>
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
 
       {/* ══ EASTER EGG SHEETS ══ */}
