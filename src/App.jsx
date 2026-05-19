@@ -954,50 +954,6 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
         })()}
       </div>
 
-      {selectedDate && (() => {
-        const now = new Date(); now.setHours(0,0,0,0);
-        const d = new Date(selectedDate); d.setHours(0,0,0,0);
-        const isToday = d.getTime() === now.getTime();
-        const isPast = d.getTime() < now.getTime();
-        const isFuture = d.getTime() > now.getTime();
-        const vKey = selectedDate.toISOString().slice(0,10);
-        const verse = isPast ? VERSES_PAST[vKey.split("").reduce((a,ch)=>a+ch.charCodeAt(0),0)%VERSES_PAST.length]
-                   : isToday ? VERSES_TODAY[vKey.split("").reduce((a,ch)=>a+ch.charCodeAt(0),0)%VERSES_TODAY.length]
-                   : VERSES_FUTURE[vKey.split("").reduce((a,ch)=>a+ch.charCodeAt(0),0)%VERSES_FUTURE.length];
-        return (
-          <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,padding:"16px 14px",marginBottom:18}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-              <div>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:2}}>{dayNames[selectedDate.getDay()]}</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#c9a84c"}}>{months[selectedDate.getMonth()]} {selectedDate.getDate()}, {selectedDate.getFullYear()}</p>
-              </div>
-              <button onClick={()=>setSelectedDate(null)} style={{background:"transparent",border:"none",color:"#3a3010",fontSize:18,cursor:"pointer",padding:"4px 8px",lineHeight:1}}>×</button>
-            </div>
-            {selectedSession ? (
-              <div style={{background:"#1a1208",border:"1px solid #2e2408",borderRadius:6,padding:"12px 14px",cursor:"pointer"}}
-                onClick={()=>{ onDaySelect(selectedSession.id); setSelectedDate(null); }}>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#c9a84c",marginBottom:5}}>{selectedSession.passage}</p>
-                <div style={{display:"flex",gap:10,color:"#4a3e1a",fontSize:12,flexWrap:"wrap"}}>
-                  <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatTime(selectedSession.startTime)}</span>
-                  <span>{elapsed(selectedSession.startTime, selectedSession.readingEndTime||selectedSession.endTime)} reading</span>
-                  {selectedSession.locationType && <span>{selectedSession.locationType}</span>}
-                </div>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Tap to open session</p>
-              </div>
-            ) : (
-              <div style={{padding:"4px 0"}}>
-                {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:10}}>His Word is still here. Today can still be the day.</p>}
-                {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3a18",lineHeight:1.6,marginBottom:10}}>His Word was here. He was not absent.</p>}
-                {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:10}}>His Word will be here. So will He.</p>}
-                <div style={{borderLeft:"2px solid #2e2408",paddingLeft:12}}>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#6a5a30",lineHeight:1.65,fontStyle:"italic",marginBottom:4}}>"{verse.text}"</p>
-                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.08em"}}>{verse.ref}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
     </>
   );
 }
@@ -1258,7 +1214,7 @@ export default function App() {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
   }
   const [calJumpId, setCalJumpId] = useState(null);
-  const [filterDate, setFilterDate] = useState(null);
+  const [filterDate, setFilterDate] = useState(() => { const d=new Date(); d.setHours(0,0,0,0); return d; });
   const sessionRefs = useRef({});
   const timerRef = useRef(null);
   const photoInputRef = useRef(null);
@@ -1732,16 +1688,34 @@ export default function App() {
                 <div style={{color:"#2e2408",marginBottom:12,display:"flex",justifyContent:"center"}}><BookIcon/></div>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.14em"}}>NO SESSIONS LOGGED YET</p>
               </div>
-            ) : (
+            ) : (() => {
+              const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+              const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+              const filteredSessions = filterDate
+                ? sessions.filter(s => { const d=new Date(s.startTime); return d.getFullYear()===filterDate.getFullYear()&&d.getMonth()===filterDate.getMonth()&&d.getDate()===filterDate.getDate(); })
+                : sessions;
+              return (
               <>
-                <StatsStrip sessions={sessions}/>
+                {/* Filter bar — above global strip when a day is selected */}
                 {filterDate && (
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,padding:"6px 10px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:5}}>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase"}}>Showing: {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][filterDate.getMonth()]} {filterDate.getDate()}</p>
-                    <button onClick={()=>setFilterDate(null)} style={{background:"transparent",border:"none",color:"#4a3e1a",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Show All</button>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,padding:"7px 12px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:5}}>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase"}}>
+                      {dayNames[filterDate.getDay()]}, {months[filterDate.getMonth()]} {filterDate.getDate()}
+                    </p>
+                    <button onClick={()=>{ setFilterDate(null); }} style={{background:"transparent",border:"none",color:"#4a3e1a",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Show All</button>
                   </div>
                 )}
-                {(filterDate ? sessions.filter(s => { const d=new Date(s.startTime); return d.getFullYear()===filterDate.getFullYear()&&d.getMonth()===filterDate.getMonth()&&d.getDate()===filterDate.getDate(); }) : sessions).map(s=>(
+                {/* Global strip — always visible, always total */}
+                <StatsStrip sessions={sessions}/>
+                {/* Day box or full list */}
+                {filterDate ? (
+                  <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+                    {filteredSessions.length === 0 ? (
+                      <div style={{padding:"20px 16px",textAlign:"center"}}>
+                        <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase"}}>No session on this day</p>
+                      </div>
+                    ) : (
+                      filteredSessions.map(s=>(
                   <div key={s.id} className="hist-card" ref={el=>{ if(el) sessionRefs.current[s.id]=el; }}>
                     {s.photoData && (
                       <div style={{height:90,overflow:"hidden",position:"relative"}}>
@@ -1825,9 +1799,48 @@ export default function App() {
                       </div>
                     )}
                   </div>
-                ))}
+                ))
+                    )}
+                  </div>
+                ) : (
+                  // Show all sessions
+                  sessions.map(s=>(
+                    <div key={s.id} className="hist-card" ref={el=>{ if(el) sessionRefs.current[s.id]=el; }}>
+                      {s.photoData && (
+                        <div style={{height:90,overflow:"hidden",position:"relative"}}>
+                          <img src={s.photoData} alt="" style={{width:"100%",height:"100%",objectFit:"cover",opacity:0.65}}/>
+                          <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent,rgba(14,12,6,0.85))"}}/>
+                        </div>
+                      )}
+                      <div className="hist-head" onClick={()=>setExpandedSession(expandedSession===s.id?null:s.id)}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"#c9a84c",marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.passage}</p>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",color:"#4a3e1a",fontSize:12,alignItems:"center"}}>
+                            <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatDate(s.startTime)}</span>
+                            <span>{elapsed(s.startTime,s.readingEndTime||s.endTime)} reading</span>
+                            {s.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3}}><PinIcon/>{s.geoLabel}</span>}
+                            {s.bibleVersion && <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.08em"}}>{s.bibleVersion}</span>}
+                          </div>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8,flexShrink:0}}>
+                          <button className="btn-danger" onClick={e=>{e.stopPropagation();deleteSession(s.id);}}>×</button>
+                          <ChevronIcon open={expandedSession===s.id}/>
+                        </div>
+                      </div>
+                      {expandedSession===s.id && s.aiResult && (
+                        <div style={{padding:"0 16px 16px",borderTop:"1px solid #252010"}}>
+                          <p style={{fontStyle:"italic",color:"#5a4a20",fontSize:15,padding:"10px 0",lineHeight:1.55}}>{s.aiResult.summary}</p>
+                          <button className="btn-export" style={{fontSize:10,padding:"9px 16px",marginBottom:10}} onClick={()=>setExportSession(s)}>
+                            <ShareIcon/> Save or Share
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </>
-            )}
+              );
+            })()}
           </div>
         )}
 
