@@ -1406,7 +1406,7 @@ export default function App() {
           <div style={{position:"absolute",left:6,top:39}}>
             <CrossIcon size={30} glow={false}/>
           </div>
-          <h1 style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)"}}>SELAH</h1>
+          <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",cursor:"pointer"}}>SELAH</h1>
           <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"#4a3e1a",marginTop:3}}>Read. Mark. Return.</p>
         </div>
 
