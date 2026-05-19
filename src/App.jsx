@@ -2031,8 +2031,9 @@ export default function App() {
           onClick={()=>setEggOpen(null)}>
           <div style={{background:"#0e0c06",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
             onClick={e=>e.stopPropagation()}
-            onTouchStart={e=>{ e._touchY = e.touches[0].clientY; }}
-            onTouchEnd={e=>{ if(e.changedTouches[0].clientY - e._touchY > 60) setEggOpen(null); }}>
+            onTouchStart={e=>{ e.currentTarget._touchY = e.touches[0].clientY; }}
+            onTouchMove={e=>{ e.stopPropagation(); }}
+            onTouchEnd={e=>{ const dy = e.changedTouches[0].clientY - e.currentTarget._touchY; if(dy > 60) setEggOpen(null); }}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
               <div style={{width:36,height:3,background:"#2e2408",borderRadius:2}}/>
               <button onClick={()=>setEggOpen(null)} style={{background:"transparent",border:"none",color:"#4a3e1a",fontSize:20,cursor:"pointer",padding:"0 4px",lineHeight:1,marginLeft:"auto"}}>×</button>
