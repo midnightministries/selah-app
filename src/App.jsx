@@ -1696,7 +1696,9 @@ export default function App() {
                 : sessions;
               return (
               <>
-                {/* Filter bar — above global strip when a day is selected */}
+                {/* Global strip — always visible, always total */}
+                <StatsStrip sessions={sessions}/>
+                {/* Filter bar — below global strip */}
                 {filterDate && (
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,padding:"7px 12px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:5}}>
                     <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase"}}>
@@ -1705,8 +1707,6 @@ export default function App() {
                     <button onClick={()=>{ setFilterDate(null); }} style={{background:"transparent",border:"none",color:"#4a3e1a",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Show All</button>
                   </div>
                 )}
-                {/* Global strip — always visible, always total */}
-                <StatsStrip sessions={sessions}/>
                 {/* Day box or full list */}
                 {filterDate ? (
                   <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,overflow:"hidden",marginBottom:10}}>
