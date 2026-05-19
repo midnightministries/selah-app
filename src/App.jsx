@@ -1296,8 +1296,16 @@ export default function App() {
       const data = await resp.json();
       const raw = data.content?.find(b=>b.type==="text")?.text||"[]";
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
-      setAnswerFeedback(Array.isArray(parsed)?parsed:[]);
+      const fb = Array.isArray(parsed)?parsed:[];
+      setAnswerFeedback(fb);
       setFeedbackSubmitted(true);
+      // Persist answers and feedback to the session log
+      if (activeSession?.id) {
+        setSessions(prev => prev.map(s => s.id === activeSession.id
+          ? { ...s, questionAnswers: questionAnswers, answerFeedback: fb }
+          : s
+        ));
+      }
     } catch(e) { setAnswerFeedback([]); setFeedbackSubmitted(true); }
     setFeedbackLoading(false);
   }
@@ -1319,7 +1327,7 @@ export default function App() {
     <div style={{minHeight:"100vh",background:"#0e0c06",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#0e0c06;overscroll-behavior:none;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
         input,select,textarea{background:#161208;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
@@ -1703,24 +1711,62 @@ export default function App() {
                     </div>
                     {expandedSession===s.id && s.aiResult && (
                       <div style={{padding:"0 16px 16px",borderTop:"1px solid #252010"}}>
-                        {s.aiResult.summary && <p style={{fontStyle:"italic",color:"#5a4a20",fontSize:15,padding:"12px 0",lineHeight:1.55}}>"{s.aiResult.summary}"</p>}
-                        <button className="btn-export" style={{fontSize:10,padding:"9px 16px",marginBottom:14}} onClick={()=>setExportSession(s)}>
-                          <ShareIcon/> Save or Share
-                        </button>
+                        {s.aiResult.context && (
+                          <div style={{background:"#120f06",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
+                            <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Ground</p>
+                            <p style={{fontSize:14,lineHeight:1.7,color:"#5a5030"}}>{s.aiResult.context}</p>
+                          </div>
+                        )}
+                        {s.aiResult.summary && (
+                          <div style={{borderLeft:"2px solid rgba(201,168,76,0.4)",paddingLeft:12,margin:"10px 0"}}>
+                            <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:5}}>In One Sentence</p>
+                            <p style={{fontStyle:"italic",color:"#8a7a4a",fontSize:15,lineHeight:1.55}}>{s.aiResult.summary}</p>
+                          </div>
+                        )}
                         <hr className="divider"/>
-                        <p className="label">Questions</p>
+                        <p className="label">Questions from the Text</p>
                         {s.aiResult.questions?.map((q,i)=>(
-                          <p key={i} style={{fontSize:15,color:"#6a5a30",marginBottom:8,paddingLeft:12,borderLeft:"1px solid #252010",lineHeight:1.5}}>{q}</p>
-                        ))}
-                        <hr className="divider"/>
-                        <p className="label">Return Verses</p>
-                        {s.aiResult.returnVerses?.map((v,i)=>(
-                          <div key={i} style={{marginBottom:9}}>
-                            <span style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c"}}>{v.ref}</span>
-                            <span style={{color:"#5a4a20",fontSize:14,fontStyle:"italic"}}> — {v.reason}</span>
+                          <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:i<s.aiResult.questions.length-1?"1px solid #1a1608":"none"}}>
+                            <p style={{fontSize:15,color:"#d4ccb8",lineHeight:1.6,marginBottom:6}}>{q}</p>
+                            {s.questionAnswers?.[i] && (
+                              <div style={{background:"#141008",border:"1px solid #2e2408",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
+                                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Your Answer</p>
+                                <p style={{fontSize:14,color:"#8a7a5a",lineHeight:1.6,fontStyle:"italic"}}>{s.questionAnswers[i]}</p>
+                              </div>
+                            )}
+                            {s.answerFeedback?.[i] && (
+                              <div style={{background:"rgba(201,168,76,0.04)",border:"1px solid rgba(201,168,76,0.12)",borderRadius:5,padding:"8px 12px"}}>
+                                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Response</p>
+                                <p style={{fontSize:14,color:"#8a7a5a",lineHeight:1.6}}>{s.answerFeedback[i]}</p>
+                              </div>
+                            )}
                           </div>
                         ))}
-                        {s.personalNotes && (<><hr className="divider"/><p style={{fontStyle:"italic",color:"#5a4a20",fontSize:15,lineHeight:1.55}}>{s.personalNotes}</p></>)}
+                        {s.aiResult.notes?.length > 0 && (
+                          <>
+                            <hr className="divider"/>
+                            <p className="label">Field Notes</p>
+                            {s.aiResult.notes.map((n,i)=>(
+                              <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start"}}>
+                                <span style={{color:"rgba(201,168,76,0.4)",fontSize:16,lineHeight:1}}>*</span>
+                                <p style={{fontSize:14,lineHeight:1.65,color:"#c0b898"}}>{n}</p>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        <hr className="divider"/>
+                        <p className="label">Come Back To</p>
+                        {s.aiResult.returnVerses?.map((v,i)=>(
+                          <div key={i} style={{marginBottom:10,paddingLeft:10,borderLeft:"2px solid #2e2408"}}>
+                            <p style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"#c9a84c",marginBottom:4}}>{v.ref}</p>
+                            <p style={{color:"#6a5a30",fontSize:13,fontStyle:"italic",lineHeight:1.55}}>{v.reason}</p>
+                          </div>
+                        ))}
+                        {s.personalNotes && (<><hr className="divider"/><p className="label">Your Notes</p><p style={{fontStyle:"italic",color:"#5a4a20",fontSize:14,lineHeight:1.55}}>{s.personalNotes}</p></>)}
+                        <hr className="divider"/>
+                        <button className="btn-export" style={{fontSize:10,padding:"9px 16px"}} onClick={()=>setExportSession(s)}>
+                          <ShareIcon/> Save or Share
+                        </button>
                       </div>
                     )}
                   </div>
