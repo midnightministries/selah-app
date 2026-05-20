@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b7";
+const BUILD = "2026.05.20-b8";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -418,11 +418,10 @@ function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify
 function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
-      position:"fixed", bottom:0, left:0, right:0, zIndex:100,
+      flexShrink:0, width:"100%", zIndex:100,
       background:"rgba(8,6,3,1)", borderTop:"1px solid #251812",
       paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
-      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"none"
+      display:"flex", alignItems:"center", justifyContent:"center", gap:8
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -1311,18 +1310,33 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
   // Lock the page behind any open modal so only the modal scrolls.
-  useEffect(() => {
-    const open = !!(eggOpen || photoView || exportSession);
-    if (!open) return;
-    const y = window.scrollY;
-    const b = document.body.style;
-    const prev = { position:b.position, top:b.top, width:b.width, overflow:b.overflow };
-    b.position = "fixed"; b.top = `-${y}px`; b.width = "100%"; b.overflow = "hidden";
-    return () => {
-      b.position = prev.position; b.top = prev.top; b.width = prev.width; b.overflow = prev.overflow;
-      window.scrollTo(0, y);
-    };
-  }, [eggOpen, photoView, exportSession]);
+  // Custom pull-to-refresh for the inner scroll area (the locked shell has no native one).
+  const [pullY, setPullY] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const pullStartY = useRef(null);
+  const PULL_THRESHOLD = 70;
+  function onPullStart(e) {
+    const el = scrollRef.current;
+    pullStartY.current = (el && el.scrollTop <= 0 && !refreshing) ? e.touches[0].clientY : null;
+  }
+  function onPullMove(e) {
+    if (pullStartY.current == null || refreshing) return;
+    const el = scrollRef.current;
+    if (!el || el.scrollTop > 0) { pullStartY.current = null; setPullY(0); return; }
+    const dy = e.touches[0].clientY - pullStartY.current;
+    setPullY(dy > 0 ? Math.min(dy * 0.5, 110) : 0);
+  }
+  function onPullEnd() {
+    if (pullStartY.current == null) return;
+    pullStartY.current = null;
+    if (pullY >= PULL_THRESHOLD) {
+      setRefreshing(true);
+      setPullY(56);
+      setTimeout(() => window.location.reload(), 450);
+    } else {
+      setPullY(0);
+    }
+  }
 
   function handleSaveAlarm(dayKey, alarm) {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
@@ -1450,9 +1464,12 @@ export default function App() {
   }
 
   function toggleSession(id) {
-    const y = window.scrollY;
+    const el = scrollRef.current;
+    const y = el ? el.scrollTop : window.scrollY;
     setExpandedSession(prev => prev === id ? null : id);
-    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" })));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (el) el.scrollTop = y; else window.scrollTo({ top: y, behavior: "instant" });
+    }));
   }
 
   function deleteSession(id) {
@@ -1466,9 +1483,10 @@ export default function App() {
   const KID_VERSIONS = ["NIrV","ICB","NLT"];
   const isKidAge = age.startsWith("Kids");
   const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
+  const modalOpen = !!(eggOpen || photoView || exportSession);
 
   return (
-    <div style={{minHeight:"100vh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
+    <div style={{height:"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative",display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
         html,body{background:#190f0b;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
@@ -1496,6 +1514,7 @@ export default function App() {
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         .pulse{animation:pulse 1.8s ease-in-out infinite;}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+        @keyframes spin{to{transform:rotate(360deg)}}
         .nav-tab{background:transparent;border:none;color:#3a3010;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;padding:10px 10px;border-bottom:2px solid transparent;transition:all 0.2s;flex:1;}
         .nav-tab.active{color:#c9a84c;border-bottom-color:#c9a84c;}
         .nav-tab:hover:not(.active){color:#8a7a4a;}
@@ -1515,14 +1534,24 @@ export default function App() {
         .version-pill{background:transparent;border:1px solid #2e2408;border-radius:4px;padding:7px 12px;font-family:'Cinzel',serif;font-size:10px;color:#5a4a20;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .version-pill.active{background:rgba(201,168,76,0.12);border-color:#c9a84c;color:#c9a84c;}
         .version-pill:hover:not(.active){border-color:#5a4a20;color:#8a7a4a;}
-        @media (min-width:600px){.app-container{padding:0 24px 80px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
-        @media (min-width:768px){.app-container{padding:0 32px 80px !important;max-width:600px !important;}h1{font-size:30px !important;}}
+        @media (min-width:600px){.app-container{padding:0 24px 24px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
+        @media (min-width:768px){.app-container{padding:0 32px 24px !important;max-width:600px !important;}h1{font-size:30px !important;}}
         @media (min-width:1024px){.app-container{max-width:640px !important;}}
       `}</style>
 
       <div style={{position:"fixed",inset:0,pointerEvents:"none",opacity:0.5,zIndex:0,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
+      <div ref={scrollRef} onTouchStart={onPullStart} onTouchMove={onPullMove} onTouchEnd={onPullEnd}
+        style={{flex:1,minHeight:0,overflowY:modalOpen?"hidden":"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",position:"relative",zIndex:1}}>
+      {/* Pull-to-refresh indicator */}
+      <div style={{position:"absolute",top:0,left:0,right:0,display:"flex",justifyContent:"center",pointerEvents:"none",height:0,zIndex:5}}>
+        <div style={{marginTop:10,opacity:Math.min(pullY/PULL_THRESHOLD,1),transition:pullStartY.current?"none":"opacity 0.2s",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.12em",textTransform:"uppercase",color:"#c9a84c",display:"flex",alignItems:"center",gap:7}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            style={refreshing?{animation:"spin 0.8s linear infinite"}:{transform:`rotate(${Math.min(pullY*2.2,180)}deg)`,transition:pullStartY.current?"none":"transform 0.2s"}}><polyline points="6 9 12 15 18 9"/></svg>
+          {refreshing?"Refreshing":(pullY>=PULL_THRESHOLD?"Release to refresh":"Pull to refresh")}
+        </div>
+      </div>
+      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 24px",overflowAnchor:"none",transform:pullY?`translateY(${pullY}px)`:"none",transition:pullStartY.current?"none":"transform 0.25s ease"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
@@ -2154,6 +2183,7 @@ export default function App() {
           </div>
         )}
 
+      </div>
       </div>
 
       <MMFooter onEggOpen={setEggOpen} onHomeView={view==="home"}/>
