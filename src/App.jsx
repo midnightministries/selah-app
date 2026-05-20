@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b5";
+const BUILD = "2026.05.20-b6";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -418,13 +418,10 @@ function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify
 function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
-      position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-      background:"linear-gradient(to top, rgba(10,8,4,1) 68%, rgba(10,8,4,0))",
-      paddingTop:5, paddingBottom:"calc(20px + env(safe-area-inset-bottom))",
-      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"none",
-      transform:"translateZ(0)", WebkitTransform:"translateZ(0)",
-      backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"
+      flexShrink:0, width:"100%", zIndex:100,
+      background:"rgba(8,6,3,1)", borderTop:"1px solid #251812",
+      paddingTop:10, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
+      display:"flex", alignItems:"center", justifyContent:"center", gap:8
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -1312,18 +1309,14 @@ export default function App() {
   const [eggOpen, setEggOpen] = useState(null); // "mm" | "cross" | null
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
-  // Lock the page behind any open modal so only the modal scrolls.
+  // Lock the scroll area behind any open modal so only the modal scrolls.
   useEffect(() => {
     const open = !!(eggOpen || photoView || exportSession);
-    if (!open) return;
-    const y = window.scrollY;
-    const b = document.body.style;
-    const prev = { position:b.position, top:b.top, width:b.width, overflow:b.overflow };
-    b.position = "fixed"; b.top = `-${y}px`; b.width = "100%"; b.overflow = "hidden";
-    return () => {
-      b.position = prev.position; b.top = prev.top; b.width = prev.width; b.overflow = prev.overflow;
-      window.scrollTo(0, y);
-    };
+    const el = scrollRef.current;
+    if (!open || !el) return;
+    const prev = el.style.overflow;
+    el.style.overflow = "hidden";
+    return () => { el.style.overflow = prev; };
   }, [eggOpen, photoView, exportSession]);
 
   function handleSaveAlarm(dayKey, alarm) {
@@ -1332,6 +1325,7 @@ export default function App() {
   const [calJumpId, setCalJumpId] = useState(null);
   const [filterDate, setFilterDate] = useState(() => { const d=new Date(); d.setHours(0,0,0,0); return d; });
   const sessionRefs = useRef({});
+  const scrollRef = useRef(null);
   const timerRef = useRef(null);
   const photoInputRef = useRef(null);
 
@@ -1451,9 +1445,12 @@ export default function App() {
   }
 
   function toggleSession(id) {
-    const y = window.scrollY;
+    const el = scrollRef.current;
+    const y = el ? el.scrollTop : window.scrollY;
     setExpandedSession(prev => prev === id ? null : id);
-    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" })));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (el) el.scrollTop = y; else window.scrollTo({ top: y, behavior: "instant" });
+    }));
   }
 
   function deleteSession(id) {
@@ -1469,7 +1466,7 @@ export default function App() {
   const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
 
   return (
-    <div style={{minHeight:"100vh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
+    <div style={{height:"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative",display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
         html,body{background:#190f0b;overscroll-behavior:none;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
@@ -1516,14 +1513,15 @@ export default function App() {
         .version-pill{background:transparent;border:1px solid #2e2408;border-radius:4px;padding:7px 12px;font-family:'Cinzel',serif;font-size:10px;color:#5a4a20;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .version-pill.active{background:rgba(201,168,76,0.12);border-color:#c9a84c;color:#c9a84c;}
         .version-pill:hover:not(.active){border-color:#5a4a20;color:#8a7a4a;}
-        @media (min-width:600px){.app-container{padding:0 24px 80px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
-        @media (min-width:768px){.app-container{padding:0 32px 80px !important;max-width:600px !important;}h1{font-size:30px !important;}}
+        @media (min-width:600px){.app-container{padding:0 24px 28px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
+        @media (min-width:768px){.app-container{padding:0 32px 28px !important;max-width:600px !important;}h1{font-size:30px !important;}}
         @media (min-width:1024px){.app-container{max-width:640px !important;}}
       `}</style>
 
       <div style={{position:"fixed",inset:0,pointerEvents:"none",opacity:0.5,zIndex:0,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
+      <div ref={scrollRef} style={{flex:1,minHeight:0,overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",position:"relative",zIndex:1}}>
+      <div className="app-container" style={{maxWidth:480,margin:"0 auto",padding:"0 16px 28px",overflowAnchor:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
@@ -2156,6 +2154,7 @@ export default function App() {
         )}
 
       </div>
+      </div>
 
       <MMFooter onEggOpen={setEggOpen} onHomeView={view==="home"}/>
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
@@ -2164,7 +2163,7 @@ export default function App() {
       {photoView && (
         <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.95)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain"}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0}}>×</button>
+            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
             <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid #36241c",display:"block"}}/>
             <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",alignItems:"center",marginBottom:photoView.personalNotes?16:0}}>
@@ -2185,7 +2184,7 @@ export default function App() {
       {eggOpen && (
         <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
           onClick={()=>setEggOpen(null)}>
-          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0}}>×</button>
+          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
           <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:12,padding:"26px 22px 32px",width:"100%",maxWidth:480,margin:"58px auto 58px"}}
             onClick={e=>e.stopPropagation()}>
             <div style={{width:36,height:3,background:"#36241c",borderRadius:2,margin:"0 auto 24px"}}/>
