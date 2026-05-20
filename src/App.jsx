@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b12";
+const BUILD = "2026.05.20-b13";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1518,10 +1518,10 @@ export default function App() {
   const glowRed = Math.max(30, Math.min(Math.round((vw || 1200) * 0.11), 150));
 
   return (
-    <div style={{height:"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{position:"fixed",top:0,left:0,right:0,height:"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#190f0b;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#190f0b;height:100%;overflow:hidden;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
         input,select,textarea{background:#221610;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
