@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b10";
+const BUILD = "2026.05.20-b11";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1323,8 +1323,9 @@ export default function App() {
   // Pin the app shell to the real visible viewport height in JS, so the footer stays
   // locked to the bottom even on browsers that don't honor the 100dvh CSS unit.
   const [vh, setVh] = useState(() => (typeof window !== "undefined" ? window.innerHeight : 0));
+  const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
   useEffect(() => {
-    const update = () => setVh(window.innerHeight);
+    const update = () => { setVh(window.innerHeight); setVw(window.innerWidth); };
     update();
     window.addEventListener("resize", update);
     window.addEventListener("orientationchange", update);
@@ -1511,6 +1512,10 @@ export default function App() {
   const isKidAge = age.startsWith("Kids");
   const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
   const modalOpen = !!(eggOpen || photoView || exportSession);
+  // Edge-glow spread scales with screen width so it hugs the edges on phones
+  // and stays a thin halo on big screens, instead of bleeding into the middle.
+  const glowGold = Math.max(14, Math.min(Math.round((vw || 1200) * 0.05), 70));
+  const glowRed = Math.max(30, Math.min(Math.round((vw || 1200) * 0.11), 150));
 
   return (
     <div style={{height:vh?vh+"px":"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative",display:"flex",flexDirection:"column",overflow:"hidden"}}>
@@ -1570,7 +1575,7 @@ export default function App() {
       <div style={{position:"fixed",inset:0,pointerEvents:"none",opacity:0.5,zIndex:0,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}}/>
 
       {/* Pulsing gold edge-glow vignette */}
-      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:"inset 0 0 70px rgba(201,168,76,0.17), inset 0 0 150px rgba(110,28,28,0.10)",animation:"edgeGlow 6s ease-in-out infinite"}}/>
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(201,168,76,0.17), inset 0 0 ${glowRed}px rgba(110,28,28,0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
       <div ref={scrollRef} onTouchStart={onPullStart} onTouchMove={onPullMove} onTouchEnd={onPullEnd}
         style={{flex:1,minHeight:0,overflowY:modalOpen?"hidden":"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",position:"relative",zIndex:1}}>
