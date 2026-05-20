@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b2";
+const BUILD = "2026.05.20-b3";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -419,13 +419,12 @@ function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-      background:"linear-gradient(to top, rgba(10,8,4,1) 62%, rgba(10,8,4,0.98) 80%, rgba(10,8,4,0))",
-      paddingTop:18, paddingBottom:"calc(10px + env(safe-area-inset-bottom))",
+      background:"linear-gradient(to top, rgba(10,8,4,1) 82%, rgba(10,8,4,0))",
+      paddingTop:7, paddingBottom:"calc(7px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
       pointerEvents:"auto",
       transform:"translateZ(0)", WebkitTransform:"translateZ(0)",
-      backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden",
-      willChange:"transform"
+      backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -554,8 +553,15 @@ function ExportSheet({ session, onClose }) {
 }
 
 // ── Depth level system ───────────────────────────────────────────────────
-function getDepthLevel(sessions) {
+function getDepthLevel(sessions, isKid=false) {
   const n = sessions.length;
+  if (isKid) {
+    if (n >= 151) return { level:5, name:"Mighty Oak", note:"This kid has spent a lot of time in the Word. Use bigger ideas but still in kid words. Ask them to connect the story to their own life and to other stories they know. Still explain hard words. Strong, not babyish." };
+    if (n >= 61)  return { level:4, name:"Strong Tree", note:"Growing strong. Ask what the people in the story learned and why it matters. Add one question that makes them think, not just remember. Short and clear." };
+    if (n >= 21)  return { level:3, name:"Sapling",     note:"Getting it. Mix in a little 'why did this happen' with 'what happened.' Keep words simple and concrete. One real challenge question." };
+    if (n >= 6)   return { level:2, name:"Sprout",      note:"Starting to grow. Ask what happened and who was there, plus one easy 'how would you feel' or 'what would you do' question." };
+    return          { level:1, name:"Seed",        note:"Brand new. Ask only simple 'what happened' and 'who is in the story' questions. Explain every word. Keep it short, clear, and exciting." };
+  }
   if (n >= 151) return { level:5, name:"Harvest", note:"Presuppose strong biblical foundation. Push into theological density, structural exegesis, original language observations where relevant. Hardest application questions. No hand-holding." };
   if (n >= 61)  return { level:4, name:"Fruit",   note:"Reader has significant time in the Word. Assume familiarity with biblical narrative, basic theology, and cross-passage connections. Questions can demand synthesis." };
   if (n >= 21)  return { level:3, name:"Branch",  note:"Reader is growing. Introduce more historical context, interpretive depth, and theological terminology with brief explanation. Stretch." };
@@ -1376,10 +1382,11 @@ export default function App() {
     setError(""); setLoading(true);
     const endTime = new Date().toISOString();
     const passage = `${activeSession.startBook} ${activeSession.startChapter}${activeSession.startVerse?":"+activeSession.startVerse:""} through ${form.endBook} ${form.endChapter}${form.endVerse?":"+form.endVerse:""}`;
-    const depth = getDepthLevel(sessions);
     const isKid = age.startsWith("Kids");
+    const depth = getDepthLevel(sessions, isKid);
     const kidNote = isKid ? ` This reader is a child between 5 and 12. Write everything for a young child. Use short, simple sentences and plain words a child knows. Explain any hard word in the verse the moment you use it. Keep the context to 2 or 3 short sentences that tell the story simply. Make the questions concrete and about what happened, who was there, and what they did, not abstract ideas. Notes should be short and clear. Return verses should be easy to picture. Stay warm and honest. Do not water down the truth, just say it in words a child understands. Never frighten or shame the child.` : "";
-    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
+    const nivNote = bibleVersion === "NIV" ? ` For the NIV, follow the classic NIV wording. Do not adopt the 2011 revision's gender-neutral language choices.` : "";
+    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
     try {
       const resp = await fetch("/.netlify/functions/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -1443,7 +1450,7 @@ export default function App() {
 
   const activeMins = activeSession ? Math.round((Date.now()-new Date(activeSession.startTime))/60000) : 0;
 
-  const STD_VERSIONS = ["NLT","ESV","KJV","NIV","NASB","CSB","MSG","AMP"];
+  const STD_VERSIONS = ["NLT","ESV","KJV","NIV","NASB","CSB"];
   const KID_VERSIONS = ["NIrV","ICB","NLT"];
   const isKidAge = age.startsWith("Kids");
   const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
@@ -1452,7 +1459,7 @@ export default function App() {
     <div style={{minHeight:"100vh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#190f0b;}*{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#190f0b;overscroll-behavior:none;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
         input,select,textarea{background:#221610;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
@@ -1992,6 +1999,12 @@ export default function App() {
                   Kids set selected. Switch your age group above to see the full translation list.
                 </p>
               )}
+              {!isKidAge && bibleVersion==="NIV" && (
+                <div style={{marginTop:12,background:"rgba(201,168,76,0.05)",border:"1px solid rgba(201,168,76,0.18)",borderLeft:"3px solid #c9a84c",borderRadius:6,padding:"11px 14px"}}>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:5}}>A Note on the NIV</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#8a7a4a",lineHeight:1.6}}>SELAH follows the classic NIV wording. It is not calibrated to the 2011 revision and its gender-language changes.</p>
+                </div>
+              )}
             </div>
 
             {/* Gender + Age + Time */}
@@ -2083,9 +2096,9 @@ export default function App() {
 
             {/* Depth level */}
             {sessions.length > 0 && (()=>{
-              const d = getDepthLevel(sessions);
+              const d = getDepthLevel(sessions, isKidAge);
               const totalMins = sessions.reduce((a,s)=>a+Math.round((new Date(s.endTime)-new Date(s.startTime))/60000),0);
-              const levels = ["Seed","Root","Branch","Fruit","Harvest"];
+              const levels = isKidAge ? ["Seed","Sprout","Sapling","Strong Tree","Mighty Oak"] : ["Seed","Root","Branch","Fruit","Harvest"];
               return (
                 <div className="card">
                   <p className="label">Depth Level</p>
