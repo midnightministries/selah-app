@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b15";
+const BUILD = "2026.05.20-b16";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -246,38 +246,33 @@ function generateShareCard(session) {
     const canvas = document.createElement("canvas");
     canvas.width = S; canvas.height = S;
     const ctx = canvas.getContext("2d");
+    // the app's real chalk-cross image (rendered in the header), for the card
+    const crossEl = document.querySelector('img[src^="data:image/png;base64,iVBOR"]');
 
     const drawCard = () => {
       const ov = ctx.createLinearGradient(0, 0, 0, S);
-      ov.addColorStop(0, "rgba(10,8,4,0.65)");
-      ov.addColorStop(0.38, "rgba(10,8,4,0.38)");
-      ov.addColorStop(0.65, "rgba(10,8,4,0.72)");
+      ov.addColorStop(0, "rgba(10,8,4,0.82)");
+      ov.addColorStop(0.42, "rgba(10,8,4,0.60)");
+      ov.addColorStop(0.66, "rgba(10,8,4,0.82)");
       ov.addColorStop(1, "rgba(10,8,4,0.97)");
       ctx.fillStyle = ov; ctx.fillRect(0, 0, S, S);
 
-      // Cross — chalky look via shadow layers
       const cx = S / 2;
-      const drawCrossBeam = (x1,y1,x2,y2) => {
-        ctx.shadowColor = "rgba(201,168,76,0.4)";
-        ctx.shadowBlur = 18;
-        ctx.strokeStyle = "rgba(226,216,168,0.9)";
-        ctx.lineWidth = 18;
-        ctx.lineCap = "round";
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = "rgba(240,232,192,0.6)";
-        ctx.lineWidth = 12;
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      };
       // Glow halo
-      const halo = ctx.createRadialGradient(cx,110,0,cx,110,90);
-      halo.addColorStop(0,"rgba(201,168,76,0.3)"); halo.addColorStop(1,"rgba(201,168,76,0)");
+      const halo = ctx.createRadialGradient(cx,112,0,cx,112,98);
+      halo.addColorStop(0,"rgba(201,168,76,0.32)"); halo.addColorStop(1,"rgba(201,168,76,0)");
       ctx.fillStyle = halo;
-      ctx.beginPath(); ctx.ellipse(cx,110,90,80,0,0,Math.PI*2); ctx.fill();
-      // Vertical: top portion taller than in a traditional cross
-      drawCrossBeam(cx, 48, cx, 168);
-      // Horizontal crossbar at ~38% from top of beam
-      drawCrossBeam(cx-62, 95, cx+62, 95);
+      ctx.beginPath(); ctx.ellipse(cx,112,98,92,0,0,Math.PI*2); ctx.fill();
+      // Proper chalk cross (gold-tinted) from the app's cross image
+      if (crossEl && crossEl.naturalWidth) {
+        const chH = 158, chW = Math.round(chH * (crossEl.naturalWidth / crossEl.naturalHeight));
+        const cc = document.createElement("canvas"); cc.width = chW; cc.height = chH;
+        const c2 = cc.getContext("2d");
+        c2.drawImage(crossEl, 0, 0, chW, chH);
+        c2.globalCompositeOperation = "source-atop";
+        c2.fillStyle = "rgba(214,184,96,0.92)"; c2.fillRect(0, 0, chW, chH);
+        ctx.drawImage(cc, cx - chW/2, 34);
+      }
 
       // SELAH wordmark
       ctx.shadowColor = "rgba(201,168,76,0.2)"; ctx.shadowBlur = 12;
@@ -456,20 +451,28 @@ function MMFooter({ onEggOpen, onHomeView }) {
 // ── Export bottom sheet ──
 function ExportSheet({ session, onClose }) {
   const [state, setState] = useState("idle"); // idle | working | done
+  const [shareFile, setShareFile] = useState(null);
 
-  async function handleShareImage() {
-    setState("working");
+  // Pre-build the share card on open so the Share tap keeps its user-gesture
+  // (navigator.share fails if heavy async runs before it — caused multi-tap).
+  useEffect(() => {
+    let alive = true;
+    generateShareCard(session).then(blob => {
+      if (alive && blob) setShareFile(new File([blob],"selah-session.png",{type:"image/png"}));
+    });
+    return () => { alive = false; };
+  }, []);
+
+  function handleShareImage() {
+    if (!shareFile) return; // still building
     try {
-      const blob = await generateShareCard(session);
-      const file = new File([blob],"selah-session.png",{type:"image/png"});
-      if (navigator.share && navigator.canShare?.({files:[file]})) {
-        await navigator.share({files:[file],title:"SELAH",text:`${session.passage} — Selah by Midnight Ministries`});
+      if (navigator.share && navigator.canShare?.({files:[shareFile]})) {
+        navigator.share({files:[shareFile],title:"SELAH",text:`${session.passage} — Selah by Midnight Ministries`}).catch(()=>{});
       } else {
-        const url=URL.createObjectURL(blob); const a=document.createElement("a");
+        const url=URL.createObjectURL(shareFile); const a=document.createElement("a");
         a.href=url; a.download="selah-session.png"; a.click(); URL.revokeObjectURL(url);
       }
     } catch {}
-    setState("idle");
   }
 
   async function handleSaveNote() {
@@ -495,7 +498,7 @@ function ExportSheet({ session, onClose }) {
         </p>
 
         {/* Share as image */}
-        <button onClick={handleShareImage} disabled={state==="working"} style={{
+        <button onClick={handleShareImage} disabled={!shareFile} style={{
           display:"flex",alignItems:"center",gap:14,width:"100%",
           background:"transparent",border:"1px solid #2e2408",borderRadius:7,
           padding:"14px 16px",cursor:"pointer",marginBottom:10,transition:"border-color 0.2s"
@@ -534,9 +537,9 @@ function ExportSheet({ session, onClose }) {
           AUTO-FOLDER CREATION AVAILABLE IN THE NATIVE APP
         </p>
 
-        {state === "working" && (
+        {(state === "working" || !shareFile) && (
           <p style={{ fontFamily:"'Cinzel',serif",fontSize:12,color:"#c9a84c",textAlign:"center",marginTop:12,letterSpacing:"0.1em" }}
-            className="pulse">BUILDING...</p>
+            className="pulse">{!shareFile ? "PREPARING IMAGE..." : "BUILDING..."}</p>
         )}
 
         <button onClick={onClose} style={{
@@ -712,6 +715,17 @@ const VERSES_FUTURE = [
   { text:"Prepare your work outside; get everything ready for yourself in the field, and after that build your house.", ref:"Proverbs 24:27" },
   { text:"The Lord himself goes before you and will be with you; He will never leave you nor forsake you. Do not be afraid.", ref:"Deuteronomy 31:8" },
 ];
+
+// Rotating content for the log photo lightbox — varies each time it opens.
+function pickReadingItem(s) {
+  const pool = [];
+  if (s.personalNotes) pool.push({ label: "From This Reading", text: s.personalNotes });
+  (s.aiResult?.returnVerses || []).forEach(v => { if (v?.reason) pool.push({ label: "Come Back To — " + (v.ref||""), text: v.reason }); });
+  (s.aiResult?.questions || []).forEach((q, i) => { const a = s.questionAnswers?.[i]; if (q) pool.push({ label: "A Question", text: a ? q + "  —  " + a : q }); });
+  if (s.aiResult?.summary) pool.push({ label: "In One Sentence", text: s.aiResult.summary });
+  if (!pool.length) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 function pickVerse(pool, key) {
   const seed = key.split("").reduce((a,c)=>a+c.charCodeAt(0),0) + Date.now() % 1000;
@@ -1303,6 +1317,10 @@ export default function App() {
   });
   const [useGps, setUseGps] = useState(true);
   const [photoView, setPhotoView] = useState(null);
+  const [lightItem, setLightItem] = useState(null);
+  const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 1 && v <= 2) ? v : 1; });
+  const [showBright, setShowBright] = useState(false);
+  useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   const [sessionPhoto, setSessionPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [locLoading, setLocLoading] = useState(false);
@@ -1334,18 +1352,14 @@ export default function App() {
     };
   }, []);
 
-  // Lock the page behind any open modal so only the modal scrolls.
+  // Lock background scroll behind any open modal (simple overflow lock — no
+  // layout shift, so it doesn't glitch taps on the modal's close button).
   useEffect(() => {
     const open = !!(eggOpen || photoView || exportSession);
     if (!open) return;
-    const y = window.scrollY;
-    const b = document.body.style;
-    const prev = { position:b.position, top:b.top, width:b.width, overflow:b.overflow };
-    b.position = "fixed"; b.top = `-${y}px`; b.width = "100%"; b.overflow = "hidden";
-    return () => {
-      b.position = prev.position; b.top = prev.top; b.width = prev.width; b.overflow = prev.overflow;
-      window.scrollTo(0, y);
-    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
   }, [eggOpen, photoView, exportSession]);
 
   function handleSaveAlarm(dayKey, alarm) {
@@ -1554,7 +1568,7 @@ export default function App() {
       {/* Pulsing gold edge-glow vignette */}
       <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(201,168,76,0.17), inset 0 0 ${glowRed}px rgba(110,28,28,0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
+      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none",filter:brightness!==1?`brightness(${brightness})`:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
@@ -1563,6 +1577,11 @@ export default function App() {
               onMouseOver={e=>e.currentTarget.style.color="#c9a84c"}
               onMouseOut={e=>e.currentTarget.style.color="#3a3010"}>
               <SettingsIcon/>
+            </button>
+          )}
+          {view !== "session" && (
+            <button onClick={()=>setShowBright(s=>!s)} aria-label="Brightness" style={{position:"absolute",right:36,top:28,background:"transparent",border:"none",color:showBright?"#c9a84c":"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
             </button>
           )}
           <div style={{position:"absolute",left:6,top:39,cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
@@ -1915,7 +1934,7 @@ export default function App() {
                       filteredSessions.map(s=>(
                   <div key={s.id} className="hist-card" ref={el=>{ if(el) sessionRefs.current[s.id]=el; }}>
                     {s.photoData && (
-                      <div onClick={(e)=>{e.stopPropagation();setPhotoView(s);}} style={{height:90,overflow:"hidden",position:"relative",cursor:"pointer"}}>
+                      <div onClick={(e)=>{e.stopPropagation();setLightItem(pickReadingItem(s));setPhotoView(s);}} style={{height:90,overflow:"hidden",position:"relative",cursor:"pointer"}}>
                         <img src={s.photoData} alt="" style={{width:"100%",height:"100%",objectFit:"cover",opacity:0.65}}/>
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent,rgba(14,12,6,0.85))"}}/>
                         <div style={{position:"absolute",bottom:8,right:10,display:"flex",alignItems:"center",gap:5,fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase",color:"#c9a84c"}}>
@@ -2198,20 +2217,34 @@ export default function App() {
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
 
       {/* ══ PHOTO LIGHTBOX ══ */}
+      {showBright && (
+        <div onClick={()=>setShowBright(false)} style={{position:"fixed",inset:0,zIndex:290}}>
+          <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"#20130f",border:"1px solid #36241c",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>Brightness</p>
+            <input type="range" min="1" max="1.8" step="0.05" value={brightness} onChange={e=>setBrightness(parseFloat(e.target.value))} style={{width:"100%",accentColor:"#c9a84c"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>DARKER</span>
+              <button onClick={()=>setBrightness(1)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>BRIGHTER</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {photoView && (
-        <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.95)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
+        <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.95)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",cursor:"pointer"}}>
+          <div style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
+            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
             <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid #36241c",display:"block"}}/>
             <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",alignItems:"center",marginBottom:photoView.personalNotes?16:0}}>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#5a4a2a",letterSpacing:"0.08em",textTransform:"uppercase"}}>{formatDate(photoView.startTime)}</span>
               {photoView.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3,color:"#5a4a2a",fontSize:12}}><PinIcon/>{photoView.geoLabel}</span>}
             </div>
-            {photoView.personalNotes && (
+            {lightItem && (
               <div style={{width:"100%",background:"#20130f",border:"1px solid #36241c",borderLeft:"3px solid #c9a84c",borderRadius:6,padding:"14px 16px"}}>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>From This Reading</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#c0b898",lineHeight:1.65}}>{photoView.personalNotes}</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>{lightItem.label}</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#c0b898",lineHeight:1.65}}>{lightItem.text}</p>
               </div>
             )}
           </div>
@@ -2222,7 +2255,7 @@ export default function App() {
       {eggOpen && (
         <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
           onClick={()=>setEggOpen(null)}>
-          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
+          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
           <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:12,padding:"26px 22px 32px",width:"100%",maxWidth:480,margin:"58px auto 58px"}}
             onClick={e=>e.stopPropagation()}>
             <div style={{width:36,height:3,background:"#36241c",borderRadius:2,margin:"0 auto 24px"}}/>
