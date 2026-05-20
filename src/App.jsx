@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b9";
+const BUILD = "2026.05.20-b10";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1319,7 +1319,24 @@ export default function App() {
   const [eggOpen, setEggOpen] = useState(null); // "mm" | "cross" | null
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
-  // Lock the page behind any open modal so only the modal scrolls.
+
+  // Pin the app shell to the real visible viewport height in JS, so the footer stays
+  // locked to the bottom even on browsers that don't honor the 100dvh CSS unit.
+  const [vh, setVh] = useState(() => (typeof window !== "undefined" ? window.innerHeight : 0));
+  useEffect(() => {
+    const update = () => setVh(window.innerHeight);
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    const vv = window.visualViewport;
+    if (vv) vv.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+      if (vv) vv.removeEventListener("resize", update);
+    };
+  }, []);
+
   // Custom pull-to-refresh for the inner scroll area (the locked shell has no native one).
   const [pullY, setPullY] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -1496,7 +1513,7 @@ export default function App() {
   const modalOpen = !!(eggOpen || photoView || exportSession);
 
   return (
-    <div style={{height:"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{height:vh?vh+"px":"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative",display:"flex",flexDirection:"column",overflow:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
         html,body{background:#190f0b;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
