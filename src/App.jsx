@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20 · b1";
+const BUILD = "2026.05.20-b2";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -419,10 +419,13 @@ function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-      background:"linear-gradient(to top, rgba(10,8,4,0.98) 70%, rgba(10,8,4,0))",
-      paddingTop:18, paddingBottom:10,
+      background:"linear-gradient(to top, rgba(10,8,4,1) 62%, rgba(10,8,4,0.98) 80%, rgba(10,8,4,0))",
+      paddingTop:18, paddingBottom:"calc(10px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"auto"
+      pointerEvents:"auto",
+      transform:"translateZ(0)", WebkitTransform:"translateZ(0)",
+      backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden",
+      willChange:"transform"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -485,7 +488,7 @@ function ExportSheet({ session, onClose }) {
       display:"flex",alignItems:"flex-end",justifyContent:"center"
     }} onClick={onClose}>
       <div style={{
-        background:"#1b160d",border:"1px solid #2e2408",
+        background:"#20130f",border:"1px solid #2e2408",
         borderRadius:"12px 12px 0 0",padding:"24px 20px 36px",
         width:"100%",maxWidth:480
       }} onClick={e=>e.stopPropagation()}>
@@ -586,7 +589,7 @@ function AnswerInput({ value, onChange, feedback }) {
       {!open && (
         <div onClick={()=>{ setDraft(value||""); setOpen(true); }} style={{
           display:"flex",alignItems:"center",justifyContent:"space-between",
-          background:"#1b160d",border:"1px solid #2e2408",borderRadius:6,
+          background:"#20130f",border:"1px solid #2e2408",borderRadius:6,
           padding:"10px 14px",cursor:"pointer",transition:"border-color 0.2s",marginTop:10
         }}
           onMouseOver={e=>e.currentTarget.style.borderColor="#c9a84c"}
@@ -608,7 +611,7 @@ function AnswerInput({ value, onChange, feedback }) {
       )}
 
       {open && (
-        <div style={{marginTop:10,background:"#1b160d",border:"1px solid #c9a84c",borderRadius:6,overflow:"hidden"}}>
+        <div style={{marginTop:10,background:"#20130f",border:"1px solid #c9a84c",borderRadius:6,overflow:"hidden"}}>
           <textarea
             autoFocus
             rows={5}
@@ -616,13 +619,13 @@ function AnswerInput({ value, onChange, feedback }) {
             onChange={e=>setDraft(e.target.value)}
             placeholder="Write your answer here..."
             style={{
-              width:"100%",background:"#1b160d",border:"none",
+              width:"100%",background:"#20130f",border:"none",
               color:"#d4ccb8",fontFamily:"'Crimson Text',Georgia,serif",
               fontSize:16,lineHeight:1.65,padding:"12px 14px",
               resize:"none",outline:"none",display:"block"
             }}
           />
-          <div style={{display:"flex",borderTop:"1px solid #2f2815",padding:"8px 12px",justifyContent:"flex-end",gap:8}}>
+          <div style={{display:"flex",borderTop:"1px solid #36241c",padding:"8px 12px",justifyContent:"flex-end",gap:8}}>
             <button onClick={cancel} style={{background:"transparent",border:"1px solid #2e2408",borderRadius:4,padding:"6px 14px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
             <button onClick={done} style={{background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.4)",borderRadius:4,padding:"6px 16px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
           </div>
@@ -646,9 +649,9 @@ function StatsStrip({ sessions }) {
   const uniqueBooks = new Set(sessions.map(s=>s.startBook)).size;
   const stats = [["Sessions",sessions.length],["Books",uniqueBooks],["Time",totalTime]];
   return (
-    <div style={{display:"flex",background:"#1b160d",border:"1px solid #2f2815",borderRadius:7,overflow:"hidden",marginBottom:18}}>
+    <div style={{display:"flex",background:"#20130f",border:"1px solid #36241c",borderRadius:7,overflow:"hidden",marginBottom:18}}>
       {stats.map(([l,v],i)=>(
-        <div key={l} style={{flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid #2f2815":"none"}}>
+        <div key={l} style={{flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid #36241c":"none"}}>
           <p style={{fontFamily:"'Cinzel',serif",fontSize:16,color:"#c9a84c",fontWeight:600}}>{v}</p>
           <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3}}>{l}</p>
         </div>
@@ -744,7 +747,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
   return (
     <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(10,8,4,0.88)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
       onClick={onClose}>
-      <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"22px 20px 36px",width:"100%",maxWidth:480,maxHeight:"85vh",overflowY:"auto"}}
+      <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"22px 20px 36px",width:"100%",maxWidth:480,maxHeight:"85vh",overflowY:"auto"}}
         onClick={e=>e.stopPropagation()}>
         <div style={{width:36,height:3,background:"#3a3010",borderRadius:2,margin:"0 auto 18px"}}/>
         <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>
@@ -758,7 +761,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
           const vKey = date.toISOString().slice(0,10) + Math.floor(Date.now()/500).toString();
           const verse = isPast ? pickVerse(VERSES_PAST, vKey) : isToday ? pickVerse(VERSES_TODAY, vKey) : pickVerse(VERSES_FUTURE, vKey);
           return session ? (
-            <div style={{background:"#221a0e",border:"1px solid #2e2408",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
+            <div style={{background:"#281a12",border:"1px solid #2e2408",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
               onClick={()=>{ onSessionClick(session.id); onClose(); }}>
               <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#c9a84c",marginBottom:6}}>{session.passage}</p>
               <div style={{display:"flex",gap:12,alignItems:"center",color:"#4a3e1a",fontSize:12}}>
@@ -769,7 +772,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Tap to open session</p>
             </div>
           ) : (
-            <div style={{padding:"4px 0 20px",borderBottom:"1px solid #2f2815",marginBottom:16}}>
+            <div style={{padding:"4px 0 20px",borderBottom:"1px solid #36241c",marginBottom:16}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
               {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
               {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3a18",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
@@ -803,7 +806,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
             ) : null}
 
             {showAlarm && (
-              <div style={{background:"#221a0e",border:"1px solid #2e2408",borderRadius:7,padding:"16px",marginBottom:10}}>
+              <div style={{background:"#281a12",border:"1px solid #2e2408",borderRadius:7,padding:"16px",marginBottom:10}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
                 <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3e1a",marginBottom:14,lineHeight:1.5}}>
                   Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.
@@ -834,6 +837,88 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
 
         <button onClick={onClose} style={{width:"100%",marginTop:6,padding:"11px",background:"transparent",border:"1px solid #2e2408",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
       </div>
+    </div>
+  );
+}
+
+// ── Empty-day panel for the log (rotating verse + reminder) ──────────────
+function EmptyDayPanel({ date, alarms, onSaveAlarm }) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const d = new Date(date); d.setHours(0,0,0,0);
+  const isToday = d.getTime() === now.getTime();
+  const isPast = d.getTime() < now.getTime();
+  const isFuture = d.getTime() > now.getTime();
+  const dayKey = d.toISOString().slice(0,10);
+  const existingAlarm = alarms?.[dayKey];
+
+  const REPEAT_OPTS = [
+    ["daily","Every Day"],["weekdays","Weekdays"],["weekends","Weekends"],
+    ["sun","Sun"],["mon","Mon"],["tue","Tue"],["wed","Wed"],["thu","Thu"],["fri","Fri"],["sat","Sat"]
+  ];
+  const [showAlarm, setShowAlarm] = useState(false);
+  const [alarmTime, setAlarmTime] = useState("06:00");
+  const [repeatMode, setRepeatMode] = useState("daily");
+
+  function doSave() { onSaveAlarm(dayKey, { time: alarmTime, repeat: repeatMode }); setShowAlarm(false); }
+  function saveAlarm() {
+    try {
+      if (typeof Notification !== "undefined" && Notification.permission === "default") {
+        Notification.requestPermission().finally(doSave);
+      } else { doSave(); }
+    } catch { doSave(); }
+  }
+
+  const verse = pickVerse(isPast ? VERSES_PAST : isToday ? VERSES_TODAY : VERSES_FUTURE, dayKey);
+
+  return (
+    <div style={{padding:"18px 16px"}}>
+      <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
+      {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
+      {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3a18",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
+      {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word will be here. So will He.</p>}
+      <div style={{borderLeft:"2px solid #2e2408",paddingLeft:14,marginBottom:(isFuture||isToday)?16:0}}>
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#6a5a30",lineHeight:1.65,fontStyle:"italic",marginBottom:6}}>"{verse.text}"</p>
+        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em"}}>{verse.ref}</p>
+      </div>
+
+      {(isFuture || isToday) && (
+        <div>
+          {existingAlarm && !showAlarm ? (
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:6,padding:"10px 14px"}}>
+              <div>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:2}}>Reminder Set</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"#8a7a4a"}}>{existingAlarm.time} — {existingAlarm.repeat}</p>
+              </div>
+              <button onClick={()=>setShowAlarm(true)} style={{background:"transparent",border:"1px solid #2e2408",borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#6a5a30",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Edit</button>
+            </div>
+          ) : !showAlarm ? (
+            <button onClick={()=>setShowAlarm(true)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"transparent",border:"1px solid #2e2408",borderRadius:6,padding:"12px",fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Set a Reminder
+            </button>
+          ) : null}
+
+          {showAlarm && (
+            <div style={{background:"#281a12",border:"1px solid #2e2408",borderRadius:7,padding:"16px"}}>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3e1a",marginBottom:14,lineHeight:1.5}}>Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.</p>
+              <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:6}}>Time</label>
+              <input type="time" value={alarmTime} onChange={e=>setAlarmTime(e.target.value)} style={{marginBottom:14,fontFamily:"'Crimson Text',serif",fontSize:16}}/>
+              <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:8}}>Repeat</label>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
+                {REPEAT_OPTS.map(([val,label])=>(
+                  <button key={val} onClick={()=>setRepeatMode(val)} style={{background:repeatMode===val?"rgba(201,168,76,0.12)":"transparent",border:`1px solid ${repeatMode===val?"#c9a84c":"#2e2408"}`,borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:repeatMode===val?"#c9a84c":"#4a3e1a",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>{label}</button>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={saveAlarm} style={{flex:1,background:"linear-gradient(135deg,#c9a84c,#a8832a)",color:"#0e0c06",border:"none",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Save</button>
+                <button onClick={()=>setShowAlarm(false)} style={{flex:1,background:"transparent",border:"1px solid #2e2408",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
+              </div>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#2e2408",letterSpacing:"0.08em",textAlign:"center",marginTop:10,lineHeight:1.6,textTransform:"uppercase"}}>Native app delivers true background alarms. Web version fires when the app is open.</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -910,7 +995,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
 
   return (
     <>
-      <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,padding:"14px 12px",marginBottom:selectedDate?8:18}}>
+      <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,padding:"14px 12px",marginBottom:selectedDate?8:18}}>
         <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>
           <ToggleBtn active={calView==="month"} onClick={()=>setCalView("month")}>Month</ToggleBtn>
           <ToggleBtn active={calView==="week"} onClick={()=>setCalView("week")}>Week</ToggleBtn>
@@ -986,7 +1071,7 @@ function AboutScreen({ onBack }) {
       <button onClick={onBack} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:20,display:"flex",alignItems:"center",gap:6,padding:0}}>
         ← Back
       </button>
-      <div style={{display:"flex",borderBottom:"1px solid #2f2815",marginBottom:20}}>
+      <div style={{display:"flex",borderBottom:"1px solid #36241c",marginBottom:20}}>
         <button className={`nav-tab ${tab==="ministry"?"active":""}`} onClick={()=>setTab("ministry")} style={{fontSize:"9px"}}>Midnight Ministries</button>
         <button className={`nav-tab ${tab==="howto"?"active":""}`} onClick={()=>setTab("howto")} style={{fontSize:"9px"}}>How to Use</button>
       </div>
@@ -1147,7 +1232,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
     <div style={{position:"relative"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{
         width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
-        background:"#1d180e", border:`1px solid ${open?"#c9a84c":"#2e2408"}`,
+        background:"#221610", border:`1px solid ${open?"#c9a84c":"#2e2408"}`,
         borderRadius:5, padding:"10px 13px", cursor:"pointer", transition:"border-color 0.2s"
       }}>
         <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#e4dcc8"}}>{current[1]}</span>
@@ -1156,7 +1241,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
       {open && (
         <div style={{
           position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:50,
-          background:"#1d180e", border:"1px solid #3a3010", borderRadius:5,
+          background:"#221610", border:"1px solid #3a3010", borderRadius:5,
           maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.6)"
         }}>
           {TZ_OPTIONS.map(([val,label])=>(
@@ -1164,7 +1249,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
               style={{
                 padding:"10px 14px", cursor:"pointer",
                 background:timezone===val?"rgba(201,168,76,0.1)":"transparent",
-                borderBottom:"1px solid #2f2815",
+                borderBottom:"1px solid #36241c",
                 transition:"background 0.15s"
               }}
               onMouseOver={e=>e.currentTarget.style.background="rgba(201,168,76,0.07)"}
@@ -1358,18 +1443,21 @@ export default function App() {
 
   const activeMins = activeSession ? Math.round((Date.now()-new Date(activeSession.startTime))/60000) : 0;
 
-  const BIBLE_VERSIONS = ["NLT","ESV","KJV","NIV","NASB","CSB","MSG","AMP","NIrV","ICB"];
+  const STD_VERSIONS = ["NLT","ESV","KJV","NIV","NASB","CSB","MSG","AMP"];
+  const KID_VERSIONS = ["NIrV","ICB","NLT"];
+  const isKidAge = age.startsWith("Kids");
+  const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
 
   return (
-    <div style={{minHeight:"100vh",background:"#15110a",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#15110a;}*{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#190f0b;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
-        input,select,textarea{background:#1d180e;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
+        input,select,textarea{background:#221610;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
         input:focus,select:focus,textarea:focus{border-color:#c9a84c;box-shadow:0 0 0 2px rgba(201,168,76,0.08);}
-        select option{background:#1d180e;}
+        select option{background:#221610;}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
         input[type=number]{-moz-appearance:textfield;appearance:textfield;}
         .btn-primary{background:linear-gradient(135deg,#c9a84c 0%,#a8832a 100%);color:#0e0c06;border:none;border-radius:5px;padding:14px 24px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:0.12em;cursor:pointer;transition:opacity 0.2s,transform 0.1s;text-transform:uppercase;width:100%;}
@@ -1382,9 +1470,9 @@ export default function App() {
         .btn-export:disabled{opacity:0.4;cursor:not-allowed;}
         .btn-danger{background:transparent;color:#8a3020;border:1px solid #3a1810;border-radius:4px;padding:6px 12px;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .btn-danger:hover{border-color:#c04030;color:#c04030;}
-        .card{background:#1b160d;border:1px solid #2f2815;border-radius:8px;padding:18px;margin-bottom:14px;}
+        .card{background:#20130f;border:1px solid #36241c;border-radius:8px;padding:18px;margin-bottom:14px;}
         .label{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:#6a5a30;text-transform:uppercase;display:block;margin-bottom:8px;}
-        .divider{border:none;border-top:1px solid #2f2815;margin:14px 0;}
+        .divider{border:none;border-top:1px solid #36241c;margin:14px 0;}
         .fade-in{animation:fadeIn 0.35s ease forwards;}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         .pulse{animation:pulse 1.8s ease-in-out infinite;}
@@ -1393,7 +1481,7 @@ export default function App() {
         .nav-tab.active{color:#c9a84c;border-bottom-color:#c9a84c;}
         .nav-tab:hover:not(.active){color:#8a7a4a;}
         .section-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 0;user-select:none;}
-        .hist-card{background:#1b160d;border:1px solid #2f2815;border-radius:7px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s;}
+        .hist-card{background:#20130f;border:1px solid #36241c;border-radius:7px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s;}
         .hist-card:hover{border-color:#2e2408;}
         .hist-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;}
         .rv-item{border-left:2px solid #2e2408;padding-left:14px;margin-bottom:13px;}
@@ -1435,7 +1523,7 @@ export default function App() {
 
         {/* NAV */}
         {view !== "session" && view !== "settings" && view !== "about" && (
-          <div style={{display:"flex",borderBottom:"1px solid #2f2815",marginBottom:20}}>
+          <div style={{display:"flex",borderBottom:"1px solid #36241c",marginBottom:20}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
               Log {sessions.length>0&&`(${sessions.length})`}
@@ -1455,7 +1543,7 @@ export default function App() {
               {form.locationType==="Other" && (
                 <input style={{marginTop:8}} placeholder="Describe the place..." value={form.otherLocation} onChange={e=>setForm(f=>({...f,otherLocation:e.target.value}))}/>
               )}
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12,paddingTop:12,borderTop:"1px solid #2f2815"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12,paddingTop:12,borderTop:"1px solid #36241c"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div style={{color:useGps?"#c9a84c":"#3a3010"}}><ShieldIcon/></div>
                   <div>
@@ -1463,7 +1551,7 @@ export default function App() {
                     <p style={{fontSize:13,color:"#3a3010",marginTop:2}}>{useGps?"Stored on device only. Never shared.":"Location will not be recorded"}</p>
                   </div>
                 </div>
-                <div onClick={()=>setUseGps(v=>!v)} style={{width:40,height:22,borderRadius:11,cursor:"pointer",flexShrink:0,background:useGps?"#c9a84c":"#2f2815",border:`1px solid ${useGps?"#c9a84c":"#3a3010"}`,position:"relative",transition:"background 0.2s,border-color 0.2s"}}>
+                <div onClick={()=>setUseGps(v=>!v)} style={{width:40,height:22,borderRadius:11,cursor:"pointer",flexShrink:0,background:useGps?"#c9a84c":"#36241c",border:`1px solid ${useGps?"#c9a84c":"#3a3010"}`,position:"relative",transition:"background 0.2s,border-color 0.2s"}}>
                   <div style={{position:"absolute",top:2,left:useGps?18:2,width:16,height:16,borderRadius:8,background:useGps?"#0e0c06":"#4a3e1a",transition:"left 0.2s"}}/>
                 </div>
               </div>
@@ -1496,7 +1584,7 @@ export default function App() {
         {/* ══ SESSION ══ */}
         {view === "session" && activeSession && (
           <div className="fade-in">
-            <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:8,padding:"14px 16px",marginBottom:16}}>
+            <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:8,padding:"14px 16px",marginBottom:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:activeSession.geoLabel?10:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,color:"#6a5a30",fontSize:13}}>
                   <ClockIcon/><span>{formatTime(activeSession.startTime)}</span>
@@ -1598,7 +1686,7 @@ export default function App() {
 
             {/* GROUND — context, deeper */}
             {result.context && (
-              <div style={{background:"#181308",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
+              <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8}}>Ground</p>
                 <p style={{fontSize:16,lineHeight:1.78,color:"#5a5030"}}>{result.context}</p>
               </div>
@@ -1623,7 +1711,7 @@ export default function App() {
             </div>
 
             {/* QUESTIONS — fillable with answer feedback */}
-            <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,q:!s.q}))}>
                 <div>
                   <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Questions from the Text</span>
@@ -1662,7 +1750,7 @@ export default function App() {
             </div>
 
             {/* FIELD NOTES — informational, grounded */}
-            <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,n:!s.n}))}>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Field Notes</span>
                 <ChevronIcon open={openSection.n}/>
@@ -1680,7 +1768,7 @@ export default function App() {
             </div>
 
             {/* RETURN VERSES — sent back, directive */}
-            <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,v:!s.v}))}>
                 <div>
                   <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Come Back To</span>
@@ -1739,7 +1827,7 @@ export default function App() {
                   const prevTime = sessionDates.filter(t=>t<curTime).slice(-1)[0];
                   const nextTime = sessionDates.filter(t=>t>curTime)[0];
                   const NavBtn = ({onClick,disabled,children}) => (
-                    <button onClick={onClick} disabled={disabled} style={{background:"transparent",border:"none",color:disabled?"#2f2815":"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:16,cursor:disabled?"default":"pointer",padding:"0 6px",lineHeight:1,transition:"color 0.2s"}}
+                    <button onClick={onClick} disabled={disabled} style={{background:"transparent",border:"none",color:disabled?"#36241c":"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:16,cursor:disabled?"default":"pointer",padding:"0 6px",lineHeight:1,transition:"color 0.2s"}}
                       onMouseOver={e=>{ if(!disabled) e.currentTarget.style.color="#c9a84c"; }}
                       onMouseOut={e=>{ if(!disabled) e.currentTarget.style.color="#6a5a30"; }}>
                       {children}
@@ -1763,11 +1851,9 @@ export default function App() {
                   );
                 })()}
                 {/* Day box or full list */}
-                <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+                <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,overflow:"hidden",marginBottom:10}}>
                     {filteredSessions.length === 0 ? (
-                      <div style={{padding:"20px 16px",textAlign:"center"}}>
-                        <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase"}}>No session on this day</p>
-                      </div>
+                      <EmptyDayPanel date={activeFd} alarms={alarms} onSaveAlarm={handleSaveAlarm}/>
                     ) : (
                       filteredSessions.map(s=>(
                   <div key={s.id} className="hist-card" ref={el=>{ if(el) sessionRefs.current[s.id]=el; }}>
@@ -1797,9 +1883,9 @@ export default function App() {
                       </div>
                     </div>
                     {expandedSession===s.id && s.aiResult && (
-                      <div style={{padding:"0 16px 16px",borderTop:"1px solid #2f2815"}}>
+                      <div style={{padding:"0 16px 16px",borderTop:"1px solid #36241c"}}>
                         {s.aiResult.context && (
-                          <div style={{background:"#181308",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
+                          <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
                             <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Ground</p>
                             <p style={{fontSize:14,lineHeight:1.7,color:"#5a5030"}}>{s.aiResult.context}</p>
                           </div>
@@ -1816,7 +1902,7 @@ export default function App() {
                           <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:i<s.aiResult.questions.length-1?"1px solid #1a1608":"none"}}>
                             <p style={{fontSize:15,color:"#d4ccb8",lineHeight:1.6,marginBottom:6}}>{q}</p>
                             {s.questionAnswers?.[i] && (
-                              <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
+                              <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
                                 <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Your Answer</p>
                                 <p style={{fontSize:14,color:"#8a7a5a",lineHeight:1.6,fontStyle:"italic"}}>{s.questionAnswers[i]}</p>
                               </div>
@@ -1891,7 +1977,9 @@ export default function App() {
             <div className="card">
               <p className="label">Bible Translation</p>
               <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>
-                Select the translation you read in. Questions and field notes are calibrated to your version's language.
+                {isKidAge
+                  ? "These are easy-to-read translations made for young readers. Questions and field notes are calibrated to a child's reading level."
+                  : "Select the translation you read in. Questions and field notes are calibrated to your version's language."}
               </p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                 {BIBLE_VERSIONS.map(v=>(
@@ -1899,6 +1987,11 @@ export default function App() {
                     onClick={()=>setBibleVersion(v)}>{v}</button>
                 ))}
               </div>
+              {isKidAge && (
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:10,lineHeight:1.6}}>
+                  Kids set selected. Switch your age group above to see the full translation list.
+                </p>
+              )}
             </div>
 
             {/* Gender + Age + Time */}
@@ -1918,7 +2011,10 @@ export default function App() {
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                 {["Kids (5-12)","Teen (13-17)","Adult (18+)","Prefer not to say"].map(a=>(
                   <button key={a} className={`version-pill ${age===a?"active":""}`}
-                    onClick={()=>setAge(a)}>{a}</button>
+                    onClick={()=>{
+                      setAge(a);
+                      if (a.startsWith("Kids") && !["NIrV","ICB","NLT"].includes(bibleVersion)) setBibleVersion("NIrV");
+                    }}>{a}</button>
                 ))}
               </div>
             </div>
@@ -2005,7 +2101,7 @@ export default function App() {
                   </div>
                   <div style={{display:"flex",gap:4}}>
                     {levels.map((l,i)=>(
-                      <div key={l} style={{flex:1,height:4,borderRadius:2,background:i<d.level?"#c9a84c":"#2f2815",transition:"background 0.3s"}}/>
+                      <div key={l} style={{flex:1,height:4,borderRadius:2,background:i<d.level?"#c9a84c":"#36241c",transition:"background 0.3s"}}/>
                     ))}
                   </div>
                   <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#3a3010",marginTop:10,lineHeight:1.5}}>
@@ -2043,14 +2139,14 @@ export default function App() {
         <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.94)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto"}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
             <button onClick={()=>setPhotoView(null)} style={{position:"fixed",top:16,right:16,zIndex:500,background:"rgba(14,12,6,0.9)",border:"1px solid #2e2408",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a5a30",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
-            <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid #2f2815",display:"block"}}/>
+            <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid #36241c",display:"block"}}/>
             <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",alignItems:"center",marginBottom:photoView.personalNotes?16:0}}>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#5a4a2a",letterSpacing:"0.08em",textTransform:"uppercase"}}>{formatDate(photoView.startTime)}</span>
               {photoView.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3,color:"#5a4a2a",fontSize:12}}><PinIcon/>{photoView.geoLabel}</span>}
             </div>
             {photoView.personalNotes && (
-              <div style={{width:"100%",background:"#1b160d",border:"1px solid #2f2815",borderLeft:"3px solid #c9a84c",borderRadius:6,padding:"14px 16px"}}>
+              <div style={{width:"100%",background:"#20130f",border:"1px solid #36241c",borderLeft:"3px solid #c9a84c",borderRadius:6,padding:"14px 16px"}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>From This Reading</p>
                 <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#c0b898",lineHeight:1.65}}>{photoView.personalNotes}</p>
               </div>
@@ -2063,7 +2159,7 @@ export default function App() {
       {eggOpen && (
         <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(10,8,4,0.92)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
           onClick={()=>setEggOpen(null)}>
-          <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
+          <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
             onClick={e=>e.stopPropagation()}>
             <div style={{width:36,height:3,background:"#2e2408",borderRadius:2,margin:"0 auto 24px"}}/>
             <button onClick={()=>setEggOpen(null)} style={{position:"fixed",top:16,right:16,zIndex:500,background:"rgba(14,12,6,0.9)",border:"1px solid #2e2408",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a5a30",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
