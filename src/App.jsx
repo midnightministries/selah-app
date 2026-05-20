@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b3";
+const BUILD = "2026.05.20-b4";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -419,10 +419,10 @@ function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-      background:"linear-gradient(to top, rgba(10,8,4,1) 82%, rgba(10,8,4,0))",
-      paddingTop:7, paddingBottom:"calc(7px + env(safe-area-inset-bottom))",
+      background:"linear-gradient(to top, rgba(10,8,4,1) 74%, rgba(10,8,4,0))",
+      paddingTop:7, paddingBottom:"calc(28px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"auto",
+      pointerEvents:"none",
       transform:"translateZ(0)", WebkitTransform:"translateZ(0)",
       backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"
     }}>
