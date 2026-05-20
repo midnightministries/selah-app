@@ -17,6 +17,9 @@ const LOCATION_TYPES = [
   "Office","Gym","Range","Outdoors","Airport","Other"
 ];
 
+// Bump this on every deploy so you can confirm which build is live.
+const BUILD = "2026.05.20 · b1";
+
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
 When given a Bible passage range, return a JSON object with exactly these five keys:
@@ -208,14 +211,16 @@ function compressImage(file) {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 900;
-        let w = img.width, h = img.height;
-        if (w > h && w > MAX) { h = Math.round((h * MAX) / w); w = MAX; }
-        else if (h > MAX) { w = Math.round((w * MAX) / h); h = MAX; }
+        // Center-crop to a square so every saved photo shares the same
+        // shape as the 1080x1080 share card and displays uniformly.
+        const SIZE = 1000;
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
         const canvas = document.createElement("canvas");
-        canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.72));
+        canvas.width = SIZE; canvas.height = SIZE;
+        canvas.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE);
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
       };
       img.src = e.target.result;
     };
@@ -480,7 +485,7 @@ function ExportSheet({ session, onClose }) {
       display:"flex",alignItems:"flex-end",justifyContent:"center"
     }} onClick={onClose}>
       <div style={{
-        background:"#141008",border:"1px solid #2e2408",
+        background:"#1b160d",border:"1px solid #2e2408",
         borderRadius:"12px 12px 0 0",padding:"24px 20px 36px",
         width:"100%",maxWidth:480
       }} onClick={e=>e.stopPropagation()}>
@@ -581,7 +586,7 @@ function AnswerInput({ value, onChange, feedback }) {
       {!open && (
         <div onClick={()=>{ setDraft(value||""); setOpen(true); }} style={{
           display:"flex",alignItems:"center",justifyContent:"space-between",
-          background:"#141008",border:"1px solid #2e2408",borderRadius:6,
+          background:"#1b160d",border:"1px solid #2e2408",borderRadius:6,
           padding:"10px 14px",cursor:"pointer",transition:"border-color 0.2s",marginTop:10
         }}
           onMouseOver={e=>e.currentTarget.style.borderColor="#c9a84c"}
@@ -603,7 +608,7 @@ function AnswerInput({ value, onChange, feedback }) {
       )}
 
       {open && (
-        <div style={{marginTop:10,background:"#141008",border:"1px solid #c9a84c",borderRadius:6,overflow:"hidden"}}>
+        <div style={{marginTop:10,background:"#1b160d",border:"1px solid #c9a84c",borderRadius:6,overflow:"hidden"}}>
           <textarea
             autoFocus
             rows={5}
@@ -611,13 +616,13 @@ function AnswerInput({ value, onChange, feedback }) {
             onChange={e=>setDraft(e.target.value)}
             placeholder="Write your answer here..."
             style={{
-              width:"100%",background:"#141008",border:"none",
+              width:"100%",background:"#1b160d",border:"none",
               color:"#d4ccb8",fontFamily:"'Crimson Text',Georgia,serif",
               fontSize:16,lineHeight:1.65,padding:"12px 14px",
               resize:"none",outline:"none",display:"block"
             }}
           />
-          <div style={{display:"flex",borderTop:"1px solid #252010",padding:"8px 12px",justifyContent:"flex-end",gap:8}}>
+          <div style={{display:"flex",borderTop:"1px solid #2f2815",padding:"8px 12px",justifyContent:"flex-end",gap:8}}>
             <button onClick={cancel} style={{background:"transparent",border:"1px solid #2e2408",borderRadius:4,padding:"6px 14px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
             <button onClick={done} style={{background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.4)",borderRadius:4,padding:"6px 16px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
           </div>
@@ -641,9 +646,9 @@ function StatsStrip({ sessions }) {
   const uniqueBooks = new Set(sessions.map(s=>s.startBook)).size;
   const stats = [["Sessions",sessions.length],["Books",uniqueBooks],["Time",totalTime]];
   return (
-    <div style={{display:"flex",background:"#141008",border:"1px solid #252010",borderRadius:7,overflow:"hidden",marginBottom:18}}>
+    <div style={{display:"flex",background:"#1b160d",border:"1px solid #2f2815",borderRadius:7,overflow:"hidden",marginBottom:18}}>
       {stats.map(([l,v],i)=>(
-        <div key={l} style={{flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid #252010":"none"}}>
+        <div key={l} style={{flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid #2f2815":"none"}}>
           <p style={{fontFamily:"'Cinzel',serif",fontSize:16,color:"#c9a84c",fontWeight:600}}>{v}</p>
           <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3}}>{l}</p>
         </div>
@@ -739,7 +744,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
   return (
     <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(10,8,4,0.88)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
       onClick={onClose}>
-      <div style={{background:"#141008",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"22px 20px 36px",width:"100%",maxWidth:480,maxHeight:"85vh",overflowY:"auto"}}
+      <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"22px 20px 36px",width:"100%",maxWidth:480,maxHeight:"85vh",overflowY:"auto"}}
         onClick={e=>e.stopPropagation()}>
         <div style={{width:36,height:3,background:"#3a3010",borderRadius:2,margin:"0 auto 18px"}}/>
         <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>
@@ -753,7 +758,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
           const vKey = date.toISOString().slice(0,10) + Math.floor(Date.now()/500).toString();
           const verse = isPast ? pickVerse(VERSES_PAST, vKey) : isToday ? pickVerse(VERSES_TODAY, vKey) : pickVerse(VERSES_FUTURE, vKey);
           return session ? (
-            <div style={{background:"#1a1208",border:"1px solid #2e2408",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
+            <div style={{background:"#221a0e",border:"1px solid #2e2408",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
               onClick={()=>{ onSessionClick(session.id); onClose(); }}>
               <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#c9a84c",marginBottom:6}}>{session.passage}</p>
               <div style={{display:"flex",gap:12,alignItems:"center",color:"#4a3e1a",fontSize:12}}>
@@ -764,7 +769,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Tap to open session</p>
             </div>
           ) : (
-            <div style={{padding:"4px 0 20px",borderBottom:"1px solid #252010",marginBottom:16}}>
+            <div style={{padding:"4px 0 20px",borderBottom:"1px solid #2f2815",marginBottom:16}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
               {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
               {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3a18",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
@@ -798,7 +803,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
             ) : null}
 
             {showAlarm && (
-              <div style={{background:"#1a1208",border:"1px solid #2e2408",borderRadius:7,padding:"16px",marginBottom:10}}>
+              <div style={{background:"#221a0e",border:"1px solid #2e2408",borderRadius:7,padding:"16px",marginBottom:10}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
                 <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3e1a",marginBottom:14,lineHeight:1.5}}>
                   Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.
@@ -905,7 +910,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
 
   return (
     <>
-      <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,padding:"14px 12px",marginBottom:selectedDate?8:18}}>
+      <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,padding:"14px 12px",marginBottom:selectedDate?8:18}}>
         <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>
           <ToggleBtn active={calView==="month"} onClick={()=>setCalView("month")}>Month</ToggleBtn>
           <ToggleBtn active={calView==="week"} onClick={()=>setCalView("week")}>Week</ToggleBtn>
@@ -981,7 +986,7 @@ function AboutScreen({ onBack }) {
       <button onClick={onBack} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:20,display:"flex",alignItems:"center",gap:6,padding:0}}>
         ← Back
       </button>
-      <div style={{display:"flex",borderBottom:"1px solid #252010",marginBottom:20}}>
+      <div style={{display:"flex",borderBottom:"1px solid #2f2815",marginBottom:20}}>
         <button className={`nav-tab ${tab==="ministry"?"active":""}`} onClick={()=>setTab("ministry")} style={{fontSize:"9px"}}>Midnight Ministries</button>
         <button className={`nav-tab ${tab==="howto"?"active":""}`} onClick={()=>setTab("howto")} style={{fontSize:"9px"}}>How to Use</button>
       </div>
@@ -1142,7 +1147,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
     <div style={{position:"relative"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{
         width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
-        background:"#161208", border:`1px solid ${open?"#c9a84c":"#2e2408"}`,
+        background:"#1d180e", border:`1px solid ${open?"#c9a84c":"#2e2408"}`,
         borderRadius:5, padding:"10px 13px", cursor:"pointer", transition:"border-color 0.2s"
       }}>
         <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#e4dcc8"}}>{current[1]}</span>
@@ -1151,7 +1156,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
       {open && (
         <div style={{
           position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:50,
-          background:"#161208", border:"1px solid #3a3010", borderRadius:5,
+          background:"#1d180e", border:"1px solid #3a3010", borderRadius:5,
           maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.6)"
         }}>
           {TZ_OPTIONS.map(([val,label])=>(
@@ -1159,7 +1164,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
               style={{
                 padding:"10px 14px", cursor:"pointer",
                 background:timezone===val?"rgba(201,168,76,0.1)":"transparent",
-                borderBottom:"1px solid #252010",
+                borderBottom:"1px solid #2f2815",
                 transition:"background 0.15s"
               }}
               onMouseOver={e=>e.currentTarget.style.background="rgba(201,168,76,0.07)"}
@@ -1198,6 +1203,7 @@ export default function App() {
     } catch { return { locationType:'Home', otherLocation:'', startBook:'Genesis', startChapter:'', startVerse:'', endBook:'Genesis', endChapter:'', endVerse:'', notes:'' }; }
   });
   const [useGps, setUseGps] = useState(true);
+  const [photoView, setPhotoView] = useState(null);
   const [sessionPhoto, setSessionPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [locLoading, setLocLoading] = useState(false);
@@ -1286,7 +1292,9 @@ export default function App() {
     const endTime = new Date().toISOString();
     const passage = `${activeSession.startBook} ${activeSession.startChapter}${activeSession.startVerse?":"+activeSession.startVerse:""} through ${form.endBook} ${form.endChapter}${form.endVerse?":"+form.endVerse:""}`;
     const depth = getDepthLevel(sessions);
-    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust. Never go below their demonstrated level. Aim one step ahead.`;
+    const isKid = age.startsWith("Kids");
+    const kidNote = isKid ? ` This reader is a child between 5 and 12. Write everything for a young child. Use short, simple sentences and plain words a child knows. Explain any hard word in the verse the moment you use it. Keep the context to 2 or 3 short sentences that tell the story simply. Make the questions concrete and about what happened, who was there, and what they did, not abstract ideas. Notes should be short and clear. Return verses should be easy to picture. Stay warm and honest. Do not water down the truth, just say it in words a child understands. Never frighten or shame the child.` : "";
+    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
     try {
       const resp = await fetch("/.netlify/functions/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -1350,18 +1358,18 @@ export default function App() {
 
   const activeMins = activeSession ? Math.round((Date.now()-new Date(activeSession.startTime))/60000) : 0;
 
-  const BIBLE_VERSIONS = ["NLT","ESV","KJV","NIV","NASB","CSB","MSG","AMP"];
+  const BIBLE_VERSIONS = ["NLT","ESV","KJV","NIV","NASB","CSB","MSG","AMP","NIrV","ICB"];
 
   return (
-    <div style={{minHeight:"100vh",background:"#0e0c06",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"#15110a",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#0e0c06;}*{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#15110a;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
-        input,select,textarea{background:#161208;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
+        input,select,textarea{background:#1d180e;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
         input:focus,select:focus,textarea:focus{border-color:#c9a84c;box-shadow:0 0 0 2px rgba(201,168,76,0.08);}
-        select option{background:#161208;}
+        select option{background:#1d180e;}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
         input[type=number]{-moz-appearance:textfield;appearance:textfield;}
         .btn-primary{background:linear-gradient(135deg,#c9a84c 0%,#a8832a 100%);color:#0e0c06;border:none;border-radius:5px;padding:14px 24px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:0.12em;cursor:pointer;transition:opacity 0.2s,transform 0.1s;text-transform:uppercase;width:100%;}
@@ -1374,9 +1382,9 @@ export default function App() {
         .btn-export:disabled{opacity:0.4;cursor:not-allowed;}
         .btn-danger{background:transparent;color:#8a3020;border:1px solid #3a1810;border-radius:4px;padding:6px 12px;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .btn-danger:hover{border-color:#c04030;color:#c04030;}
-        .card{background:#141008;border:1px solid #252010;border-radius:8px;padding:18px;margin-bottom:14px;}
+        .card{background:#1b160d;border:1px solid #2f2815;border-radius:8px;padding:18px;margin-bottom:14px;}
         .label{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:#6a5a30;text-transform:uppercase;display:block;margin-bottom:8px;}
-        .divider{border:none;border-top:1px solid #252010;margin:14px 0;}
+        .divider{border:none;border-top:1px solid #2f2815;margin:14px 0;}
         .fade-in{animation:fadeIn 0.35s ease forwards;}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         .pulse{animation:pulse 1.8s ease-in-out infinite;}
@@ -1385,7 +1393,7 @@ export default function App() {
         .nav-tab.active{color:#c9a84c;border-bottom-color:#c9a84c;}
         .nav-tab:hover:not(.active){color:#8a7a4a;}
         .section-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 0;user-select:none;}
-        .hist-card{background:#141008;border:1px solid #252010;border-radius:7px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s;}
+        .hist-card{background:#1b160d;border:1px solid #2f2815;border-radius:7px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s;}
         .hist-card:hover{border-color:#2e2408;}
         .hist-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;}
         .rv-item{border-left:2px solid #2e2408;padding-left:14px;margin-bottom:13px;}
@@ -1427,7 +1435,7 @@ export default function App() {
 
         {/* NAV */}
         {view !== "session" && view !== "settings" && view !== "about" && (
-          <div style={{display:"flex",borderBottom:"1px solid #252010",marginBottom:20}}>
+          <div style={{display:"flex",borderBottom:"1px solid #2f2815",marginBottom:20}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
               Log {sessions.length>0&&`(${sessions.length})`}
@@ -1447,7 +1455,7 @@ export default function App() {
               {form.locationType==="Other" && (
                 <input style={{marginTop:8}} placeholder="Describe the place..." value={form.otherLocation} onChange={e=>setForm(f=>({...f,otherLocation:e.target.value}))}/>
               )}
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12,paddingTop:12,borderTop:"1px solid #252010"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12,paddingTop:12,borderTop:"1px solid #2f2815"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div style={{color:useGps?"#c9a84c":"#3a3010"}}><ShieldIcon/></div>
                   <div>
@@ -1455,7 +1463,7 @@ export default function App() {
                     <p style={{fontSize:13,color:"#3a3010",marginTop:2}}>{useGps?"Stored on device only. Never shared.":"Location will not be recorded"}</p>
                   </div>
                 </div>
-                <div onClick={()=>setUseGps(v=>!v)} style={{width:40,height:22,borderRadius:11,cursor:"pointer",flexShrink:0,background:useGps?"#c9a84c":"#252010",border:`1px solid ${useGps?"#c9a84c":"#3a3010"}`,position:"relative",transition:"background 0.2s,border-color 0.2s"}}>
+                <div onClick={()=>setUseGps(v=>!v)} style={{width:40,height:22,borderRadius:11,cursor:"pointer",flexShrink:0,background:useGps?"#c9a84c":"#2f2815",border:`1px solid ${useGps?"#c9a84c":"#3a3010"}`,position:"relative",transition:"background 0.2s,border-color 0.2s"}}>
                   <div style={{position:"absolute",top:2,left:useGps?18:2,width:16,height:16,borderRadius:8,background:useGps?"#0e0c06":"#4a3e1a",transition:"left 0.2s"}}/>
                 </div>
               </div>
@@ -1488,7 +1496,7 @@ export default function App() {
         {/* ══ SESSION ══ */}
         {view === "session" && activeSession && (
           <div className="fade-in">
-            <div style={{background:"#141008",border:"1px solid #2e2408",borderRadius:8,padding:"14px 16px",marginBottom:16}}>
+            <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:8,padding:"14px 16px",marginBottom:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:activeSession.geoLabel?10:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,color:"#6a5a30",fontSize:13}}>
                   <ClockIcon/><span>{formatTime(activeSession.startTime)}</span>
@@ -1560,7 +1568,7 @@ export default function App() {
           <div className="fade-in">
             {activeSession.photoData ? (
               <div style={{borderRadius:8,overflow:"hidden",marginBottom:14,position:"relative"}}>
-                <img src={activeSession.photoData} alt="" style={{width:"100%",maxHeight:280,objectFit:"cover",display:"block"}}/>
+                <img src={activeSession.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",display:"block"}}/>
                 <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 45%,rgba(14,12,6,0.9) 100%)"}}/>
                 <div style={{position:"absolute",bottom:14,left:16,right:16}}>
                   <p style={{fontFamily:"'Crimson Text',serif",fontSize:19,color:"#c9a84c",marginBottom:6}}>{activeSession.passage}</p>
@@ -1590,7 +1598,7 @@ export default function App() {
 
             {/* GROUND — context, deeper */}
             {result.context && (
-              <div style={{background:"#120f06",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
+              <div style={{background:"#181308",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8}}>Ground</p>
                 <p style={{fontSize:16,lineHeight:1.78,color:"#5a5030"}}>{result.context}</p>
               </div>
@@ -1615,7 +1623,7 @@ export default function App() {
             </div>
 
             {/* QUESTIONS — fillable with answer feedback */}
-            <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,q:!s.q}))}>
                 <div>
                   <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Questions from the Text</span>
@@ -1654,7 +1662,7 @@ export default function App() {
             </div>
 
             {/* FIELD NOTES — informational, grounded */}
-            <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,n:!s.n}))}>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Field Notes</span>
                 <ChevronIcon open={openSection.n}/>
@@ -1672,7 +1680,7 @@ export default function App() {
             </div>
 
             {/* RETURN VERSES — sent back, directive */}
-            <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,v:!s.v}))}>
                 <div>
                   <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Come Back To</span>
@@ -1731,7 +1739,7 @@ export default function App() {
                   const prevTime = sessionDates.filter(t=>t<curTime).slice(-1)[0];
                   const nextTime = sessionDates.filter(t=>t>curTime)[0];
                   const NavBtn = ({onClick,disabled,children}) => (
-                    <button onClick={onClick} disabled={disabled} style={{background:"transparent",border:"none",color:disabled?"#252010":"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:16,cursor:disabled?"default":"pointer",padding:"0 6px",lineHeight:1,transition:"color 0.2s"}}
+                    <button onClick={onClick} disabled={disabled} style={{background:"transparent",border:"none",color:disabled?"#2f2815":"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:16,cursor:disabled?"default":"pointer",padding:"0 6px",lineHeight:1,transition:"color 0.2s"}}
                       onMouseOver={e=>{ if(!disabled) e.currentTarget.style.color="#c9a84c"; }}
                       onMouseOut={e=>{ if(!disabled) e.currentTarget.style.color="#6a5a30"; }}>
                       {children}
@@ -1755,7 +1763,7 @@ export default function App() {
                   );
                 })()}
                 {/* Day box or full list */}
-                <div style={{background:"#141008",border:"1px solid #252010",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+                <div style={{background:"#1b160d",border:"1px solid #2f2815",borderRadius:8,overflow:"hidden",marginBottom:10}}>
                     {filteredSessions.length === 0 ? (
                       <div style={{padding:"20px 16px",textAlign:"center"}}>
                         <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase"}}>No session on this day</p>
@@ -1764,9 +1772,13 @@ export default function App() {
                       filteredSessions.map(s=>(
                   <div key={s.id} className="hist-card" ref={el=>{ if(el) sessionRefs.current[s.id]=el; }}>
                     {s.photoData && (
-                      <div style={{height:90,overflow:"hidden",position:"relative"}}>
+                      <div onClick={(e)=>{e.stopPropagation();setPhotoView(s);}} style={{height:90,overflow:"hidden",position:"relative",cursor:"pointer"}}>
                         <img src={s.photoData} alt="" style={{width:"100%",height:"100%",objectFit:"cover",opacity:0.65}}/>
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent,rgba(14,12,6,0.85))"}}/>
+                        <div style={{position:"absolute",bottom:8,right:10,display:"flex",alignItems:"center",gap:5,fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase",color:"#c9a84c"}}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+                          View
+                        </div>
                       </div>
                     )}
                     <div className="hist-head" onClick={()=>toggleSession(s.id)}>
@@ -1785,9 +1797,9 @@ export default function App() {
                       </div>
                     </div>
                     {expandedSession===s.id && s.aiResult && (
-                      <div style={{padding:"0 16px 16px",borderTop:"1px solid #252010"}}>
+                      <div style={{padding:"0 16px 16px",borderTop:"1px solid #2f2815"}}>
                         {s.aiResult.context && (
-                          <div style={{background:"#120f06",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
+                          <div style={{background:"#181308",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
                             <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Ground</p>
                             <p style={{fontSize:14,lineHeight:1.7,color:"#5a5030"}}>{s.aiResult.context}</p>
                           </div>
@@ -1804,7 +1816,7 @@ export default function App() {
                           <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:i<s.aiResult.questions.length-1?"1px solid #1a1608":"none"}}>
                             <p style={{fontSize:15,color:"#d4ccb8",lineHeight:1.6,marginBottom:6}}>{q}</p>
                             {s.questionAnswers?.[i] && (
-                              <div style={{background:"#141008",border:"1px solid #2e2408",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
+                              <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
                                 <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Your Answer</p>
                                 <p style={{fontSize:14,color:"#8a7a5a",lineHeight:1.6,fontStyle:"italic"}}>{s.questionAnswers[i]}</p>
                               </div>
@@ -1904,7 +1916,7 @@ export default function App() {
               </div>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Age</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                {["Child (under 13)","Teen (13-17)","Adult (18+)","Prefer not to say"].map(a=>(
+                {["Kids (5-12)","Teen (13-17)","Adult (18+)","Prefer not to say"].map(a=>(
                   <button key={a} className={`version-pill ${age===a?"active":""}`}
                     onClick={()=>setAge(a)}>{a}</button>
                 ))}
@@ -1993,7 +2005,7 @@ export default function App() {
                   </div>
                   <div style={{display:"flex",gap:4}}>
                     {levels.map((l,i)=>(
-                      <div key={l} style={{flex:1,height:4,borderRadius:2,background:i<d.level?"#c9a84c":"#252010",transition:"background 0.3s"}}/>
+                      <div key={l} style={{flex:1,height:4,borderRadius:2,background:i<d.level?"#c9a84c":"#2f2815",transition:"background 0.3s"}}/>
                     ))}
                   </div>
                   <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#3a3010",marginTop:10,lineHeight:1.5}}>
@@ -2016,6 +2028,7 @@ export default function App() {
             </div>
             <div style={{textAlign:"center",paddingTop:8}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#2a2208",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:8}}>Build {BUILD}</p>
             </div>
           </div>
         )}
@@ -2025,11 +2038,32 @@ export default function App() {
       <MMFooter onEggOpen={setEggOpen} onHomeView={view==="home"}/>
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
 
+      {/* ══ PHOTO LIGHTBOX ══ */}
+      {photoView && (
+        <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.94)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
+            <button onClick={()=>setPhotoView(null)} style={{position:"fixed",top:16,right:16,zIndex:500,background:"rgba(14,12,6,0.9)",border:"1px solid #2e2408",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a5a30",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
+            <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid #2f2815",display:"block"}}/>
+            <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",alignItems:"center",marginBottom:photoView.personalNotes?16:0}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#5a4a2a",letterSpacing:"0.08em",textTransform:"uppercase"}}>{formatDate(photoView.startTime)}</span>
+              {photoView.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3,color:"#5a4a2a",fontSize:12}}><PinIcon/>{photoView.geoLabel}</span>}
+            </div>
+            {photoView.personalNotes && (
+              <div style={{width:"100%",background:"#1b160d",border:"1px solid #2f2815",borderLeft:"3px solid #c9a84c",borderRadius:6,padding:"14px 16px"}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>From This Reading</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#c0b898",lineHeight:1.65}}>{photoView.personalNotes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ══ EASTER EGG SHEETS ══ */}
       {eggOpen && (
         <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(10,8,4,0.92)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
           onClick={()=>setEggOpen(null)}>
-          <div style={{background:"#0e0c06",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
+          <div style={{background:"#1b160d",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
             onClick={e=>e.stopPropagation()}>
             <div style={{width:36,height:3,background:"#2e2408",borderRadius:2,margin:"0 auto 24px"}}/>
             <button onClick={()=>setEggOpen(null)} style={{position:"fixed",top:16,right:16,zIndex:500,background:"rgba(14,12,6,0.9)",border:"1px solid #2e2408",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a5a30",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
