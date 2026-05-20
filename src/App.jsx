@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b4";
+const BUILD = "2026.05.20-b5";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -419,8 +419,8 @@ function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-      background:"linear-gradient(to top, rgba(10,8,4,1) 74%, rgba(10,8,4,0))",
-      paddingTop:7, paddingBottom:"calc(28px + env(safe-area-inset-bottom))",
+      background:"linear-gradient(to top, rgba(10,8,4,1) 68%, rgba(10,8,4,0))",
+      paddingTop:5, paddingBottom:"calc(20px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
       pointerEvents:"none",
       transform:"translateZ(0)", WebkitTransform:"translateZ(0)",
@@ -556,11 +556,11 @@ function ExportSheet({ session, onClose }) {
 function getDepthLevel(sessions, isKid=false) {
   const n = sessions.length;
   if (isKid) {
-    if (n >= 151) return { level:5, name:"Mighty Oak", note:"This kid has spent a lot of time in the Word. Use bigger ideas but still in kid words. Ask them to connect the story to their own life and to other stories they know. Still explain hard words. Strong, not babyish." };
-    if (n >= 61)  return { level:4, name:"Strong Tree", note:"Growing strong. Ask what the people in the story learned and why it matters. Add one question that makes them think, not just remember. Short and clear." };
-    if (n >= 21)  return { level:3, name:"Sapling",     note:"Getting it. Mix in a little 'why did this happen' with 'what happened.' Keep words simple and concrete. One real challenge question." };
-    if (n >= 6)   return { level:2, name:"Sprout",      note:"Starting to grow. Ask what happened and who was there, plus one easy 'how would you feel' or 'what would you do' question." };
-    return          { level:1, name:"Seed",        note:"Brand new. Ask only simple 'what happened' and 'who is in the story' questions. Explain every word. Keep it short, clear, and exciting." };
+    if (n >= 151) return { level:5, name:"Wildfire", note:"This kid has spent a lot of time in the Word. Use bigger ideas but still in kid words. Ask them to connect the story to their own life and to other stories they know. Still explain hard words. Strong, not babyish." };
+    if (n >= 61)  return { level:4, name:"Torch",    note:"Growing strong. Ask what the people in the story learned and why it matters. Add one question that makes them think, not just remember. Short and clear." };
+    if (n >= 21)  return { level:3, name:"Flame",    note:"Getting it. Mix in a little 'why did this happen' with 'what happened.' Keep words simple and concrete. One real challenge question." };
+    if (n >= 6)   return { level:2, name:"Ember",    note:"Starting to grow. Ask what happened and who was there, plus one easy 'how would you feel' or 'what would you do' question." };
+    return          { level:1, name:"Spark",    note:"Brand new. Ask only simple 'what happened' and 'who is in the story' questions. Explain every word. Keep it short, clear, and exciting." };
   }
   if (n >= 151) return { level:5, name:"Harvest", note:"Presuppose strong biblical foundation. Push into theological density, structural exegesis, original language observations where relevant. Hardest application questions. No hand-holding." };
   if (n >= 61)  return { level:4, name:"Fruit",   note:"Reader has significant time in the Word. Assume familiarity with biblical narrative, basic theology, and cross-passage connections. Questions can demand synthesis." };
@@ -1312,6 +1312,19 @@ export default function App() {
   const [eggOpen, setEggOpen] = useState(null); // "mm" | "cross" | null
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
+  // Lock the page behind any open modal so only the modal scrolls.
+  useEffect(() => {
+    const open = !!(eggOpen || photoView || exportSession);
+    if (!open) return;
+    const y = window.scrollY;
+    const b = document.body.style;
+    const prev = { position:b.position, top:b.top, width:b.width, overflow:b.overflow };
+    b.position = "fixed"; b.top = `-${y}px`; b.width = "100%"; b.overflow = "hidden";
+    return () => {
+      b.position = prev.position; b.top = prev.top; b.width = prev.width; b.overflow = prev.overflow;
+      window.scrollTo(0, y);
+    };
+  }, [eggOpen, photoView, exportSession]);
 
   function handleSaveAlarm(dayKey, alarm) {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
@@ -2098,7 +2111,7 @@ export default function App() {
             {sessions.length > 0 && (()=>{
               const d = getDepthLevel(sessions, isKidAge);
               const totalMins = sessions.reduce((a,s)=>a+Math.round((new Date(s.endTime)-new Date(s.startTime))/60000),0);
-              const levels = isKidAge ? ["Seed","Sprout","Sapling","Strong Tree","Mighty Oak"] : ["Seed","Root","Branch","Fruit","Harvest"];
+              const levels = isKidAge ? ["Spark","Ember","Flame","Torch","Wildfire"] : ["Seed","Root","Branch","Fruit","Harvest"];
               return (
                 <div className="card">
                   <p className="label">Depth Level</p>
@@ -2149,9 +2162,9 @@ export default function App() {
 
       {/* ══ PHOTO LIGHTBOX ══ */}
       {photoView && (
-        <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.94)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto"}}>
+        <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.95)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain"}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <button onClick={()=>setPhotoView(null)} style={{position:"fixed",top:16,right:16,zIndex:500,background:"rgba(14,12,6,0.9)",border:"1px solid #2e2408",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a5a30",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
+            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0}}>×</button>
             <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid #36241c",display:"block"}}/>
             <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",alignItems:"center",marginBottom:photoView.personalNotes?16:0}}>
@@ -2170,12 +2183,12 @@ export default function App() {
 
       {/* ══ EASTER EGG SHEETS ══ */}
       {eggOpen && (
-        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(10,8,4,0.92)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
+        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
           onClick={()=>setEggOpen(null)}>
-          <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"28px 22px 48px",width:"100%",maxWidth:480,maxHeight:"88vh",overflowY:"auto"}}
+          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:14,right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0}}>×</button>
+          <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:12,padding:"26px 22px 32px",width:"100%",maxWidth:480,margin:"58px auto 58px"}}
             onClick={e=>e.stopPropagation()}>
-            <div style={{width:36,height:3,background:"#2e2408",borderRadius:2,margin:"0 auto 24px"}}/>
-            <button onClick={()=>setEggOpen(null)} style={{position:"fixed",top:16,right:16,zIndex:500,background:"rgba(14,12,6,0.9)",border:"1px solid #2e2408",borderRadius:"50%",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",color:"#6a5a30",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
+            <div style={{width:36,height:3,background:"#36241c",borderRadius:2,margin:"0 auto 24px"}}/>
 
             {eggOpen === "cross" && (
               <>
