@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b6";
+const BUILD = "2026.05.20-b7";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -418,10 +418,11 @@ function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify
 function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
-      flexShrink:0, width:"100%", zIndex:100,
+      position:"fixed", bottom:0, left:0, right:0, zIndex:100,
       background:"rgba(8,6,3,1)", borderTop:"1px solid #251812",
-      paddingTop:10, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
-      display:"flex", alignItems:"center", justifyContent:"center", gap:8
+      paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
+      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+      pointerEvents:"none"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -1309,14 +1310,18 @@ export default function App() {
   const [eggOpen, setEggOpen] = useState(null); // "mm" | "cross" | null
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
-  // Lock the scroll area behind any open modal so only the modal scrolls.
+  // Lock the page behind any open modal so only the modal scrolls.
   useEffect(() => {
     const open = !!(eggOpen || photoView || exportSession);
-    const el = scrollRef.current;
-    if (!open || !el) return;
-    const prev = el.style.overflow;
-    el.style.overflow = "hidden";
-    return () => { el.style.overflow = prev; };
+    if (!open) return;
+    const y = window.scrollY;
+    const b = document.body.style;
+    const prev = { position:b.position, top:b.top, width:b.width, overflow:b.overflow };
+    b.position = "fixed"; b.top = `-${y}px`; b.width = "100%"; b.overflow = "hidden";
+    return () => {
+      b.position = prev.position; b.top = prev.top; b.width = prev.width; b.overflow = prev.overflow;
+      window.scrollTo(0, y);
+    };
   }, [eggOpen, photoView, exportSession]);
 
   function handleSaveAlarm(dayKey, alarm) {
@@ -1445,12 +1450,9 @@ export default function App() {
   }
 
   function toggleSession(id) {
-    const el = scrollRef.current;
-    const y = el ? el.scrollTop : window.scrollY;
+    const y = window.scrollY;
     setExpandedSession(prev => prev === id ? null : id);
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      if (el) el.scrollTop = y; else window.scrollTo({ top: y, behavior: "instant" });
-    }));
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" })));
   }
 
   function deleteSession(id) {
@@ -1466,10 +1468,10 @@ export default function App() {
   const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
 
   return (
-    <div style={{height:"100dvh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+    <div style={{minHeight:"100vh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#190f0b;overscroll-behavior:none;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#190f0b;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
         input,select,textarea{background:#221610;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
@@ -1513,15 +1515,14 @@ export default function App() {
         .version-pill{background:transparent;border:1px solid #2e2408;border-radius:4px;padding:7px 12px;font-family:'Cinzel',serif;font-size:10px;color:#5a4a20;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .version-pill.active{background:rgba(201,168,76,0.12);border-color:#c9a84c;color:#c9a84c;}
         .version-pill:hover:not(.active){border-color:#5a4a20;color:#8a7a4a;}
-        @media (min-width:600px){.app-container{padding:0 24px 28px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
-        @media (min-width:768px){.app-container{padding:0 32px 28px !important;max-width:600px !important;}h1{font-size:30px !important;}}
+        @media (min-width:600px){.app-container{padding:0 24px 80px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
+        @media (min-width:768px){.app-container{padding:0 32px 80px !important;max-width:600px !important;}h1{font-size:30px !important;}}
         @media (min-width:1024px){.app-container{max-width:640px !important;}}
       `}</style>
 
       <div style={{position:"fixed",inset:0,pointerEvents:"none",opacity:0.5,zIndex:0,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}}/>
 
-      <div ref={scrollRef} style={{flex:1,minHeight:0,overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",position:"relative",zIndex:1}}>
-      <div className="app-container" style={{maxWidth:480,margin:"0 auto",padding:"0 16px 28px",overflowAnchor:"none"}}>
+      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
@@ -2153,7 +2154,6 @@ export default function App() {
           </div>
         )}
 
-      </div>
       </div>
 
       <MMFooter onEggOpen={setEggOpen} onHomeView={view==="home"}/>
