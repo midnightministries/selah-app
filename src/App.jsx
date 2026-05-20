@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b8";
+const BUILD = "2026.05.20-b9";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -845,7 +845,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
 }
 
 // ── Empty-day panel for the log (rotating verse + reminder) ──────────────
-function EmptyDayPanel({ date, alarms, onSaveAlarm }) {
+function EmptyDayPanel({ date, alarms, onSaveAlarm, suppressPast }) {
   const now = new Date(); now.setHours(0,0,0,0);
   const d = new Date(date); d.setHours(0,0,0,0);
   const isToday = d.getTime() === now.getTime();
@@ -872,6 +872,16 @@ function EmptyDayPanel({ date, alarms, onSaveAlarm }) {
   }
 
   const verse = pickVerse(isPast ? VERSES_PAST : isToday ? VERSES_TODAY : VERSES_FUTURE, dayKey);
+
+  // For a brand-new reader (no sessions yet), don't hit them with conviction
+  // for past days they couldn't have used the app. Stay quiet on past days.
+  if (isPast && suppressPast) {
+    return (
+      <div style={{padding:"18px 16px"}}>
+        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase"}}>No Session On This Day</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{padding:"18px 16px"}}>
@@ -1515,6 +1525,7 @@ export default function App() {
         .pulse{animation:pulse 1.8s ease-in-out infinite;}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
         @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes edgeGlow{0%,100%{opacity:0.4}50%{opacity:0.95}}
         .nav-tab{background:transparent;border:none;color:#3a3010;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;padding:10px 10px;border-bottom:2px solid transparent;transition:all 0.2s;flex:1;}
         .nav-tab.active{color:#c9a84c;border-bottom-color:#c9a84c;}
         .nav-tab:hover:not(.active){color:#8a7a4a;}
@@ -1540,6 +1551,9 @@ export default function App() {
       `}</style>
 
       <div style={{position:"fixed",inset:0,pointerEvents:"none",opacity:0.5,zIndex:0,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}}/>
+
+      {/* Pulsing gold edge-glow vignette */}
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:"inset 0 0 70px rgba(201,168,76,0.17), inset 0 0 150px rgba(110,28,28,0.10)",animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
       <div ref={scrollRef} onTouchStart={onPullStart} onTouchMove={onPullMove} onTouchEnd={onPullEnd}
         style={{flex:1,minHeight:0,overflowY:modalOpen?"hidden":"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",position:"relative",zIndex:1}}>
@@ -1852,10 +1866,16 @@ export default function App() {
           <div className="fade-in" style={{overflowAnchor:"none"}}>
             <SessionCalendar sessions={sessions} onDaySelect={handleCalendarDay} alarms={alarms} onSaveAlarm={handleSaveAlarm} onFilterChange={setFilterDate} activeDate={filterDate}/>
             {sessions.length === 0 ? (
-              <div style={{textAlign:"center",padding:"30px 0"}}>
-                <div style={{color:"#2e2408",marginBottom:12,display:"flex",justifyContent:"center"}}><BookIcon/></div>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.14em"}}>NO SESSIONS LOGGED YET</p>
-              </div>
+              <>
+                <div style={{textAlign:"center",padding:"12px 0 18px"}}>
+                  <div style={{color:"#2e2408",marginBottom:10,display:"flex",justifyContent:"center"}}><BookIcon/></div>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.14em"}}>NO SESSIONS LOGGED YET</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3a18",marginTop:8}}>Tap today or a day ahead to set a reminder.</p>
+                </div>
+                <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+                  <EmptyDayPanel date={filterDate || (()=>{const d=new Date();d.setHours(0,0,0,0);return d;})()} alarms={alarms} onSaveAlarm={handleSaveAlarm} suppressPast/>
+                </div>
+              </>
             ) : (() => {
               const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
               const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
