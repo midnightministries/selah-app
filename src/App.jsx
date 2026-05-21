@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b46";
+const BUILD = "2026.05.20-b47";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -252,521 +252,236 @@ function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-function generateShareCard(session, opts) {
-  const o = Object.assign({ aspect:"square", font:"serif", textColor:"#c9a84c", opacity:1, content:"session", showPhoto:true, offX:0, offY:0 }, opts||{});
+const CARD_COLORS = [["#c9a84c","Gold"],["#ece0c6","Cream"],["#ffffff","White"],["#b5302f","Blood Red"],["#b07fe0","Purple"],["#5aa0d6","Sky"],["#5fae7a","Green"],["#0e0c06","Ink"]];
+const CARD_FONTS = { serif:"Georgia, serif", cinzel:"Cinzel, Georgia, serif", crimson:"'Crimson Text', Georgia, serif", sans:"Helvetica, Arial, sans-serif" };
+
+function defaultLayout(session, hasPhoto, fam) {
+  fam = fam || "Georgia, serif";
+  return {
+    aspect: "square",
+    content: "session",
+    photo: { show: !!hasPhoto, x: 0.5, y: 0.5 },
+    els: {
+      cross: { kind:"cross", show:true, xf:0.12, yf:0.11, size:0.085, rot:0, color:"#d6b860" },
+      selah: { kind:"text", show:true, xf:0.5, yf:0.13, size:0.085, rot:0, color:"#ece0c6", weight:"bold", italic:false, text:"SELAH" },
+      body:  { kind:"text", show:true, xf:0.5, yf:0.5,  size:0.048, rot:0, color:"#c9a84c", weight:"", italic:true, text:(session.passage||"") },
+      mm:    { kind:"text", show:true, xf:0.5, yf:0.93, size:0.024, rot:0, color:"#c9a84c", weight:"", italic:false, text:"MIDNIGHT MINISTRIES" },
+    },
+    fam,
+  };
+}
+
+// Compose the final share image from the editor layout
+function composeCard(session, layout) {
   const DIMS = { square:[1080,1080], portrait:[1080,1350], story:[1080,1920] };
-  const [W,H] = DIMS[o.aspect] || DIMS.square;
+  const [W,H] = DIMS[layout.aspect] || DIMS.square;
+  const fam = CARD_FONTS[layout.font] || layout.fam || "Georgia, serif";
   return new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext("2d");
+    const cv = document.createElement("canvas"); cv.width=W; cv.height=H; const ctx=cv.getContext("2d");
     const crossEl = document.querySelector('img[src^="data:image/png;base64,iVBOR"]');
-    const FF = o.font === "cinzel" ? "Cinzel, Georgia, serif"
-             : o.font === "crimson" ? "'Crimson Text', Georgia, serif"
-             : o.font === "sans" ? "Helvetica, Arial, sans-serif"
-             : "Georgia, serif";
-    function hx(h){ h=(h||"").replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
-    const [TR,TG,TB] = hx(o.textColor||"#c9a84c");
-    const tc = (a)=>`rgba(${TR},${TG},${TB},${a*(o.opacity==null?1:o.opacity)})`;
-    const usePhoto = session.photoData && o.showPhoto;
-    // pull the active palette so the no-photo card matches the reader's theme
-    let pBg="#190f0b", pSurface="#20130f", pAcc="201,168,76";
-    try { const cs=getComputedStyle(document.documentElement);
-      pBg=(cs.getPropertyValue('--bg')||'').trim()||pBg;
-      pSurface=(cs.getPropertyValue('--surface')||'').trim()||pSurface;
-      pAcc=(cs.getPropertyValue('--accent-rgb')||'').trim()||pAcc;
-    } catch {}
-
-    const drawCard = () => {
-      const top = usePhoto ? 0.72 : 0.62, mid = usePhoto ? 0.42 : 0.4;
-      const ov = ctx.createLinearGradient(0,0,0,H);
-      ov.addColorStop(0,`rgba(10,8,4,${top})`); ov.addColorStop(0.42,`rgba(10,8,4,${mid})`);
-      ov.addColorStop(0.7,`rgba(10,8,4,${top})`); ov.addColorStop(1,"rgba(10,8,4,0.97)");
-      ctx.fillStyle = ov; ctx.fillRect(0,0,W,H);
-
-      if (crossEl && crossEl.naturalWidth) {
-        const chH=110, chW=Math.round(chH*(crossEl.naturalWidth/crossEl.naturalHeight));
-        const cc=document.createElement("canvas"); cc.width=chW; cc.height=chH; const c2=cc.getContext("2d");
-        c2.drawImage(crossEl,0,0,chW,chH); c2.globalCompositeOperation="source-atop";
-        c2.fillStyle="rgba(214,184,96,0.92)"; c2.fillRect(0,0,chW,chH); ctx.drawImage(cc,84,54);
+    const els = layout.els;
+    function drawText(el){
+      if(!el.show || !el.text) return;
+      const fpx = el.size*W;
+      ctx.save(); ctx.translate(el.xf*W, el.yf*H); ctx.rotate((el.rot||0)*Math.PI/180);
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.font = `${el.weight||""} ${el.italic?"italic ":""}${fpx}px ${fam}`;
+      ctx.fillStyle = el.color;
+      const lines = wrapText(ctx, el.text, W*0.86);
+      let y = -(lines.length-1)*fpx*0.6;
+      lines.forEach(l=>{ ctx.fillText(l,0,y); y+=fpx*1.2; });
+      ctx.restore();
+    }
+    function drawCross(el){
+      if(!el.show || !crossEl || !crossEl.naturalWidth) return;
+      const ch=el.size*W*1.5, cw=ch*(crossEl.naturalWidth/crossEl.naturalHeight);
+      const tmp=document.createElement("canvas"); tmp.width=Math.max(1,Math.round(cw)); tmp.height=Math.max(1,Math.round(ch));
+      const t2=tmp.getContext("2d"); t2.drawImage(crossEl,0,0,tmp.width,tmp.height);
+      t2.globalCompositeOperation="source-atop"; t2.fillStyle=el.color; t2.fillRect(0,0,tmp.width,tmp.height);
+      ctx.save(); ctx.translate(el.xf*W, el.yf*H); ctx.rotate((el.rot||0)*Math.PI/180);
+      ctx.drawImage(tmp,-cw/2,-ch/2,cw,ch); ctx.restore();
+    }
+    function finish(){
+      if (layout.photo.show && session.photoData){
+        const ov=ctx.createLinearGradient(0,0,0,H);
+        ov.addColorStop(0,"rgba(10,8,4,0.5)"); ov.addColorStop(0.5,"rgba(10,8,4,0.28)"); ov.addColorStop(1,"rgba(10,8,4,0.7)");
+        ctx.fillStyle=ov; ctx.fillRect(0,0,W,H);
       }
-      ctx.shadowColor="rgba(201,168,76,0.2)"; ctx.shadowBlur=12;
-      ctx.fillStyle="#ece0c6"; ctx.font=`bold 96px ${FF}`; ctx.textAlign="center";
-      ctx.fillText("SELAH", W/2, 150); ctx.shadowBlur=0;
-      ctx.strokeStyle="rgba(201,168,76,0.38)"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(W*0.27,196); ctx.lineTo(W*0.73,196); ctx.stroke();
-
-      let py = Math.round(H*0.30);
-      const headline=(t,size)=>{ ctx.fillStyle=tc(1); ctx.font=`italic ${size}px ${FF}`; wrapText(ctx,t,W-140).forEach(l=>{ ctx.fillText(l,W/2,py); py+=Math.round(size*1.28); }); };
-      const sub=(t,size,alpha)=>{ ctx.fillStyle=`rgba(228,220,200,${alpha})`; ctx.font=`italic ${size}px ${FF}`; wrapText(ctx,t,W-200).forEach(l=>{ ctx.fillText(l,W/2,py); py+=Math.round(size*1.4); }); };
-
-      if (o.content === "anchor") {
-        py = Math.round(H*0.44); headline("Read. Mark. Return.", 64);
-        py += 18; ctx.fillStyle="rgba(201,168,76,0.6)"; ctx.font=`600 30px ${FF}`; ctx.fillText("Matthew 3:11", W/2, py);
-      } else if (o.content === "return" && session.aiResult?.returnVerses?.[0]) {
-        const rv = session.aiResult.returnVerses[0];
-        py = Math.round(H*0.38); headline(rv.ref, 70);
-        py += 16; sub(rv.reason||"", 36, 0.78);
-      } else if (o.content === "passage") {
-        py = Math.round(H*0.42); headline(session.passage||"", 56);
-      } else {
-        py = Math.round(H*0.28); headline(session.passage||"", 50);
-        if (session.aiResult?.summary){ py+=10; sub(`"${session.aiResult.summary}"`, 34, 0.74); }
-        const rv = session.aiResult?.returnVerses?.[0];
-        if (rv){ py+=8; ctx.fillStyle="rgba(201,168,76,0.55)"; ctx.font=`600 28px ${FF}`; ctx.fillText(rv.ref, W/2, py); }
-      }
-
-      if (o.content === "session" || o.content === "passage") {
-        const locLine=[session.locationType!=="Other"?session.locationType:session.otherLocation, session.geoLabel, formatDate(session.startTime)].filter(Boolean).join("  ·  ");
-        ctx.fillStyle="rgba(228,220,200,0.42)"; ctx.font=`400 27px ${FF}`; ctx.fillText(locLine, W/2, H-108);
-      }
-      ctx.strokeStyle="rgba(201,168,76,0.22)"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(W*0.32,H-88); ctx.lineTo(W*0.68,H-88); ctx.stroke();
-      ctx.fillStyle="rgba(201,168,76,0.55)"; ctx.font=`400 25px ${FF}`; ctx.fillText("MIDNIGHT MINISTRIES", W/2, H-54);
-
-      canvas.toBlob(blob=>resolve(blob),"image/png");
-    };
-
-    if (usePhoto) {
+      drawCross(els.cross); drawText(els.selah); drawText(els.body); drawText(els.mm);
+      cv.toBlob(b=>resolve(b),"image/png");
+    }
+    if (layout.photo.show && session.photoData){
       const img=new Image();
       img.onload=()=>{
         ctx.fillStyle="#0e0c06"; ctx.fillRect(0,0,W,H);
-        const ratio=Math.max(W/img.width,H/img.height), dw=img.width*ratio, dh=img.height*ratio;
-        const dx=(W-dw)/2 + (o.offX||0)*((dw-W)/2);
-        const dy=(H-dh)/2 + (o.offY||0)*((dh-H)/2);
-        ctx.drawImage(img,dx,dy,dw,dh);
-        drawCard();
+        const r=Math.max(W/img.width,H/img.height), dw=img.width*r, dh=img.height*r;
+        ctx.drawImage(img,(W-dw)*layout.photo.x,(H-dh)*layout.photo.y,dw,dh);
+        finish();
       };
       img.src=session.photoData;
     } else {
+      let pBg="#190f0b",pSurface="#20130f",pAcc="201,168,76";
+      try { const cs=getComputedStyle(document.documentElement);
+        pBg=(cs.getPropertyValue('--bg')||'').trim()||pBg; pSurface=(cs.getPropertyValue('--surface')||'').trim()||pSurface; pAcc=(cs.getPropertyValue('--accent-rgb')||'').trim()||pAcc; } catch {}
       ctx.fillStyle=pBg; ctx.fillRect(0,0,W,H);
-      const grad=ctx.createLinearGradient(0,0,W,H); grad.addColorStop(0,pSurface); grad.addColorStop(1,pBg);
-      ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
-      const radial=ctx.createRadialGradient(W*0.3,H*0.34,0,W*0.3,H*0.34,Math.max(W,H)*0.7);
-      radial.addColorStop(0,`rgba(${pAcc},0.10)`); radial.addColorStop(1,"rgba(0,0,0,0)");
-      ctx.fillStyle=radial; ctx.fillRect(0,0,W,H);
-      drawCard();
+      const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,pSurface); g.addColorStop(1,pBg); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      const rad=ctx.createRadialGradient(W*0.3,H*0.34,0,W*0.3,H*0.34,Math.max(W,H)*0.7);
+      rad.addColorStop(0,`rgba(${pAcc},0.10)`); rad.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=rad; ctx.fillRect(0,0,W,H);
+      finish();
     }
   });
-}
-// Generate formatted note text for export to Notes/Files
-function generateNoteText(session) {
-  const line = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
-  const thin = "────────────────────────────────────────";
-  let txt = "";
-  txt += `SELAH SESSION LOG\n${line}\n\n`;
-  txt += `PASSAGE\n${session.passage}\n\n`;
-  txt += `DATE\n${formatDate(session.startTime)}\n\n`;
-  txt += `LOCATION\n${session.locationType !== "Other" ? session.locationType : session.otherLocation}`;
-  if (session.geoLabel) txt += ` — ${session.geoLabel}`;
-  txt += `\n\n`;
-  txt += `TIME IN THE WORD\n${elapsed(session.startTime, session.endTime)}\n\n`;
-  txt += `${line}\n\n`;
-
-  if (session.aiResult?.summary) {
-    txt += `SUMMARY\n${session.aiResult.summary}\n\n${thin}\n\n`;
-  }
-
-  if (session.aiResult?.questions?.length) {
-    txt += `QUESTIONS FROM THE TEXT\n`;
-    session.aiResult.questions.forEach((q,i) => { txt += `${String(i+1).padStart(2,"0")}. ${q}\n`; });
-    txt += `\n${thin}\n\n`;
-  }
-
-  if (session.aiResult?.notes?.length) {
-    txt += `FIELD NOTES\n`;
-    session.aiResult.notes.forEach(n => { txt += `— ${n}\n`; });
-    txt += `\n${thin}\n\n`;
-  }
-
-  if (session.aiResult?.returnVerses?.length) {
-    txt += `COME BACK TO\n`;
-    session.aiResult.returnVerses.forEach(v => { txt += `${v.ref}\n${v.reason}\n\n`; });
-    txt += `${thin}\n\n`;
-  }
-
-  if (session.personalNotes) {
-    txt += `YOUR NOTES\n${session.personalNotes}\n\n${thin}\n\n`;
-  }
-
-  txt += `${line}\nSelah by Midnight Ministries\n`;
-  txt += `Save in: Selah — Midnight Ministries (folder)\n`;
-  return txt;
-}
-
-async function shareAsNote(session) {
-  const text = generateNoteText(session);
-  const dateStr = new Date(session.startTime).toISOString().slice(0,10);
-  const passageShort = (session.passage||"Session").slice(0,40).replace(/[^a-zA-Z0-9 ]/g," ").trim();
-  const filename = `Selah — ${passageShort} — ${dateStr}.txt`;
-  const blob = new Blob([text], { type: "text/plain" });
-  const file = new File([blob], filename, { type: "text/plain" });
-
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: "Selah — "+passageShort, text: "Session: "+session.passage });
-      return "shared";
-    } catch(e) {
-      if (e.name === "AbortError") return "cancelled";
-    }
-  }
-  // Fallback: download
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href=url; a.download=filename; a.click();
-  URL.revokeObjectURL(url);
-  return "downloaded";
-}
-
-const STORAGE_KEY = "selah_sessions_v2";
-function loadSessions() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; } catch { return []; } }
-function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(s)); } catch {} }
-
-// ── Account + cloud sync (Netlify functions) ──
-const ACCOUNT_KEY = "selah_account";
-function loadAccount() { try { return JSON.parse(localStorage.getItem(ACCOUNT_KEY))||null; } catch { return null; } }
-function saveAccount(a) { try { if (a) localStorage.setItem(ACCOUNT_KEY, JSON.stringify(a)); else localStorage.removeItem(ACCOUNT_KEY); } catch {} }
-
-async function authRequest(action, email, password) {
-  const r = await fetch("/.netlify/functions/auth", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, email, password })
-  });
-  const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || "Something went wrong. Try again.");
-  return j; // { token, email, data }
-}
-
-async function syncRequest(action, account, data) {
-  if (!account) return null;
-  const r = await fetch("/.netlify/functions/sync", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, email: account.email, token: account.token, data })
-  });
-  const j = await r.json().catch(()=>({}));
-  if (!r.ok) throw new Error(j.error || "Sync failed.");
-  return j; // save: {ok,updatedAt} | load: {data,updatedAt}
-}
-
-// ── App icon themes (swap favicon + apple-touch at runtime) ──
-const ICON_THEMES = {
-  default: { label: "Gold Cross", base: "",            thumb: "/icon-192.png" },
-  red:     { label: "Blood Red",  base: "/icons/red",    thumb: "/icons/red/icon-192.png" },
-  nebula:  { label: "Nebula",     base: "/icons/nebula", thumb: "/icons/nebula/icon-192.png" },
-  camo:    { label: "Tiger Camo", base: "/icons/camo",   thumb: "/icons/camo/icon-192.png" },
-  pinkneb: { label: "Pink Cross",  base: "/icons/pinkneb", thumb: "/icons/pinkneb/icon-192.png" },
-  pinksplatter: { label: "Pink Splatter", base: "/icons/pinksplatter", thumb: "/icons/pinksplatter/icon-192.png" },
-  redneb:  { label: "Red Cross",   base: "/icons/redneb",  thumb: "/icons/redneb/icon-192.png" },
-  selahred:{ label: "SELAH Red",   base: "/icons/selahred",thumb: "/icons/selahred/icon-192.png" },
-  tigerpurple:    { label: "Purple Tiger",   base: "/icons/tigerpurple",    thumb: "/icons/tigerpurple/icon-192.png" },
-  splatterpurple: { label: "Purple Splatter",base: "/icons/splatterpurple", thumb: "/icons/splatterpurple/icon-192.png" },
-};
-function applyAppIcon(name) {
-  if (typeof document === "undefined") return;
-  const t = ICON_THEMES[name] || ICON_THEMES.default;
-  const b = t.base;
-  const set = (sel, file) => { const el = document.querySelector(sel); if (el) el.setAttribute("href", b + file); };
-  set('link[rel="apple-touch-icon"]', "/apple-touch-icon.png");
-  set('link[rel="icon"][sizes="32x32"]', "/favicon-32.png");
-  set('link[rel="icon"][sizes="16x16"]', "/favicon-16.png");
-  set('link[rel="icon"][type="image/x-icon"]', "/favicon.ico");
-}
-
-// ── Color palettes (override the theme variable package) ──
-const PALETTES = {
-  midnight: { label: "Midnight", swatch: ["#190f0b","#c9a84c","#6e1c1c"], vars: {
-    "--bg":"#190f0b","--surface":"#20130f","--input":"#221610","--input2":"#160d0a",
-    "--border":"#36241c","--border2":"#2e2408","--accent":"#c9a84c","--accent2":"#a8832a",
-    "--ink":"#0e0c06","--text":"#e4dcc8","--text2":"#c8bfa0","--text3":"#c0b898","--text4":"#d4ccb8",
-    "--m1":"#8a7a4a","--m1b":"#8a7a5a","--m2":"#6a5a30","--m3":"#5a4a20","--m3b":"#5a4a2a","--m4":"#4a3e1a","--m5":"#3a3010",
-    "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28" } },
-  warm: { label: "Warm Amber", swatch: ["#241108","#f5894a","#a4734e"], vars: {
-    "--bg":"#241108","--surface":"#311a0e","--input":"#3a2012","--input2":"#2a1409",
-    "--border":"#4a2e1c","--border2":"#3e2616","--accent":"#f5894a","--accent2":"#d2632a",
-    "--ink":"#1a0d05","--text":"#f7e7d6","--text2":"#ecccb4","--text3":"#e2c0a6","--text4":"#f5e6d6",
-    "--m1":"#c79874","--m1b":"#c79874","--m2":"#a4734e","--m3":"#875b3c","--m3b":"#875b3c","--m4":"#6a4630","--m5":"#523524",
-    "--accent-rgb":"245,137,74","--blood-rgb":"150,40,40" } },
-  rose: { label: "Rose", swatch: ["#26101c","#f08fb5","#a86883"], vars: {
-    "--bg":"#26101c","--surface":"#341624","--input":"#3c1a2b","--input2":"#2a1320",
-    "--border":"#4e2840","--border2":"#432234","--accent":"#f08fb5","--accent2":"#cc6090",
-    "--ink":"#1c0c14","--text":"#f8e7ee","--text2":"#edccd8","--text3":"#e2c0cf","--text4":"#f3dde8",
-    "--m1":"#c98ba2","--m1b":"#c98ba2","--m2":"#a86883","--m3":"#8a536c","--m3b":"#8a536c","--m4":"#6c3f53","--m5":"#543141",
-    "--accent-rgb":"240,143,181","--blood-rgb":"160,50,90" } },
-  blossom: { label: "Blossom", swatch: ["#1d1336","#cf9bff","#8772aa"], vars: {
-    "--bg":"#1d1336","--surface":"#271a45","--input":"#2d1e4f","--input2":"#211541",
-    "--border":"#3c2c63","--border2":"#322455","--accent":"#cf9bff","--accent2":"#a86fe0",
-    "--ink":"#150c28","--text":"#f0e8fb","--text2":"#d8ccef","--text3":"#cdc0e6","--text4":"#e6dcf6",
-    "--m1":"#a995c9","--m1b":"#a995c9","--m2":"#8772aa","--m3":"#6f5b90","--m3b":"#6f5b90","--m4":"#564574","--m5":"#43355c",
-    "--accent-rgb":"207,155,255","--blood-rgb":"170,70,120" } },
-  cadet: { label: "Cadet Blue", swatch: ["#0b1a30","#4ec4ff","#5e7a9c"], vars: {
-    "--bg":"#0b1a30","--surface":"#11233f","--input":"#13294a","--input2":"#0e1d36",
-    "--border":"#25405f","--border2":"#1f3650","--accent":"#4ec4ff","--accent2":"#2e84cc",
-    "--ink":"#08121f","--text":"#e4eef8","--text2":"#c4d8ee","--text3":"#bacfe6","--text4":"#d8e6f4",
-    "--m1":"#7e9bbb","--m1b":"#7e9bbb","--m2":"#5e7a9c","--m3":"#4e6582","--m3b":"#4e6582","--m4":"#3e5168","--m5":"#314052",
-    "--accent-rgb":"78,196,255","--blood-rgb":"60,100,170" } },
-  steel: { label: "Steel", swatch: ["#14181d","#93b6cf","#6a7c8a"], vars: {
-    "--bg":"#14181d","--surface":"#1d232a","--input":"#212831","--input2":"#161b21",
-    "--border":"#333c46","--border2":"#2a323b","--accent":"#93b6cf","--accent2":"#5f87a4",
-    "--ink":"#0c1116","--text":"#e8edf2","--text2":"#cdd8e0","--text3":"#c2cfd8","--text4":"#dde6ed",
-    "--m1":"#8a9aa8","--m1b":"#8a9aa8","--m2":"#6a7c8a","--m3":"#586774","--m3b":"#586774","--m4":"#45525d","--m5":"#364049",
-    "--accent-rgb":"147,182,207","--blood-rgb":"100,120,150" } },
-  dark: { label: "Dark", swatch: ["#141215","#c7414c","#7a6f78"], vars: {
-    "--bg":"#141215","--surface":"#1d1a20","--input":"#221e26","--input2":"#17141a",
-    "--border":"#352f3e","--border2":"#2b2733","--accent":"#c7414c","--accent2":"#93303a",
-    "--ink":"#14080a","--text":"#ece6ea","--text2":"#d4ccd2","--text3":"#c8bfc6","--text4":"#f0eaef",
-    "--m1":"#9a8f98","--m1b":"#9a8f98","--m2":"#7a6f78","--m3":"#645b66","--m3b":"#645b66","--m4":"#4e4654","--m5":"#3c3542",
-    "--accent-rgb":"199,65,76","--blood-rgb":"150,40,40" } },
-};
-function ageFromBirthday(bday) {
-  if (!bday) return null;
-  const d = new Date(bday); if (isNaN(d)) return null;
-  const now = new Date();
-  let a = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
-  return a;
-}
-function applyPalette(name) {
-  if (typeof document === "undefined") return;
-  const p = PALETTES[name] || PALETTES.midnight;
-  const root = document.documentElement;
-  Object.entries(p.vars).forEach(([k, v]) => root.style.setProperty(k, v));
-}
-
-// ── Auth + onboarding screen ──
-function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
-  const [mode, setMode] = useState(initialMode || "signup");
-  const [email, setEmail] = useState("");
-  const [pw, setPw] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-  const inputStyle = { width:"100%", boxSizing:"border-box", background:"var(--input2)", border:"1px solid var(--border)", borderRadius:6, padding:"12px 14px", color:"var(--text)", fontFamily:"'Crimson Text',serif", fontSize:17, outline:"none", marginBottom:12 };
-  async function submit() {
-    setErr("");
-    const e = email.trim().toLowerCase();
-    if (!e.includes("@")) { setErr("Enter a valid email."); return; }
-    if (pw.length < 6) { setErr("Password must be at least 6 characters."); return; }
-    setBusy(true);
-    try {
-      const res = await authRequest(mode, e, pw);
-      onAuthed({ email: res.email, token: res.token }, res.data || {}, mode === "signup");
-    } catch (ex) { setErr(ex.message || "Something went wrong."); }
-    setBusy(false);
-  }
-  return (
-    <div className="fade-in">
-      {onBack && (
-        <button onClick={onBack} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Back</button>
-      )}
-      {intro && (
-        <div style={{textAlign:"center",marginBottom:18}}>
-          <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={40} glow={true}/></div>
-          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:24,fontWeight:700,letterSpacing:"0.12em",color:SELAH_CREAM,textShadow:"0 0 22px rgba(var(--accent-rgb),0.3)",marginBottom:6}}>SELAH</h2>
-          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.5,marginBottom:4}}>Read. Mark. Return.</p>
-          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",lineHeight:1.55,maxWidth:330,margin:"0 auto"}}>
-            Make an account to carry your log and settings across every device. Or step straight in. Your reading stays yours.
-          </p>
-        </div>
-      )}
-      <div className="card">
-        <div style={{display:"flex",gap:8,marginBottom:18}}>
-          {[["signup","Create Account"],["login","Sign In"]].map(([val,label])=>(
-            <button key={val} className={`version-pill ${mode===val?"active":""}`} onClick={()=>{ setMode(val); setErr(""); }} style={{flex:1}}>{label}</button>
-          ))}
-        </div>
-        <p className="label">Email</p>
-        <input type="email" autoComplete="email" inputMode="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle}/>
-        <p className="label">Password</p>
-        <input type="password" autoComplete={mode==="signup"?"new-password":"current-password"} value={pw} onChange={e=>setPw(e.target.value)} placeholder="At least 6 characters" style={inputStyle}
-          onKeyDown={e=>{ if(e.key==="Enter") submit(); }}/>
-        {err && <p style={{color:"#d98a8a",fontFamily:"'Crimson Text',serif",fontSize:15,marginBottom:12,lineHeight:1.5}}>{err}</p>}
-        <button className="btn-primary" style={{width:"100%",padding:"13px",opacity:busy?0.6:1}} disabled={busy} onClick={submit}>
-          {busy ? "Working…" : (mode==="signup" ? "Create Account" : "Sign In")}
-        </button>
-        <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)",textAlign:"center",marginTop:12,lineHeight:1.55}}>
-          Why sign in: so your reading log and settings follow you to every device. Your photos and location stay on this device. If you would rather not, you can continue without an account.
-        </p>
-      </div>
-      {onSkip && (
-        <div style={{textAlign:"center",marginTop:4}}>
-          <button onClick={onSkip} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,padding:8}}>
-            Continue without an account
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Midnight Ministries footer (always visible) ──
-function MMFooter({ onEggOpen, onHomeView }) {
-  return (
-    <div style={{
-      position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-      background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
-      paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
-      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"none"
-    }}>
-      <svg width="0" height="0" style={{position:"absolute"}}>
-        <defs>
-          <filter id="chalk-mm" x="-5%" y="-30%" width="110%" height="160%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="7" result="noise"/>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-            <feGaussianBlur in="displaced" stdDeviation="0.35" result="soft"/>
-            <feComposite in="soft" in2="SourceGraphic" operator="in" result="clipped"/>
-            <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="var(--accent)" floodOpacity="0.45"/>
-          </filter>
-        </defs>
-      </svg>
-      <span onClick={()=>{ if(onHomeView) onEggOpen("mm"); }} style={{
-        fontFamily:"'Cinzel',serif",
-        fontSize:12,
-        letterSpacing:"0.22em",
-        textTransform:"uppercase",
-        color:CROSS_RED,
-        textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",
-        filter:"url(#chalk-mm)",
-        paddingBottom:1,
-        cursor:onHomeView?"pointer":"default",
-        pointerEvents:"all"
-      }}>
-        MIDNIGHT MINISTRIES
-      </span>
-    </div>
-  );
-}
-
-// ── Export bottom sheet ──
-// ── Six-box PIN input ──
-function PinBoxes({ value, onChange, autoFocus }) {
-  const refs = useRef([]);
-  const set = (i, raw) => {
-    const d = (raw || "").replace(/\D/g, "");
-    if (d.length > 1) { const nv = d.slice(0, 6); onChange(nv); refs.current[Math.min(nv.length, 5)] && refs.current[Math.min(nv.length, 5)].focus(); return; }
-    const arr = (value || "").padEnd(6, " ").split("");
-    arr[i] = d || " ";
-    const nv = arr.join("").replace(/ /g, "").slice(0, 6);
-    onChange(nv);
-    if (d && i < 5 && refs.current[i + 1]) refs.current[i + 1].focus();
-  };
-  const onKey = (i, e) => { if (e.key === "Backspace" && !value[i] && i > 0 && refs.current[i - 1]) refs.current[i - 1].focus(); };
-  return (
-    <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-      {[0,1,2,3,4,5].map(i => (
-        <input key={i} ref={el => refs.current[i] = el} value={value[i] || ""} inputMode="numeric" maxLength={1}
-          autoFocus={autoFocus && i === 0}
-          onChange={e => set(i, e.target.value)} onKeyDown={e => onKey(i, e)}
-          style={{ flex: 1, minWidth: 0, height: 54, textAlign: "center", background: "var(--input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)", fontFamily: "'Crimson Text',serif", fontSize: 26, outline: "none" }} />
-      ))}
-    </div>
-  );
 }
 
 function ExportSheet({ session, onClose }) {
   const hasRV = !!(session.aiResult && session.aiResult.returnVerses && session.aiResult.returnVerses[0]);
   const hasPhoto = !!session.photoData;
-  const [opts, setOpts] = useState({ aspect:"square", font:"serif", textColor:"#c9a84c", opacity:1, content:"session", showPhoto:true, offX:0, offY:0 });
-  const set = (k,v)=>setOpts(o=>({...o,[k]:v}));
-  const aspectPad = { square:"100%", portrait:"125%", story:"177.78%" };
-  const [state, setState] = useState("idle");
+  const [layout, setLayout] = useState(()=>({ ...defaultLayout(session, hasPhoto), font:"serif" }));
+  const [sel, setSel] = useState(null);      // selected element key
   const [shareFile, setShareFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [state, setState] = useState("idle");
   const urlRef = useRef(null);
-  const sheetRef = useRef(null);
-  const dragStart = useRef(null); const dragCur = useRef(0);
-  function onTS(e){ dragStart.current=e.touches[0].clientY; dragCur.current=0; if(sheetRef.current) sheetRef.current.style.transition="none"; }
-  function onTM(e){ if(dragStart.current==null) return; const dy=e.touches[0].clientY-dragStart.current; dragCur.current=dy>0?dy:0; if(sheetRef.current) sheetRef.current.style.transform=`translateY(${dragCur.current}px)`; }
-  function onTE(){ if(dragStart.current==null) return; const d=dragCur.current; dragStart.current=null; if(sheetRef.current){ sheetRef.current.style.transition="transform 0.25s ease"; sheetRef.current.style.transform="translateY(0)"; } if(d>110) onClose(); }
+  const stageRef = useRef(null);
+  const drag = useRef(null);
+  const DIMS = { square:[1080,1080], portrait:[1080,1350], story:[1080,1920] };
+  const [aw,ah] = DIMS[layout.aspect];
+  const aspectPad = (ah/aw*100)+"%";
 
-  // Rebuild card whenever options change (keeps Share gesture: file is always ready)
+  const setEl = (key,patch)=>setLayout(L=>({ ...L, els:{ ...L.els, [key]:{ ...L.els[key], ...patch } } }));
+  const setPhoto = (patch)=>setLayout(L=>({ ...L, photo:{ ...L.photo, ...patch } }));
+
+  function pointerDown(e, key){
+    e.stopPropagation(); setSel(key);
+    const st=stageRef.current.getBoundingClientRect();
+    drag.current={ key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf, w:st.width, h:st.height };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function pointerMove(e){
+    if(!drag.current) return;
+    const d=drag.current;
+    const nx=Math.max(0.02,Math.min(0.98, d.ox + (e.clientX-d.sx)/d.w));
+    const ny=Math.max(0.02,Math.min(0.98, d.oy + (e.clientY-d.sy)/d.h));
+    setEl(d.key,{ xf:nx, yf:ny });
+  }
+  function pointerUp(){ drag.current=null; }
+
+  // content -> body text
+  function setContent(c){
+    let text = session.passage||"";
+    if(c==="return" && hasRV) text = session.aiResult.returnVerses[0].ref;
+    else if(c==="anchor") text = "Read. Mark. Return.";
+    else if(c==="passage") text = session.passage||"";
+    setLayout(L=>({ ...L, content:c, els:{ ...L.els, body:{ ...L.els.body, text } } }));
+  }
+
   useEffect(()=>{
-    let alive=true;
-    const t=setTimeout(()=>{
-      generateShareCard(session,opts).then(blob=>{
+    let alive=true; const t=setTimeout(()=>{
+      composeCard(session, layout).then(blob=>{
         if(!alive||!blob) return;
         if(urlRef.current) URL.revokeObjectURL(urlRef.current);
-        urlRef.current=URL.createObjectURL(blob);
-        setPreviewUrl(urlRef.current);
+        urlRef.current=URL.createObjectURL(blob); setPreviewUrl(urlRef.current);
         setShareFile(new File([blob],"selah-session.png",{type:"image/png"}));
       });
-    },120);
+    },140);
     return ()=>{ alive=false; clearTimeout(t); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[opts]);
+  },[layout]);
   useEffect(()=>()=>{ if(urlRef.current) URL.revokeObjectURL(urlRef.current); },[]);
 
   function handleShareImage(){
     if(!shareFile) return;
-    try{
-      if(navigator.share && navigator.canShare?.({files:[shareFile]})){
-        navigator.share({files:[shareFile],title:"SELAH",text:`${session.passage} — Selah by Midnight Ministries`}).catch(()=>{});
-      } else { const url=URL.createObjectURL(shareFile); const a=document.createElement("a"); a.href=url; a.download="selah-session.png"; a.click(); URL.revokeObjectURL(url); }
-    }catch{}
+    try{ if(navigator.share && navigator.canShare?.({files:[shareFile]})) navigator.share({files:[shareFile],title:"SELAH",text:`${session.passage} — Selah by Midnight Ministries`}).catch(()=>{});
+      else { const url=URL.createObjectURL(shareFile); const a=document.createElement("a"); a.href=url; a.download="selah-session.png"; a.click(); URL.revokeObjectURL(url); } }catch{}
   }
   async function handleSaveNote(){ setState("working"); await shareAsNote(session); setState("idle"); }
 
   const Seg = ({label, options, value, onPick}) => (
-    <div style={{marginBottom:14}}>
+    <div style={{marginBottom:12}}>
       <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>{label}</p>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-        {options.map(([v,lbl])=>(<button key={v} className={`version-pill ${value===v?"active":""}`} onClick={()=>onPick(v)}>{lbl}</button>))}
-      </div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>{options.map(([v,lbl])=>(<button key={v} className={`version-pill ${value===v?"active":""}`} onClick={()=>onPick(v)}>{lbl}</button>))}</div>
     </div>
   );
+  const contentOpts=[["session","Session"],["passage","Passage"]]; if(hasRV) contentOpts.push(["return","Return Verse"]); contentOpts.push(["anchor","Read. Mark. Return."]);
+  const selEl = sel ? layout.els[sel] : null;
+  const elName = { cross:"Cross", selah:"SELAH", body:"Verse", mm:"Ministry" };
 
-  const contentOpts = [["session","Session"],["passage","Passage"]];
-  if (hasRV) contentOpts.push(["return","Return Verse"]);
-  contentOpts.push(["anchor","Read. Mark. Return."]);
-  const photoOn = hasPhoto && opts.showPhoto;
+  // preview element rendering
+  const renderEl = (key) => {
+    const el = layout.els[key]; if(!el.show) return null;
+    const common = { position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, cursor:"grab", touchAction:"none", outline:sel===key?"1.5px dashed rgba(201,168,76,0.9)":"none", outlineOffset:4 };
+    if(el.kind==="cross"){
+      const px = el.size*1.5*100;
+      return <div key={key} onPointerDown={e=>pointerDown(e,key)} style={{ ...common, width:el.size*100+"%", height:px+"%", maxHeight:"none", backgroundColor:el.color, WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" }}/>;
+    }
+    return <div key={key} onPointerDown={e=>pointerDown(e,key)} style={{ ...common, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew, 320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
+  };
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(10,8,4,0.85)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <div ref={sheetRef} onClick={e=>e.stopPropagation()} style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:"12px 12px 0 0",padding:"calc(env(safe-area-inset-top,0px) + 14px) 18px calc(env(safe-area-inset-bottom,0px) + 28px)",width:"100%",maxWidth:480,maxHeight:"86dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",willChange:"transform"}}>
-        <div onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} style={{padding:"6px 0 14px",cursor:"grab"}}>
-          <div style={{width:44,height:4,background:"var(--m3)",borderRadius:2,margin:"0 auto"}}/>
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(10,8,4,0.9)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:"12px 12px 0 0",padding:"calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 24px)",width:"100%",maxWidth:480,maxHeight:"92dvh",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+        <div style={{width:44,height:4,background:"var(--m3)",borderRadius:2,margin:"0 auto 14px"}}/>
+        <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--m3)",textAlign:"center",letterSpacing:"0.06em",marginBottom:12}}>Tap a piece to select it. Drag it anywhere.</p>
+
+        {/* Interactive stage */}
+        <div ref={el=>{ stageRef.current=el; if(el) el.style.setProperty('--stagew', el.getBoundingClientRect().width+'px'); }}
+          onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={pointerUp} onClick={()=>setSel(null)}
+          style={{position:"relative",width:layout.aspect==="story"?"56%":"86%",margin:"0 auto 14px",paddingBottom:layout.aspect==="story"?"99.6%":(aspectPad),borderRadius:10,overflow:"hidden",border:"1px solid var(--border2)",background:"#0e0c06",touchAction:"none"}}>
+          {layout.photo.show && session.photoData
+            ? <img src={session.photoData} alt="" draggable={false} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:`${layout.photo.x*100}% ${layout.photo.y*100}%`}}/>
+            : <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,var(--surface),var(--bg))"}}/>}
+          {layout.photo.show && session.photoData && <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,8,4,0.45),rgba(10,8,4,0.2),rgba(10,8,4,0.6))"}}/>}
+          {["cross","selah","body","mm"].map(renderEl)}
         </div>
 
-        {/* Live preview — pinned so it stays visible while you adjust controls below */}
-        <div style={{position:"sticky",top:0,zIndex:5,background:"var(--surface)",paddingBottom:12,marginBottom:6}}>
-          <div style={{width:opts.aspect==="story"?200:300,maxWidth:"82%",margin:"0 auto",position:"relative",paddingBottom:`min(${aspectPad[opts.aspect]||"100%"}, ${opts.aspect==="story"?"480px":"320px"})`,borderRadius:10,overflow:"hidden",border:"1px solid var(--border2)",background:"#0e0c06"}}>
-            {previewUrl ? <img src={previewUrl} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/> : <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.1em"}}>BUILDING…</span></div>}
+        {/* Selected-element controls */}
+        {selEl && (
+          <div style={{background:"var(--input)",border:"1px solid var(--border)",borderRadius:8,padding:"12px 14px",marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{elName[sel]}</span>
+              <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"4px 10px",color:"var(--m3)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:10}}>
+              {CARD_COLORS.map(([hex,lbl])=>(
+                <button key={hex} onClick={()=>setEl(sel,{color:hex})} title={lbl} style={{width:26,height:26,borderRadius:"50%",background:hex,border:selEl.color===hex?"2px solid var(--accent)":"1px solid var(--border2)",cursor:"pointer",padding:0}}/>
+              ))}
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.08em",width:44}}>SIZE</span>
+              <input type="range" min="0.02" max="0.16" step="0.004" value={selEl.size} onChange={e=>setEl(sel,{size:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.08em",width:44}}>ROTATE</span>
+              <input type="range" min="-45" max="45" step="1" value={selEl.rot||0} onChange={e=>setEl(sel,{rot:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/>
+            </div>
           </div>
-        </div>
-
-        <Seg label="On the card" options={contentOpts} value={opts.content} onPick={v=>set("content",v)}/>
-        <Seg label="Frame" options={[["square","Square"],["portrait","Portrait"],["story","Story"]]} value={opts.aspect} onPick={v=>set("aspect",v)}/>
-        {hasPhoto && (
-          <Seg label="Photo" options={[[true,"Show photo"],[false,"Hide photo"]]} value={opts.showPhoto} onPick={v=>set("showPhoto",v)}/>
         )}
-        {photoOn && (
-          <div style={{marginBottom:14}}>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Move photo — up / down</p>
-            <input type="range" min="-1" max="1" step="0.04" value={opts.offY} onChange={e=>set("offY",parseFloat(e.target.value))} style={{width:"100%",accentColor:"var(--accent)",marginBottom:10}}/>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Move photo — left / right</p>
-            <input type="range" min="-1" max="1" step="0.04" value={opts.offX} onChange={e=>set("offX",parseFloat(e.target.value))} style={{width:"100%",accentColor:"var(--accent)"}}/>
+
+        {/* hidden elements: tap to bring back */}
+        {Object.keys(layout.els).some(k=>!layout.els[k].show) && (
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+            {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(
+              <button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); }} className="version-pill">+ {elName[k]}</button>
+            ))}
           </div>
         )}
-        <Seg label="Font" options={[["serif","Serif"],["cinzel","Cinzel"],["crimson","Crimson"],["sans","Sans"]]} value={opts.font} onPick={v=>set("font",v)}/>
 
-        <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Text color</p>
-        <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:14}}>
-          {[["#c9a84c","Gold"],["#ece0c6","Cream"],["#b5302f","Blood Red"],["#b07fe0","Purple"]].map(([hex,lbl])=>(
-            <button key={hex} onClick={()=>set("textColor",hex)} style={{display:"flex",alignItems:"center",gap:7,background:"transparent",border:opts.textColor===hex?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:6,padding:"6px 10px",cursor:"pointer"}}>
-              <span style={{width:18,height:18,borderRadius:"50%",background:hex,border:"1px solid var(--border2)"}}/>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",color:opts.textColor===hex?"var(--accent)":"var(--m3)"}}>{lbl}</span>
-            </button>
-          ))}
-        </div>
+        <Seg label="Verse text" options={contentOpts} value={layout.content} onPick={setContent}/>
+        <Seg label="Frame" options={[["square","Square"],["portrait","Portrait"],["story","Story"]]} value={layout.aspect} onPick={v=>setLayout(L=>({...L,aspect:v}))}/>
+        {hasPhoto && <Seg label="Photo" options={[[true,"Show photo"],[false,"Hide photo"]]} value={layout.photo.show} onPick={v=>setPhoto({show:v})}/>}
+        {hasPhoto && layout.photo.show && (
+          <div style={{marginBottom:12}}>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Photo position — up / down</p>
+            <input type="range" min="0" max="1" step="0.02" value={layout.photo.y} onChange={e=>setPhoto({y:parseFloat(e.target.value)})} style={{width:"100%",accentColor:"var(--accent)",marginBottom:8}}/>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Photo position — left / right</p>
+            <input type="range" min="0" max="1" step="0.02" value={layout.photo.x} onChange={e=>setPhoto({x:parseFloat(e.target.value)})} style={{width:"100%",accentColor:"var(--accent)"}}/>
+          </div>
+        )}
+        <Seg label="Font" options={[["serif","Serif"],["cinzel","Cinzel"],["crimson","Crimson"],["sans","Sans"]]} value={layout.font} onPick={v=>setLayout(L=>({...L,font:v}))}/>
 
-        <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Text opacity</p>
-        <input type="range" min="0.5" max="1" step="0.05" value={opts.opacity} onChange={e=>set("opacity",parseFloat(e.target.value))} style={{width:"100%",accentColor:"var(--accent)",marginBottom:18}}/>
-
-        <button onClick={handleShareImage} disabled={!shareFile} className="btn-primary" style={{width:"100%",padding:"14px",marginBottom:10,opacity:shareFile?1:0.6}}>Share Image</button>
+        <button onClick={handleShareImage} disabled={!shareFile} className="btn-primary" style={{width:"100%",padding:"14px",marginTop:6,marginBottom:10,opacity:shareFile?1:0.6}}>Share Image</button>
         <button onClick={handleSaveNote} disabled={state==="working"} className="btn-ghost" style={{width:"100%",padding:"13px",marginBottom:8}}>Save text to Notes or Files</button>
-        <p style={{fontFamily:"'Crimson Text',serif",fontSize:12,color:"var(--m4)",textAlign:"center",lineHeight:1.6,marginTop:6}}>
-          Your own reflections stay private in the Notes/Files export. Cards carry Scripture, not free text.
-        </p>
-        <button onClick={onClose} style={{width:"100%",marginTop:14,padding:"12px",background:"transparent",border:"1px solid var(--border2)",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:12,color:"var(--m4)",textAlign:"center",lineHeight:1.6}}>Your own reflections stay private in the Notes/Files export. Cards carry Scripture, not free text.</p>
+        <button onClick={onClose} style={{width:"100%",marginTop:12,padding:"12px",background:"transparent",border:"1px solid var(--border2)",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
       </div>
     </div>
   );
