@@ -11,11 +11,12 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: JSON.stringify({ error: "API key not configured." }) };
   }
 
-  console.log("API key found, length:", apiKey.length);
-
   try {
     const body = JSON.parse(event.body);
     const { system, message } = body;
+    if (typeof message !== "string" || !message.trim()) {
+      return { statusCode: 400, headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify({ error: "Missing message." }) };
+    }
 
     const payload = JSON.stringify({
       model: "claude-opus-4-5",
@@ -23,8 +24,6 @@ exports.handler = async (event) => {
       system: system,
       messages: [{ role: "user", content: message }]
     });
-
-    console.log("Calling Anthropic API, message length:", message?.length);
 
     const data = await new Promise((resolve, reject) => {
       const req = https.request({

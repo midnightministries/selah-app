@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b50";
+const BUILD = "2026.05.21-b52";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -93,9 +93,9 @@ function FooterCross({ size = 14 }) {
   );
 }
 
-function ChevronIcon({ open }) {
+function ChevronIcon({ open, size=14 }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
       style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}>
       <polyline points="6 9 12 15 18 9"/>
     </svg>
@@ -253,6 +253,14 @@ function wrapText(ctx, text, maxWidth) {
 }
 
 const CARD_COLORS = [["#c9a84c","Gold"],["#ece0c6","Cream"],["#ffffff","White"],["#b5302f","Blood Red"],["#b07fe0","Purple"],["#5aa0d6","Sky"],["#5fae7a","Green"],["#0e0c06","Ink"]];
+const BG_OPTIONS = [
+  ["ink","Ink","#0e0c06","#0e0c06"],
+  ["embers","Embers","#2a1408","#0c0905"],
+  ["oxblood","Oxblood","#2a0c0c","#0c0606"],
+  ["plum","Plum","#1d0b18","#0b0610"],
+  ["nightsky","Night Sky","#0c1424","#070a12"],
+  ["forest","Forest","#0c1a12","#070d08"],
+];
 const CARD_FONTS = { serif:"Georgia, serif", cinzel:"Cinzel, Georgia, serif", crimson:"'Crimson Text', Georgia, serif", sans:"Helvetica, Arial, sans-serif" };
 
 function defaultLayout(session, hasPhoto, fam) {
@@ -280,6 +288,11 @@ function composeCard(session, layout) {
     const cv = document.createElement("canvas"); cv.width=W; cv.height=H; const ctx=cv.getContext("2d");
     const crossEl = document.querySelector('img[src^="data:image/png;base64,iVBOR"]');
     const els = layout.els;
+    function paintBg(){
+      const o = BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink")) || BG_OPTIONS[0];
+      if(o[2]===o[3]){ ctx.fillStyle=o[2]; ctx.fillRect(0,0,W,H); }
+      else { const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,o[2]); g.addColorStop(1,o[3]); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+    }
     function drawText(el){
       if(!el.show || !el.text) return;
       const fpx = el.size*W;
@@ -313,7 +326,7 @@ function composeCard(session, layout) {
     if (layout.photo.show && session.photoData){
       const img=new Image();
       img.onload=()=>{
-        ctx.fillStyle="#0e0c06"; ctx.fillRect(0,0,W,H);
+        paintBg();
         const z=layout.photo.zoom||1;
         const r=Math.max(W/img.width,H/img.height), dw=img.width*r*z, dh=img.height*r*z;
         ctx.drawImage(img,(W-dw)*layout.photo.x,(H-dh)*layout.photo.y,dw,dh);
@@ -321,13 +334,7 @@ function composeCard(session, layout) {
       };
       img.src=session.photoData;
     } else {
-      let pBg="#190f0b",pSurface="#20130f",pAcc="201,168,76";
-      try { const cs=getComputedStyle(document.documentElement);
-        pBg=(cs.getPropertyValue('--bg')||'').trim()||pBg; pSurface=(cs.getPropertyValue('--surface')||'').trim()||pSurface; pAcc=(cs.getPropertyValue('--accent-rgb')||'').trim()||pAcc; } catch {}
-      ctx.fillStyle=pBg; ctx.fillRect(0,0,W,H);
-      const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,pSurface); g.addColorStop(1,pBg); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-      const rad=ctx.createRadialGradient(W*0.3,H*0.34,0,W*0.3,H*0.34,Math.max(W,H)*0.7);
-      rad.addColorStop(0,`rgba(${pAcc},0.10)`); rad.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=rad; ctx.fillRect(0,0,W,H);
+      paintBg();
       finish();
     }
   });
@@ -448,11 +455,23 @@ function applyAppIcon(name) {
   if (typeof document === "undefined") return;
   const t = ICON_THEMES[name] || ICON_THEMES.default;
   const b = t.base;
-  const set = (sel, file) => { const el = document.querySelector(sel); if (el) el.setAttribute("href", b + file); };
-  set('link[rel="apple-touch-icon"]', "/apple-touch-icon.png");
-  set('link[rel="icon"][sizes="32x32"]', "/favicon-32.png");
-  set('link[rel="icon"][sizes="16x16"]', "/favicon-16.png");
-  set('link[rel="icon"][type="image/x-icon"]', "/favicon.ico");
+  const v = "?v=" + encodeURIComponent(name);   // cache-buster so the browser refetches
+  const head = document.head;
+  // Recreate the link nodes instead of mutating href in place. Browsers
+  // (Chrome especially) often ignore an in-place href change and keep the
+  // cached favicon; removing + re-adding forces a refresh of the tab/dock icon.
+  const swap = (sel, rel, attrs, file) => {
+    document.querySelectorAll(sel).forEach(el => el.parentNode && el.parentNode.removeChild(el));
+    const link = document.createElement("link");
+    link.setAttribute("rel", rel);
+    Object.entries(attrs).forEach(([k, val]) => link.setAttribute(k, val));
+    link.setAttribute("href", b + file + v);
+    head.appendChild(link);
+  };
+  swap('link[rel="icon"][type="image/x-icon"]', "icon", { type: "image/x-icon" }, "/favicon.ico");
+  swap('link[rel="icon"][sizes="32x32"]', "icon", { type: "image/png", sizes: "32x32" }, "/favicon-32.png");
+  swap('link[rel="icon"][sizes="16x16"]', "icon", { type: "image/png", sizes: "16x16" }, "/favicon-16.png");
+  swap('link[rel="apple-touch-icon"]', "apple-touch-icon", { sizes: "180x180" }, "/apple-touch-icon.png");
 }
 
 // ── Color palettes (override the theme variable package) ──
@@ -669,7 +688,11 @@ function ExportSheet({ session, onClose }) {
   useEffect(()=>{ let alive=true; const t=setTimeout(()=>{ composeCard(session, layout).then(b=>{ if(alive&&b) setShareFile(new File([b],"selah-session.png",{type:"image/png"})); }); },120); return ()=>{ alive=false; clearTimeout(t); }; },[layout]);
 
   const baseRatio=Math.max(W/nat.w,H/nat.h), z=layout.photo.zoom||1;
+  const fitRatio=Math.min(W/nat.w,H/nat.h);
+  const minZoom=fitRatio/baseRatio;   // zoom-out limit: photo just fits inside frame
   const bgWpct=(nat.w*baseRatio*z)/W*100, bgHpct=(nat.h*baseRatio*z)/H*100;
+  const bgOpt=BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink"))||BG_OPTIONS[0];
+  const stageBg=bgOpt[2]===bgOpt[3]?bgOpt[2]:`linear-gradient(180deg,${bgOpt[2]},${bgOpt[3]})`;
 
   function stageDown(e){
     ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId);
@@ -682,7 +705,7 @@ function ExportSheet({ session, onClose }) {
   function stageMove(e){
     if(ptrs.current.has(e.pointerId)) ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
     const r=stageRef.current?.getBoundingClientRect(); if(!r) return;
-    if(pinch.current && ptrs.current.size>=2){ const v=[...ptrs.current.values()]; const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y); setPhoto({zoom:clamp(pinch.current.z*(d/pinch.current.d),1,3)}); return; }
+    if(pinch.current && ptrs.current.size>=2){ const v=[...ptrs.current.values()]; const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y); setPhoto({zoom:clamp(pinch.current.z*(d/pinch.current.d),minZoom,3)}); return; }
     const d=dragRef.current; if(!d) return;
     if(d.type==="photo"){ const slX=r.width*(bgWpct/100-1), slY=r.height*(bgHpct/100-1); let nx=layout.photo.x, ny=layout.photo.y; if(slX>1) nx=clamp(d.ox-(e.clientX-d.sx)/slX,0,1); if(slY>1) ny=clamp(d.oy-(e.clientY-d.sy)/slY,0,1); setPhoto({x:nx,y:ny}); }
     else if(d.type==="el"){ setEl(d.key,{ xf:clamp(d.ox+(e.clientX-d.sx)/r.width,0.02,0.98), yf:clamp(d.oy+(e.clientY-d.sy)/r.height,0.02,0.98) }); }
@@ -704,23 +727,22 @@ function ExportSheet({ session, onClose }) {
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:48,height:48,borderRadius:"50%",background:"rgba(20,14,10,0.78)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.5)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",...extra });
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.95)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
       {/* full-bleed stage */}
       <div ref={el=>{ stageRef.current=el; if(el) el.style.setProperty('--stagew', el.getBoundingClientRect().width+'px'); }}
         onPointerDown={stageDown} onPointerMove={stageMove} onPointerUp={stageUp} onPointerCancel={stageUp}
-        style={{position:"relative",aspectRatio:`${W} / ${H}`,maxWidth:"100%",maxHeight:"100%",width:"100%",overflow:"hidden",background:"#0e0c06",touchAction:"none",userSelect:"none"}}>
+        style={{position:"relative",aspectRatio:`${W} / ${H}`,maxWidth:"100%",maxHeight:"100%",width:"100%",overflow:"hidden",background:stageBg,touchAction:"none",userSelect:"none"}}>
         {layout.photo.show && hasPhoto
-          ? <div style={{position:"absolute",inset:0,backgroundImage:`url(${session.photoData})`,backgroundRepeat:"no-repeat",backgroundSize:`${bgWpct}% ${bgHpct}%`,backgroundPosition:`${layout.photo.x*100}% ${layout.photo.y*100}%`}}/>
-          : <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,var(--surface),var(--bg))"}}/>}
+          && <div style={{position:"absolute",inset:0,backgroundImage:`url(${session.photoData})`,backgroundRepeat:"no-repeat",backgroundSize:`${bgWpct}% ${bgHpct}%`,backgroundPosition:`${layout.photo.x*100}% ${layout.photo.y*100}%`}}/>}
         {layout.photo.show && hasPhoto && <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"linear-gradient(180deg,rgba(10,8,4,0.5),rgba(10,8,4,0.22),rgba(10,8,4,0.62))"}}/>}
         {["cross","selah","body","mm"].map(renderEl)}
       </div>
 
       {/* top-left: frame toggle */}
-      <button onClick={()=>setLayout(L=>({...L,aspect:L.aspect==="square"?"story":"square"}))} style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 12px)",left:14,...circle({fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.04em"})}}>{layout.aspect==="square"?"1:1":"9:16"}</button>
+      <button onClick={()=>setLayout(L=>({...L,aspect:L.aspect==="square"?"story":"square"}))} style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 12px)",left:14,...circle({fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.04em"})}}>{layout.aspect==="square"?"1:1":"9:16"}</button>
 
       {/* top-right: content + font toggles */}
       <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 12px)",right:14,display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
@@ -731,7 +753,7 @@ function ExportSheet({ session, onClose }) {
 
       {/* selected element controls (floating, no reflow) */}
       {selEl && (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 86px)",background:"rgba(20,14,10,0.86)",backdropFilter:"blur(6px)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 14px"}}>
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 86px)",background:"rgba(14,10,6,0.55)",backdropFilter:"blur(8px)",border:"1px solid var(--border)",borderRadius:12,padding:"9px 12px"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
             <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{elName[sel]}</span>
             <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"4px 10px",color:"var(--text2)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
@@ -747,12 +769,24 @@ function ExportSheet({ session, onClose }) {
       {/* restore hidden pieces */}
       {!selEl && Object.keys(layout.els).some(k=>!layout.els[k].show) && (
         <div style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 86px)",display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center"}}>
-          {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(<button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); }} className="version-pill">+ {elName[k]}</button>))}
+          {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(<button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); }} style={{background:"rgba(14,10,6,0.95)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",borderRadius:20,padding:"9px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.06em",cursor:"pointer"}}>+ {elName[k]}</button>))}
         </div>
       )}
 
-      {/* bottom-left close */}
-      <button onClick={onClose} style={{position:"absolute",left:18,bottom:"calc(env(safe-area-inset-bottom,0px) + 18px)",...circle({fontSize:20})}}>×</button>
+      {/* background picker (only when no photo is showing) */}
+      {!selEl && (!hasPhoto || !layout.photo.show) && (
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 150px)",background:"rgba(14,10,6,0.6)",backdropFilter:"blur(6px)",border:"1px solid var(--border)",borderRadius:12,padding:"10px 12px"}}>
+          <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:8,textAlign:"center"}}>Background</p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+            {BG_OPTIONS.map(([id,lbl,top,bot])=>(
+              <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:34,height:34,borderRadius:"50%",background:top===bot?top:`linear-gradient(180deg,${top},${bot})`,border:(layout.bg||"ink")===id?"2px solid var(--accent)":"1px solid var(--border2)",cursor:"pointer",padding:0}}/>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* bottom-left close — no circle, larger, themed glow */}
+      <button onClick={onClose} aria-label="Close" style={{position:"absolute",left:20,bottom:"calc(env(safe-area-inset-bottom,0px) + 14px)",background:"transparent",border:"none",cursor:"pointer",fontSize:46,lineHeight:1,color:"var(--accent)",textShadow:"0 0 14px rgba(var(--accent-rgb),0.85), 0 0 4px rgba(0,0,0,0.8)",padding:0,fontWeight:300}}>×</button>
       {/* bottom-right share */}
       <div style={{position:"absolute",right:18,bottom:"calc(env(safe-area-inset-bottom,0px) + 18px)"}}>
         {shareOpen && (
@@ -1601,6 +1635,8 @@ export default function App() {
   const [visualsOpen, setVisualsOpen] = useState(false);
   const [showAddReader, setShowAddReader] = useState(false);
   const syncTimer = useRef(null);
+  const syncStateRef = useRef("idle");      // mirror of syncState for use inside stable effects
+  const applySyncRef = useRef(null);        // always points at the latest applySync closure
 
   // ── Profiles (owner + up to 2 kids). Sessions are tagged with profileId and
   //   kept in one device store; per-profile content settings swap on switch. ──
@@ -1739,6 +1775,7 @@ export default function App() {
       });
     }
   }
+  applySyncRef.current = applySync;
   function setupIsDone() {
     return localStorage.getItem("selah_setup_done") === "1";
   }
@@ -1815,6 +1852,39 @@ export default function App() {
     syncRequest("save", account, gatherSync()).then(()=>setSyncState("synced")).catch(()=>setSyncState("error"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profiles, activeProfileId]);
+
+  // Keep a ref copy of sync state so the focus/online listeners (bound once) can read it.
+  useEffect(() => { syncStateRef.current = syncState; }, [syncState]);
+
+  // Installed/pinned app stays current: re-pull from the server whenever the app
+  // regains focus, becomes visible again, or reconnects. A standalone PWA keeps
+  // the page alive in the background, so the launch load never re-runs; without
+  // this, a home-screen icon could show stale data even while online.
+  useEffect(() => {
+    if (!account) return;
+    let busy = false;
+    const refresh = () => {
+      if (busy) return;
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+      if (!hydratedRef.current) return;            // initial load not finished
+      if (syncStateRef.current === "saving") return; // a local edit is mid-save; don't clobber
+      busy = true;
+      syncRequest("load", account, null)
+        .then(res => { if (res && res.data && applySyncRef.current) applySyncRef.current(res.data); setSyncState("synced"); })
+        .catch(() => {})
+        .finally(() => { busy = false; });
+    };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("online", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("online", refresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -2698,9 +2768,9 @@ export default function App() {
                           {s.bibleVersion && <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m5)",letterSpacing:"0.08em"}}>{s.bibleVersion}</span>}
                         </div>
                       </div>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8,flexShrink:0}}>
-                        <button className="btn-danger" onClick={e=>{e.stopPropagation();deleteSession(s.id);}}>×</button>
-                        <ChevronIcon open={expandedSession===s.id}/>
+                      <div style={{display:"flex",alignItems:"center",gap:12,marginLeft:8,flexShrink:0}}>
+                        <button className="btn-danger" onClick={e=>{e.stopPropagation();deleteSession(s.id);}} style={{fontSize:24,lineHeight:1,padding:"3px 13px"}}>×</button>
+                        <ChevronIcon open={expandedSession===s.id} size={24}/>
                       </div>
                     </div>
                     {expandedSession===s.id && s.aiResult && (
