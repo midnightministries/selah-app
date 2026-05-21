@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b18";
+const BUILD = "2026.05.20-b19";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1323,6 +1323,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem("selah_textscale", String(textScale)); }, [textScale]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
+  const eggScrollRef = useRef(null);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 420);
@@ -1589,8 +1590,8 @@ export default function App() {
             </button>
           )}
           {view !== "session" && (
-            <button onClick={()=>setShowBright(s=>!s)} aria-label="Brightness" style={{position:"absolute",right:36,top:28,background:"transparent",border:"none",color:showBright?"#c9a84c":"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:36,top:28,background:"transparent",border:"none",color:showBright?"#c9a84c":"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
           <div style={{position:"absolute",left:6,top:39,cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
@@ -2275,9 +2276,12 @@ export default function App() {
 
       {/* ══ EASTER EGG SHEETS ══ */}
       {eggOpen && (
-        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
+        <div ref={eggScrollRef} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
           onClick={()=>setEggOpen(null)}>
           <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
+          <button onClick={(e)=>{e.stopPropagation();eggScrollRef.current?.scrollTo({top:0,behavior:"smooth"});}} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 18px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.82,padding:0}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
           <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:12,padding:"26px 22px 32px",width:"100%",maxWidth:480,margin:"58px auto 58px"}}
             onClick={e=>e.stopPropagation()}>
             <div style={{width:36,height:3,background:"#36241c",borderRadius:2,margin:"0 auto 24px"}}/>
