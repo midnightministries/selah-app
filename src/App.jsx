@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b29";
+const BUILD = "2026.05.20-b30";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1598,6 +1598,7 @@ export default function App() {
   const [authIntro, setAuthIntro] = useState(false);
   const [syncState, setSyncState] = useState("idle"); // idle | saving | synced | error
   const [kidName, setKidName] = useState("");
+  const [kidForm, setKidForm] = useState({ name:"", birthday:"", gender:"Prefer not to say", bible:"NIrV", palette:"midnight" });
   const syncTimer = useRef(null);
 
   // ── Profiles (owner + up to 2 kids). Sessions are tagged with profileId and
@@ -1618,7 +1619,7 @@ export default function App() {
     let lastPosition = null;
     try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
     return {
-      bibleVersion, gender, age, birthday,
+      bibleVersion, gender, age, birthday, palette,
       alarms,
       lastPosition,
       setupDone: localStorage.getItem("selah_setup_done") === "1",
@@ -1632,6 +1633,7 @@ export default function App() {
     setAge(st.age || "Prefer not to say");
     setBirthday(typeof st.birthday === "string" ? st.birthday : "");
     setAlarms(st.alarms && typeof st.alarms === "object" ? st.alarms : {});
+    setPalette(st.palette && PALETTES[st.palette] ? st.palette : "midnight");
     try { localStorage.setItem("selah_last_position", JSON.stringify(st.lastPosition || null)); } catch {}
     localStorage.setItem("selah_setup_done", st.setupDone ? "1" : "0");
     const lp = st.lastPosition;
@@ -1650,16 +1652,24 @@ export default function App() {
     setActiveProfileId(id);
     setNeedsSetup(!(profileSnaps.current[id] && profileSnaps.current[id].setupDone));
   }
-  function createKidProfile(name) {
+  function createKidProfile(opts) {
+    opts = opts || {};
     const kidIds = Object.keys(profiles).filter(k => profiles[k].kid);
-    if (kidIds.length >= 2) return;
+    if (kidIds.length >= 3) return;
     const id = "kid_" + Date.now();
     profileSnaps.current[activeProfileId] = liveSettings();
-    profileSnaps.current[id] = { bibleVersion: "NIrV", gender: "Prefer not to say", age: "Kids (5-12)", birthday: "", alarms: {}, lastPosition: null, setupDone: false };
-    setProfiles(p => ({ ...p, [id]: { name: (name || "Child").slice(0, 24), kid: true } }));
+    profileSnaps.current[id] = {
+      bibleVersion: opts.bible || "NIrV",
+      gender: opts.gender || "Prefer not to say",
+      age: "Kids (5-12)",
+      birthday: opts.birthday || "",
+      palette: opts.palette || "midnight",
+      alarms: {}, lastPosition: null, setupDone: true,
+    };
+    setProfiles(p => ({ ...p, [id]: { name: (opts.name || "Child").slice(0, 24), kid: true } }));
     loadSettings(profileSnaps.current[id]);
     setActiveProfileId(id);
-    setNeedsSetup(true);
+    setNeedsSetup(false);
   }
   function deleteKidProfile(id) {
     if (!profiles[id] || !profiles[id].kid) return;
@@ -1682,13 +1692,12 @@ export default function App() {
     const snaps = { ...profileSnaps.current, [activeProfileId]: liveSettings() };
     const profileSettings = {};
     Object.keys(profiles).forEach(id => { profileSettings[id] = snaps[id] || {}; });
-    return { v: 2, appIcon, palette, clockFmt, timezone, activeProfileId, profiles, profileSettings, sessions: lean };
+    return { v: 2, appIcon, clockFmt, timezone, activeProfileId, profiles, profileSettings, sessions: lean };
   }
   function applySync(data) {
     if (!data || typeof data !== "object") return;
     // account-level settings
     if (data.appIcon && ICON_THEMES[data.appIcon]) setAppIcon(data.appIcon);
-    if (data.palette && PALETTES[data.palette]) setPalette(data.palette);
     if (data.clockFmt) setClockFmt(data.clockFmt);
     if (data.timezone) setTimezone(data.timezone);
     const localById = {};
@@ -1713,7 +1722,7 @@ export default function App() {
       profileSnaps.current = {};
       loadSettings({
         bibleVersion: data.bibleVersion, gender: data.gender, age: data.age, birthday: data.birthday,
-        alarms: data.alarms, lastPosition: data.lastPosition, setupDone: data.setupDone,
+        palette: data.palette, alarms: data.alarms, lastPosition: data.lastPosition, setupDone: data.setupDone,
       });
     }
   }
@@ -1725,16 +1734,18 @@ export default function App() {
     localStorage.setItem("selah_onboarded", "1");
     setAuthIntro(false);
     const hasServer = serverData && Object.keys(serverData).length > 0;
+    let multiProfile = false;
     if (!isNew && hasServer) {
       applySync(serverData);
       setNeedsSetup(!setupIsDone());
+      multiProfile = serverData.v === 2 && serverData.profiles && Object.keys(serverData.profiles).length > 1;
     } else {
       // new signup, or login with nothing stored: push current local data up
       syncRequest("save", acc, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{});
       setNeedsSetup(!setupIsDone());
     }
     hydratedRef.current = true; // safe to auto-save now
-    setView("home");
+    setView(multiProfile ? "profilepick" : "home");
   }
   function handleSkipAuth() {
     localStorage.setItem("selah_onboarded", "1");
@@ -2024,14 +2035,14 @@ export default function App() {
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
-          {view !== "session" && view !== "auth" && (
+          {view !== "session" && view !== "auth" && view !== "profilepick" && (
             <button onClick={()=>setView("settings")} style={{position:"absolute",right:0,top:28,background:"transparent",border:"none",color:"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}
               onMouseOver={e=>e.currentTarget.style.color="var(--accent)"}
               onMouseOut={e=>e.currentTarget.style.color="var(--m5)"}>
               <SettingsIcon/>
             </button>
           )}
-          {view !== "session" && view !== "auth" && (
+          {view !== "session" && view !== "auth" && view !== "profilepick" && (
             <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:31,top:28,background:"transparent",border:"none",color:showBright?"var(--accent)":"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
@@ -2047,7 +2058,7 @@ export default function App() {
         <div ref={displayRef} style={{filter:brightness!==1?`brightness(${brightness})`:"none",zoom:textScale}}>
 
         {/* NAV */}
-        {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && (
+        {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && view !== "profiles" && view !== "profilepick" && (
           <div style={{display:"flex",borderBottom:"1px solid var(--border)",marginBottom:20}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
@@ -2067,6 +2078,127 @@ export default function App() {
             onBack={authIntro ? null : ()=>setView("settings")}
           />
         )}
+
+        {/* ══ PROFILE PICKER (Netflix-style, after sign-in) ══ */}
+        {view === "profilepick" && (
+          <div className="fade-in" style={{paddingTop:10}}>
+            <div style={{textAlign:"center",marginBottom:26}}>
+              <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={34} glow={true}/></div>
+              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:22,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM}}>Who is Reading?</h2>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:18,justifyContent:"center"}}>
+              {Object.entries(profiles).map(([id,p])=>(
+                <button key={id} onClick={()=>{ switchProfile(id); setView("home"); }}
+                  style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:10,width:120,padding:0}}>
+                  <div style={{width:96,height:96,borderRadius:18,background:"var(--surface)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>
+                    <CrossIcon size={40}/>
+                  </div>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:13,letterSpacing:"0.06em",color:"var(--text2)"}}>{p.name || (p.kid?"Child":"You")}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══ PROFILES (manage) ══ */}
+        {view === "profiles" && (()=>{
+          const ownerBday = activeProfileId==="owner" ? birthday : ((profileSnaps.current["owner"]||{}).birthday || "");
+          const ownerAge = ageFromBirthday(ownerBday);
+          const kidIds = Object.keys(profiles).filter(k=>profiles[k].kid);
+          const canAddKid = ownerAge!==null && ownerAge>=18 && kidIds.length<3;
+          const KIDV = ["NIrV","ICB","NLT"];
+          const dateStyle = {width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"};
+          return (
+            <div className="fade-in">
+              <button onClick={()=>setView("settings")} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Settings</button>
+              <div style={{textAlign:"center",marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:10}}><CrossIcon size={32} glow={true}/></div>
+                <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM}}>Profiles</h2>
+              </div>
+
+              <div className="card">
+                <p className="label">Hand Them The Torch</p>
+                <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                  The most important ministry in any house and any church is the one raising the young. They are watching when we think they are not. They absorb what we live, not only what we say. We are not babysitting them. We are handing them the torch.
+                </p>
+                <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                  Scripture is clear that what we carry passes down the line. Not only sin, but habit, posture, and hunger. So we put the Word in front of them early and we read beside them. A profile here is for a young reader in your care, whether your own child or one God has set under your charge.
+                </p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",lineHeight:1.6}}>
+                  Draft text in your voice. Replace it with your own writing whenever you are ready.
+                </p>
+              </div>
+
+              <div className="card">
+                <p className="label">Who is Reading</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {Object.entries(profiles).map(([id,p])=>(
+                    <button key={id} onClick={()=>switchProfile(id)} className={`version-pill ${activeProfileId===id?"active":""}`}>
+                      {p.name || (p.kid?"Child":"You")}{activeProfileId===id?" •":""}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card">
+                <p className="label">Add a Young Reader</p>
+                {canAddKid ? (
+                  <>
+                    <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
+                      Up to three young readers can be added under your account. Set them up here; you can adjust anytime.
+                    </p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Name</p>
+                    <input value={kidForm.name} onChange={e=>setKidForm(f=>({...f,name:e.target.value}))} placeholder="First name"
+                      style={{width:"100%",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:14}}/>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Birthday</p>
+                    <input type="date" value={kidForm.birthday} onChange={e=>setKidForm(f=>({...f,birthday:e.target.value}))} style={{...dateStyle,marginBottom:14}}/>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Gender</p>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+                      {["Male","Female","Prefer not to say"].map(g=>(
+                        <button key={g} className={`version-pill ${kidForm.gender===g?"active":""}`} onClick={()=>setKidForm(f=>({...f,gender:g}))}>{g}</button>
+                      ))}
+                    </div>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Bible (kids translations)</p>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+                      {KIDV.map(v=>(
+                        <button key={v} className={`version-pill ${kidForm.bible===v?"active":""}`} onClick={()=>setKidForm(f=>({...f,bible:v}))}>{v}</button>
+                      ))}
+                    </div>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Their Palette</p>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+                      {Object.entries(PALETTES).map(([key,p])=>(
+                        <button key={key} onClick={()=>setKidForm(f=>({...f,palette:key}))}
+                          style={{display:"flex",alignItems:"center",gap:6,background:"transparent",border:kidForm.palette===key?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:6,padding:"5px 9px",cursor:"pointer"}}>
+                          <span style={{display:"flex",borderRadius:4,overflow:"hidden"}}>{p.swatch.map((c,i)=><span key={i} style={{width:12,height:16,background:c}}/>)}</span>
+                          <span style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",color:kidForm.palette===key?"var(--accent)":"var(--m3)"}}>{p.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <button className="btn-primary" style={{width:"100%",padding:"13px"}}
+                      onClick={()=>{ if(kidForm.name.trim()){ createKidProfile({name:kidForm.name.trim(),birthday:kidForm.birthday,gender:kidForm.gender,bible:kidForm.bible,palette:kidForm.palette}); setKidForm({name:"",birthday:"",gender:"Prefer not to say",bible:"NIrV",palette:"midnight"}); setView("settings"); } }}>
+                      Add Reader
+                    </button>
+                  </>
+                ) : (
+                  <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6}}>
+                    {kidIds.length>=3 ? "You have added the maximum of three young readers." : "Set your own birthday in Settings (you must be 18 or older) to add a young reader to your account."}
+                  </p>
+                )}
+                {kidIds.length>0 && (
+                  <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--border2)"}}>
+                    {kidIds.map(id=>(
+                      <div key={id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                        <span style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--text2)"}}>{profiles[id].name||"Child"}</span>
+                        <button onClick={()=>{ if(window.confirm(`Remove ${profiles[id].name||"this reader"} and all of their sessions? This cannot be undone.`)) deleteKidProfile(id); }}
+                          style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"5px 10px",color:"var(--m3)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ══ HOME ══ */}
         {view === "home" && (
@@ -2547,52 +2679,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Profiles (signed-in only) */}
-            {account && (()=>{
-              const ownerBday = activeProfileId==="owner" ? birthday : ((profileSnaps.current["owner"]||{}).birthday || "");
-              const ownerAge = ageFromBirthday(ownerBday);
-              const kidIds = Object.keys(profiles).filter(k=>profiles[k].kid);
-              const canAddKid = ownerAge!==null && ownerAge>=18 && kidIds.length<2;
-              return (
-                <div className="card">
-                  <p className="label">Profiles</p>
-                  <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
-                    Each profile keeps its own reading log, translation, and depth. The whole household reads under one account.
-                  </p>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
-                    {Object.entries(profiles).map(([id,p])=>(
-                      <button key={id} onClick={()=>switchProfile(id)}
-                        className={`version-pill ${activeProfileId===id?"active":""}`}>
-                        {p.kid ? "🔥 " : ""}{p.name || (p.kid?"Child":"You")}
-                      </button>
-                    ))}
-                  </div>
-                  {kidIds.length>0 && (
-                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
-                      {kidIds.map(id=>(
-                        <button key={id} onClick={()=>{ if(window.confirm(`Remove ${profiles[id].name||"this child"}'s profile and all of their sessions? This cannot be undone.`)) deleteKidProfile(id); }}
-                          style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"5px 10px",color:"var(--m3)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>
-                          Remove {profiles[id].name||"child"}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {canAddKid ? (
-                    <div style={{display:"flex",gap:8}}>
-                      <input value={kidName} onChange={e=>setKidName(e.target.value)} placeholder="Child's name"
-                        style={{flex:1,minWidth:0,background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"10px 12px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none"}}/>
-                      <button className="btn-primary" style={{padding:"10px 16px",whiteSpace:"nowrap"}}
-                        onClick={()=>{ if(kidName.trim()){ createKidProfile(kidName.trim()); setKidName(""); } }}>Add Child</button>
-                    </div>
-                  ) : (
-                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",lineHeight:1.5}}>
-                      {kidIds.length>=2 ? "You've added the maximum of two child profiles." : "Set your birthday above (18+) to add a child profile to your account."}
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
-
             {/* Bible Version */}
             <div className="card">
               <p className="label">Bible Translation</p>
@@ -2647,6 +2733,17 @@ export default function App() {
               <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
                 style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input2)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
             </div>
+
+            {/* Profiles launcher */}
+            {account && (
+              <div className="card">
+                <p className="label">Profiles</p>
+                <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
+                  Read under your own profile, and disciple the young readers in your care under theirs. Each profile keeps its own log, translation, depth, and look.
+                </p>
+                <button className="btn-primary" style={{width:"100%",padding:"13px"}} onClick={()=>setView("profiles")}>Open Profiles</button>
+              </div>
+            )}
 
             {/* Clock and Timezone */}
             <div className="card">
