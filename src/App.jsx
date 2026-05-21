@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b48";
+const BUILD = "2026.05.20-b49";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -314,7 +314,8 @@ function composeCard(session, layout) {
       const img=new Image();
       img.onload=()=>{
         ctx.fillStyle="#0e0c06"; ctx.fillRect(0,0,W,H);
-        const r=Math.max(W/img.width,H/img.height), dw=img.width*r, dh=img.height*r;
+        const z=layout.photo.zoom||1;
+        const r=Math.max(W/img.width,H/img.height), dw=img.width*r*z, dh=img.height*r*z;
         ctx.drawImage(img,(W-dw)*layout.photo.x,(H-dh)*layout.photo.y,dw,dh);
         finish();
       };
@@ -648,153 +649,143 @@ function PinBoxes({ value, onChange, autoFocus }) {
 function ExportSheet({ session, onClose }) {
   const hasRV = !!(session.aiResult && session.aiResult.returnVerses && session.aiResult.returnVerses[0]);
   const hasPhoto = !!session.photoData;
-  const [layout, setLayout] = useState(()=>({ ...defaultLayout(session, hasPhoto), font:"serif" }));
-  const [sel, setSel] = useState(null);      // selected element key
+  const [layout, setLayout] = useState(()=>{ const L=defaultLayout(session, hasPhoto); return { ...L, font:"serif", photo:{ show:!!hasPhoto, x:0.5, y:0.5, zoom:1 } }; });
+  const [mode, setMode] = useState(hasPhoto ? "frame" : "words");
+  const [sel, setSel] = useState(null);
+  const [nat, setNat] = useState({ w:1, h:1 });
   const [shareFile, setShareFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [state, setState] = useState("idle");
-  const urlRef = useRef(null);
   const stageRef = useRef(null);
-  const drag = useRef(null);
-  const DIMS = { square:[1080,1080], portrait:[1080,1350], story:[1080,1920] };
-  const [aw,ah] = DIMS[layout.aspect];
-  const aspectPad = (ah/aw*100)+"%";
+  const ptrs = useRef(new Map());
+  const dragRef = useRef(null);
+  const pinch = useRef(null);
 
+  const DIMS = { square:[1080,1080], portrait:[1080,1350], story:[1080,1920] };
+  const [W,H] = DIMS[layout.aspect];
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
   const setEl = (key,patch)=>setLayout(L=>({ ...L, els:{ ...L.els, [key]:{ ...L.els[key], ...patch } } }));
   const setPhoto = (patch)=>setLayout(L=>({ ...L, photo:{ ...L.photo, ...patch } }));
 
-  function pointerDown(e, key){
-    e.stopPropagation(); setSel(key);
-    const st=stageRef.current.getBoundingClientRect();
-    drag.current={ key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf, w:st.width, h:st.height };
-    e.currentTarget.setPointerCapture?.(e.pointerId);
+  useEffect(()=>{ if(session.photoData){ const im=new Image(); im.onload=()=>setNat({w:im.width,h:im.height}); im.src=session.photoData; } },[]);
+  useEffect(()=>{ let alive=true; const t=setTimeout(()=>{ composeCard(session, layout).then(b=>{ if(alive&&b) setShareFile(new File([b],"selah-session.png",{type:"image/png"})); }); },120); return ()=>{ alive=false; clearTimeout(t); }; },[layout]);
+
+  const baseRatio = Math.max(W/nat.w, H/nat.h);
+  const z = layout.photo.zoom||1;
+  const bgWpct = (nat.w*baseRatio*z)/W*100;
+  const bgHpct = (nat.h*baseRatio*z)/H*100;
+
+  function stageDown(e){
+    ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    stageRef.current?.setPointerCapture?.(e.pointerId);
+    if(mode==="frame" && layout.photo.show && hasPhoto){
+      if(ptrs.current.size>=2){ const v=[...ptrs.current.values()]; pinch.current={ d:Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y), z:layout.photo.zoom||1 }; dragRef.current=null; }
+      else dragRef.current={ type:"photo", sx:e.clientX, sy:e.clientY, ox:layout.photo.x, oy:layout.photo.y };
+    } else if(mode==="words"){ setSel(null); }
   }
-  function pointerMove(e){
-    if(!drag.current) return;
-    const d=drag.current;
-    const nx=Math.max(0.02,Math.min(0.98, d.ox + (e.clientX-d.sx)/d.w));
-    const ny=Math.max(0.02,Math.min(0.98, d.oy + (e.clientY-d.sy)/d.h));
-    setEl(d.key,{ xf:nx, yf:ny });
-  }
-  function pointerUp(){ drag.current=null; }
-
-  // content -> body text
-  function setContent(c){
-    let text = session.passage||"";
-    if(c==="return" && hasRV) text = session.aiResult.returnVerses[0].ref;
-    else if(c==="anchor") text = "Read. Mark. Return.";
-    else if(c==="passage") text = session.passage||"";
-    setLayout(L=>({ ...L, content:c, els:{ ...L.els, body:{ ...L.els.body, text } } }));
-  }
-
-  useEffect(()=>{
-    let alive=true; const t=setTimeout(()=>{
-      composeCard(session, layout).then(blob=>{
-        if(!alive||!blob) return;
-        if(urlRef.current) URL.revokeObjectURL(urlRef.current);
-        urlRef.current=URL.createObjectURL(blob); setPreviewUrl(urlRef.current);
-        setShareFile(new File([blob],"selah-session.png",{type:"image/png"}));
-      });
-    },140);
-    return ()=>{ alive=false; clearTimeout(t); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[layout]);
-  useEffect(()=>()=>{ if(urlRef.current) URL.revokeObjectURL(urlRef.current); },[]);
-
-  function handleShareImage(){
-    if(!shareFile) return;
-    try{ if(navigator.share && navigator.canShare?.({files:[shareFile]})) navigator.share({files:[shareFile],title:"SELAH",text:`${session.passage} — Selah by Midnight Ministries`}).catch(()=>{});
-      else { const url=URL.createObjectURL(shareFile); const a=document.createElement("a"); a.href=url; a.download="selah-session.png"; a.click(); URL.revokeObjectURL(url); } }catch{}
-  }
-  async function handleSaveNote(){ setState("working"); await shareAsNote(session); setState("idle"); }
-
-  const Seg = ({label, options, value, onPick}) => (
-    <div style={{marginBottom:12}}>
-      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>{label}</p>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>{options.map(([v,lbl])=>(<button key={v} className={`version-pill ${value===v?"active":""}`} onClick={()=>onPick(v)}>{lbl}</button>))}</div>
-    </div>
-  );
-  const contentOpts=[["session","Session"],["passage","Passage"]]; if(hasRV) contentOpts.push(["return","Return Verse"]); contentOpts.push(["anchor","Read. Mark. Return."]);
-  const selEl = sel ? layout.els[sel] : null;
-  const elName = { cross:"Cross", selah:"SELAH", body:"Verse", mm:"Ministry" };
-
-  // preview element rendering
-  const renderEl = (key) => {
-    const el = layout.els[key]; if(!el.show) return null;
-    const common = { position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, cursor:"grab", touchAction:"none", outline:sel===key?"1.5px dashed rgba(201,168,76,0.9)":"none", outlineOffset:4 };
-    if(el.kind==="cross"){
-      const px = el.size*1.5*100;
-      return <div key={key} onPointerDown={e=>pointerDown(e,key)} style={{ ...common, width:el.size*100+"%", height:px+"%", maxHeight:"none", backgroundColor:el.color, WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" }}/>;
+  function stageMove(e){
+    if(ptrs.current.has(e.pointerId)) ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const r=stageRef.current?.getBoundingClientRect(); if(!r) return;
+    if(mode==="frame" && pinch.current && ptrs.current.size>=2){ const v=[...ptrs.current.values()]; const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y); setPhoto({ zoom:clamp(pinch.current.z*(d/pinch.current.d),1,3) }); return; }
+    const d=dragRef.current; if(!d) return;
+    if(d.type==="photo"){
+      const slX=r.width*(bgWpct/100-1), slY=r.height*(bgHpct/100-1);
+      let nx=layout.photo.x, ny=layout.photo.y;
+      if(slX>1) nx=clamp(d.ox-(e.clientX-d.sx)/slX,0,1);
+      if(slY>1) ny=clamp(d.oy-(e.clientY-d.sy)/slY,0,1);
+      setPhoto({x:nx,y:ny});
+    } else if(d.type==="el"){
+      setEl(d.key,{ xf:clamp(d.ox+(e.clientX-d.sx)/r.width,0.02,0.98), yf:clamp(d.oy+(e.clientY-d.sy)/r.height,0.02,0.98) });
     }
-    return <div key={key} onPointerDown={e=>pointerDown(e,key)} style={{ ...common, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew, 320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
+  }
+  function stageUp(e){ ptrs.current.delete(e.pointerId); if(ptrs.current.size<2) pinch.current=null; if(ptrs.current.size===0) dragRef.current=null; }
+  function elDown(e,key){ if(mode!=="words") return; e.stopPropagation(); setSel(key); dragRef.current={ type:"el", key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
+
+  function setContent(c){ let text=session.passage||""; if(c==="return"&&hasRV) text=session.aiResult.returnVerses[0].ref; else if(c==="anchor") text="Read. Mark. Return."; setLayout(L=>({ ...L, content:c, els:{ ...L.els, body:{ ...L.els.body, text } } })); }
+  const FONT_ORDER=["serif","cinzel","crimson","sans"]; const FONT_LABEL={serif:"Serif",cinzel:"Cinzel",crimson:"Crimson",sans:"Sans"};
+
+  function handleShareImage(){ if(!shareFile) return; try{ if(navigator.share && navigator.canShare?.({files:[shareFile]})) navigator.share({files:[shareFile],title:"SELAH",text:`${session.passage} — Selah by Midnight Ministries`}).catch(()=>{}); else { const u=URL.createObjectURL(shareFile); const a=document.createElement("a"); a.href=u; a.download="selah-session.png"; a.click(); URL.revokeObjectURL(u);} }catch{} }
+  async function handleSaveNote(){ await shareAsNote(session); }
+
+  const elName={ cross:"Cross", selah:"SELAH", body:"Verse", mm:"Ministry" };
+  const renderEl = (key)=>{
+    const el=layout.els[key]; if(!el.show) return null;
+    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, pointerEvents:mode==="words"?"auto":"none", touchAction:"none", cursor:"grab", outline:(mode==="words"&&sel===key)?"1.5px dashed rgba(201,168,76,0.95)":"none", outlineOffset:4 };
+    if(el.kind==="cross") return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%", backgroundColor:el.color, WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" }}/>;
+    return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew, 320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
+  const selEl = (mode==="words"&&sel) ? layout.els[sel] : null;
+  const tabBtn=(m,lbl)=>(<button onClick={()=>{ setMode(m); setSel(null); }} style={{flex:1,padding:"10px",background:mode===m?"var(--accent)":"transparent",color:mode===m?"var(--ink)":"var(--m2)",border:"none",borderRadius:7,fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>);
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(10,8,4,0.9)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:"12px 12px 0 0",padding:"calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 24px)",width:"100%",maxWidth:480,maxHeight:"92dvh",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-        <div style={{width:44,height:4,background:"var(--m3)",borderRadius:2,margin:"0 auto 14px"}}/>
-        <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--m3)",textAlign:"center",letterSpacing:"0.06em",marginBottom:12}}>Tap a piece to select it. Drag it anywhere.</p>
+    <div style={{position:"fixed",inset:0,zIndex:300,background:"#0a0804",display:"flex",flexDirection:"column"}}>
+      {/* top bar */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"calc(env(safe-area-inset-top,0px) + 10px) 16px 8px"}}>
+        <button onClick={onClose} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",padding:6}}>Close</button>
+        <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m3)",letterSpacing:"0.14em",textTransform:"uppercase"}}>{mode==="frame"?"Frame & Photo":"Move & Style"}</span>
+        <button onClick={handleShareImage} disabled={!shareFile} style={{background:"var(--accent)",border:"none",color:"var(--ink)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",padding:"8px 16px",borderRadius:6,opacity:shareFile?1:0.5}}>Share</button>
+      </div>
 
-        {/* Interactive stage */}
+      {/* stage */}
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:"4px 12px"}}>
         <div ref={el=>{ stageRef.current=el; if(el) el.style.setProperty('--stagew', el.getBoundingClientRect().width+'px'); }}
-          onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerLeave={pointerUp} onClick={()=>setSel(null)}
-          style={{position:"relative",width:layout.aspect==="story"?"56%":"86%",margin:"0 auto 14px",paddingBottom:layout.aspect==="story"?"99.6%":(aspectPad),borderRadius:10,overflow:"hidden",border:"1px solid var(--border2)",background:"#0e0c06",touchAction:"none"}}>
-          {layout.photo.show && session.photoData
-            ? <img src={session.photoData} alt="" draggable={false} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:`${layout.photo.x*100}% ${layout.photo.y*100}%`}}/>
+          onPointerDown={stageDown} onPointerMove={stageMove} onPointerUp={stageUp} onPointerCancel={stageUp}
+          style={{position:"relative",aspectRatio:`${W} / ${H}`,maxWidth:"100%",maxHeight:"100%",width:"100%",borderRadius:8,overflow:"hidden",border:"1px solid var(--border2)",background:"#0e0c06",touchAction:"none",userSelect:"none"}}>
+          {layout.photo.show && hasPhoto
+            ? <div style={{position:"absolute",inset:0,backgroundImage:`url(${session.photoData})`,backgroundRepeat:"no-repeat",backgroundSize:`${bgWpct}% ${bgHpct}%`,backgroundPosition:`${layout.photo.x*100}% ${layout.photo.y*100}%`}}/>
             : <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,var(--surface),var(--bg))"}}/>}
-          {layout.photo.show && session.photoData && <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(10,8,4,0.45),rgba(10,8,4,0.2),rgba(10,8,4,0.6))"}}/>}
+          {layout.photo.show && hasPhoto && <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"linear-gradient(180deg,rgba(10,8,4,0.5),rgba(10,8,4,0.25),rgba(10,8,4,0.62))"}}/>}
           {["cross","selah","body","mm"].map(renderEl)}
         </div>
+      </div>
 
-        {/* Selected-element controls */}
-        {selEl && (
-          <div style={{background:"var(--input)",border:"1px solid var(--border)",borderRadius:8,padding:"12px 14px",marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{elName[sel]}</span>
-              <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"4px 10px",color:"var(--m3)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
-            </div>
+      {/* dock */}
+      <div style={{background:"var(--surface)",borderTop:"1px solid var(--border2)",padding:"10px 14px calc(env(safe-area-inset-bottom,0px) + 12px)"}}>
+        <div style={{display:"flex",gap:8,background:"var(--input)",borderRadius:9,padding:4,marginBottom:12}}>
+          {tabBtn("frame","Frame & Photo")}{tabBtn("words","Words")}
+        </div>
+
+        {mode==="frame" ? (
+          <div>
             <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:10}}>
-              {CARD_COLORS.map(([hex,lbl])=>(
-                <button key={hex} onClick={()=>setEl(sel,{color:hex})} title={lbl} style={{width:26,height:26,borderRadius:"50%",background:hex,border:selEl.color===hex?"2px solid var(--accent)":"1px solid var(--border2)",cursor:"pointer",padding:0}}/>
-              ))}
+              {[["square","Square"],["portrait","Portrait"],["story","Story"]].map(([v,l])=>(<button key={v} className={`version-pill ${layout.aspect===v?"active":""}`} onClick={()=>setLayout(L=>({...L,aspect:v}))}>{l}</button>))}
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.08em",width:44}}>SIZE</span>
-              <input type="range" min="0.02" max="0.16" step="0.004" value={selEl.size} onChange={e=>setEl(sel,{size:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              {hasPhoto && <button className="version-pill" onClick={()=>setPhoto({show:!layout.photo.show})}>{layout.photo.show?"Hide photo":"Show photo"}</button>}
+              {hasPhoto && layout.photo.show && <button className="version-pill" onClick={()=>setPhoto({x:0.5,y:0.5,zoom:1})}>Reset photo</button>}
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.08em",width:44}}>ROTATE</span>
-              <input type="range" min="-45" max="45" step="1" value={selEl.rot||0} onChange={e=>setEl(sel,{rot:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/>
+            {hasPhoto && layout.photo.show && <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",marginTop:10,lineHeight:1.5}}>Drag the photo to position it. Pinch with two fingers to zoom.</p>}
+          </div>
+        ) : (
+          <div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:10}}>
+              {[["session","Verse: Session"],["passage","Passage"],...(hasRV?[["return","Return Verse"]]:[]),["anchor","Read. Mark. Return."]].map(([v,l])=>(<button key={v} className={`version-pill ${layout.content===v?"active":""}`} onClick={()=>setContent(v)}>{l}</button>))}
+              <button className="version-pill" onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))}>Font: {FONT_LABEL[layout.font]}</button>
             </div>
+            {selEl ? (
+              <div style={{background:"var(--input)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 12px"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{elName[sel]}</span>
+                  <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"4px 10px",color:"var(--m3)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
+                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:8}}>
+                  {CARD_COLORS.map(([hex,lbl])=>(<button key={hex} title={lbl} onClick={()=>setEl(sel,{color:hex})} style={{width:26,height:26,borderRadius:"50%",background:hex,border:selEl.color===hex?"2px solid var(--accent)":"1px solid var(--border2)",cursor:"pointer",padding:0}}/>))}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",width:44}}>SIZE</span><input type="range" min="0.02" max="0.16" step="0.004" value={selEl.size} onChange={e=>setEl(sel,{size:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/></div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",width:44}}>ROTATE</span><input type="range" min="-45" max="45" step="1" value={selEl.rot||0} onChange={e=>setEl(sel,{rot:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/></div>
+              </div>
+            ) : (
+              <div>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",lineHeight:1.5,marginBottom:8}}>Tap a piece on the photo to select it, then drag it. Selected pieces can change color, size, and rotation.</p>
+                {Object.keys(layout.els).some(k=>!layout.els[k].show) && (
+                  <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                    {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(<button key={k} className="version-pill" onClick={()=>{ setEl(k,{show:true}); setSel(k); }}>+ {elName[k]}</button>))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* hidden elements: tap to bring back */}
-        {Object.keys(layout.els).some(k=>!layout.els[k].show) && (
-          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
-            {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(
-              <button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); }} className="version-pill">+ {elName[k]}</button>
-            ))}
-          </div>
-        )}
-
-        <Seg label="Verse text" options={contentOpts} value={layout.content} onPick={setContent}/>
-        <Seg label="Frame" options={[["square","Square"],["portrait","Portrait"],["story","Story"]]} value={layout.aspect} onPick={v=>setLayout(L=>({...L,aspect:v}))}/>
-        {hasPhoto && <Seg label="Photo" options={[[true,"Show photo"],[false,"Hide photo"]]} value={layout.photo.show} onPick={v=>setPhoto({show:v})}/>}
-        {hasPhoto && layout.photo.show && (
-          <div style={{marginBottom:12}}>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Photo position — up / down</p>
-            <input type="range" min="0" max="1" step="0.02" value={layout.photo.y} onChange={e=>setPhoto({y:parseFloat(e.target.value)})} style={{width:"100%",accentColor:"var(--accent)",marginBottom:8}}/>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Photo position — left / right</p>
-            <input type="range" min="0" max="1" step="0.02" value={layout.photo.x} onChange={e=>setPhoto({x:parseFloat(e.target.value)})} style={{width:"100%",accentColor:"var(--accent)"}}/>
-          </div>
-        )}
-        <Seg label="Font" options={[["serif","Serif"],["cinzel","Cinzel"],["crimson","Crimson"],["sans","Sans"]]} value={layout.font} onPick={v=>setLayout(L=>({...L,font:v}))}/>
-
-        <button onClick={handleShareImage} disabled={!shareFile} className="btn-primary" style={{width:"100%",padding:"14px",marginTop:6,marginBottom:10,opacity:shareFile?1:0.6}}>Share Image</button>
-        <button onClick={handleSaveNote} disabled={state==="working"} className="btn-ghost" style={{width:"100%",padding:"13px",marginBottom:8}}>Save text to Notes or Files</button>
-        <p style={{fontFamily:"'Crimson Text',serif",fontSize:12,color:"var(--m4)",textAlign:"center",lineHeight:1.6}}>Your own reflections stay private in the Notes/Files export. Cards carry Scripture, not free text.</p>
-        <button onClick={onClose} style={{width:"100%",marginTop:12,padding:"12px",background:"transparent",border:"1px solid var(--border2)",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
+        <button onClick={handleSaveNote} className="btn-ghost" style={{width:"100%",padding:"11px",marginTop:12}}>Save text to Notes or Files</button>
       </div>
     </div>
   );
