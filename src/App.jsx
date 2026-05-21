@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b58";
+const BUILD = "2026.05.21-b59";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -681,10 +681,48 @@ function PinBoxes({ value, onChange, autoFocus }) {
   );
 }
 
+// Custom slider: filled track follows the thumb exactly, thumb reaches both
+// ends, fully smooth (no native range quirks).
+function Slider({ value, min, max, step, onChange, width=240 }) {
+  const ref = useRef(null);
+  const drag = useRef(false);
+  const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  const setFromX = (clientX) => {
+    const r = ref.current?.getBoundingClientRect(); if(!r) return;
+    let p = (clientX - r.left) / r.width; p = Math.max(0, Math.min(1, p));
+    let v = min + p * (max - min);
+    if (step) v = Math.round(v / step) * step;
+    onChange(Math.max(min, Math.min(max, v)));
+  };
+  const down = (e) => { e.stopPropagation(); drag.current = true; ref.current?.setPointerCapture?.(e.pointerId); setFromX(e.clientX); };
+  const move = (e) => { if (drag.current) setFromX(e.clientX); };
+  const up = (e) => { drag.current = false; ref.current?.releasePointerCapture?.(e.pointerId); };
+  return (
+    <div ref={ref} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+      style={{position:"relative",width,height:30,maxWidth:"82vw",touchAction:"none",cursor:"pointer",display:"flex",alignItems:"center"}}>
+      <div style={{position:"absolute",left:0,right:0,height:4,borderRadius:2,background:"rgba(255,255,255,0.28)"}}/>
+      <div style={{position:"absolute",left:0,width:`${pct*100}%`,height:4,borderRadius:2,background:"var(--accent)"}}/>
+      <div style={{position:"absolute",left:`calc(${pct*100}% - 9px)`,width:18,height:18,borderRadius:"50%",background:"var(--accent)",boxShadow:"0 1px 5px rgba(0,0,0,0.7)"}}/>
+    </div>
+  );
+}
+
+// Good element positions per format, so switching 1:1 <-> 9:16 always lands
+// the lettering and cross composed for that frame.
+const DEFAULT_POS = {
+  square: { cross:{xf:0.12,yf:0.11,size:0.085}, selah:{xf:0.5,yf:0.13,size:0.085}, body:{xf:0.5,yf:0.5,size:0.048}, mm:{xf:0.5,yf:0.93,size:0.024} },
+  story:  { cross:{xf:0.13,yf:0.09,size:0.08},  selah:{xf:0.5,yf:0.115,size:0.08}, body:{xf:0.5,yf:0.47,size:0.046}, mm:{xf:0.5,yf:0.955,size:0.024} },
+};
+
 function ExportSheet({ session, onClose }) {
   const hasRV = !!(session.aiResult && session.aiResult.returnVerses && session.aiResult.returnVerses[0]);
   const hasPhoto = !!session.photoData;
-  const [layout, setLayout] = useState(()=>{ const L=defaultLayout(session, hasPhoto); return { ...L, font:"serif", photo:{ show:!!hasPhoto, x:0.5, y:0.5, zoom:1 } }; });
+  const [layout, setLayout] = useState(()=>{
+    const L=defaultLayout(session, hasPhoto);
+    const ap=L.aspect, dp=DEFAULT_POS[ap]||DEFAULT_POS.square, els={...L.els};
+    Object.keys(dp).forEach(k=>{ if(els[k]) els[k]={...els[k], ...dp[k]}; });
+    return { ...L, els, font:"serif", photo:{ show:!!hasPhoto, x:0.5, y:0.5, zoom:1 } };
+  });
   const [sel, setSel] = useState(null);
   const [nat, setNat] = useState({ w:1, h:1 });
   const [shareFile, setShareFile] = useState(null);
@@ -700,6 +738,18 @@ function ExportSheet({ session, onClose }) {
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const setEl=(k,p)=>setLayout(L=>({ ...L, els:{ ...L.els, [k]:{ ...L.els[k], ...p } } }));
   const setPhoto=(p)=>setLayout(L=>({ ...L, photo:{ ...L.photo, ...p } }));
+  // remembers element positions per aspect so switching format keeps each one composed
+  const posMem = useRef({ square:{...DEFAULT_POS.square}, story:{...DEFAULT_POS.story} });
+  function switchAspect(na){
+    setLayout(L=>{
+      if(L.aspect===na) return L;
+      const cur={}; ["cross","selah","body","mm"].forEach(k=>{ const e=L.els[k]; if(e) cur[k]={xf:e.xf,yf:e.yf,size:e.size}; });
+      posMem.current[L.aspect]=cur;
+      const target=posMem.current[na]||DEFAULT_POS[na]; const els={...L.els};
+      Object.keys(target).forEach(k=>{ if(els[k]) els[k]={...els[k], ...target[k]}; });
+      return {...L, aspect:na, els};
+    });
+  }
 
   useEffect(()=>{ if(session.photoData){ const im=new Image(); im.onload=()=>setNat({w:im.width,h:im.height}); im.src=session.photoData; } },[]);
   useEffect(()=>{ let alive=true; const t=setTimeout(()=>{ composeCard(session, layout).then(b=>{ if(alive&&b) setShareFile(new File([b],"selah-session.png",{type:"image/png"})); }); },120); return ()=>{ alive=false; clearTimeout(t); }; },[layout]);
@@ -746,7 +796,7 @@ function ExportSheet({ session, onClose }) {
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.6)",backdropFilter:"blur(6px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.82)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
@@ -765,22 +815,22 @@ function ExportSheet({ session, onClose }) {
 
       {/* TOP-RIGHT stack: Share, Verse/content, Font, Hide Photo, Format */}
       <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
-        <div style={{position:"relative"}}>
-          {shareOpen && (
-            <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",right:60,top:0,display:"flex",flexDirection:"column",gap:8,width:210}}>
-              <button onClick={()=>{ handleShareImage(); }} disabled={!shareFile} className="btn-primary" style={{padding:"12px",opacity:shareFile?1:0.5}}>Share Image</button>
-              <button onClick={()=>{ shareAsNote(session); }} className="btn-ghost" style={{padding:"11px"}}>Save text to Notes / Files</button>
-            </div>
-          )}
-          <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"var(--accent)",border:"none",color:"var(--ink)"})}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          </button>
-        </div>
+        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"var(--accent)",border:"none",color:"var(--ink)"})}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </button>
         <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel.length>8?"Verse":contentLabel}</button>
         <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={circle({fontFamily:CARD_FONTS[layout.font],fontSize:18})}>Aa</button>
         {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} style={circle({fontFamily:"'Cinzel',serif",fontSize:7,letterSpacing:"0.03em",textAlign:"center",lineHeight:1.1,padding:3})}>{layout.photo.show?"Hide Photo":"Show Photo"}</button>}
-        <button onClick={()=>setLayout(L=>({...L,aspect:L.aspect==="square"?"story":"square"}))} style={circle({fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.04em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
+        <button onClick={()=>switchAspect(layout.aspect==="square"?"story":"square")} style={circle({fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.04em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
       </div>
+
+      {/* Share menu — centered so it's visible in any format */}
+      {shareOpen && (
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 70px)",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",gap:8,width:240,maxWidth:"86vw",background:"rgba(14,10,6,0.92)",border:"1px solid var(--border)",borderRadius:12,padding:12,boxShadow:"0 6px 24px rgba(0,0,0,0.6)",zIndex:5}}>
+          <button onClick={()=>{ handleShareImage(); }} disabled={!shareFile} className="btn-primary" style={{padding:"12px",opacity:shareFile?1:0.5}}>Share Image</button>
+          <button onClick={()=>{ shareAsNote(session); }} className="btn-ghost" style={{padding:"11px"}}>Save text to Notes / Files</button>
+        </div>
+      )}
 
       {/* SELECTED ELEMENT — floating bubbles at the very bottom, no box */}
       {selEl && (
@@ -796,14 +846,14 @@ function ExportSheet({ session, onClose }) {
                 <div style={{display:"flex",flexWrap:"wrap",gap:9,justifyContent:"center"}}>
                   {[["#0e0c06","Dark"],...CARD_COLORS.slice(0,7)].map(([hex,lbl])=>(<button key={hex} title={lbl} onClick={()=>setEl(sel,{glowColor:hex})} style={{width:26,height:26,borderRadius:"50%",background:hex,border:(selEl.glowColor||"#0e0c06")===hex?"2px solid #fff":"1px solid rgba(255,255,255,0.4)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>))}
                 </div>
-                <input type="range" min="0" max="1" step="0.05" value={selEl.glow||0} onChange={e=>setEl(sel,{glow:parseFloat(e.target.value)})} style={{width:210,accentColor:"var(--accent)"}}/>
+                <Slider value={selEl.glow||0} min={0} max={1} step={0.02} onChange={v=>setEl(sel,{glow:v})} width={210}/>
               </div>
             )}
-            {tool==="size" && <input type="range" min="0.02" max="0.16" step="0.004" value={selEl.size} onChange={e=>setEl(sel,{size:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
-            {tool==="rotate" && <input type="range" min="-45" max="45" step="1" value={selEl.rot||0} onChange={e=>setEl(sel,{rot:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
-            {tool==="opacity" && <input type="range" min="0.1" max="1" step="0.05" value={selEl.opacity==null?1:selEl.opacity} onChange={e=>setEl(sel,{opacity:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
+            {tool==="size" && <Slider value={selEl.size} min={0.02} max={0.16} step={0.002} onChange={v=>setEl(sel,{size:v})}/>}
+            {tool==="rotate" && <Slider value={selEl.rot||0} min={-45} max={45} step={1} onChange={v=>setEl(sel,{rot:v})}/>}
+            {tool==="opacity" && <Slider value={selEl.opacity==null?1:selEl.opacity} min={0.1} max={1} step={0.02} onChange={v=>setEl(sel,{opacity:v})}/>}
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.42)",backdropFilter:"blur(8px)",borderRadius:24,padding:"6px 8px"}}>
+          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.72)",borderRadius:24,padding:"6px 8px"}}>
             {[["color","Color"],["size","Size"],["rotate","Turn"],["opacity","Fade"],["glow","Glow"]].map(([id,lbl])=>(
               <button key={id} onClick={()=>setTool(id)} style={{borderRadius:16,padding:"7px 11px",background:tool===id?"var(--accent)":"transparent",color:tool===id?"var(--ink)":"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>
             ))}
@@ -2840,7 +2890,7 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:12,marginLeft:8,flexShrink:0}}>
-                        <button className="btn-danger" onClick={e=>{e.stopPropagation();deleteSession(s.id);}} style={{fontSize:24,lineHeight:1,padding:"3px 13px"}}>×</button>
+                        <button className="btn-danger" onClick={e=>{e.stopPropagation();deleteSession(s.id);}} style={{fontSize:28,lineHeight:1,padding:0,width:40,height:36,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid #b5302f",background:"rgba(181,48,47,0.10)",color:"#b5302f",borderRadius:6}}>×</button>
                         <ChevronIcon open={expandedSession===s.id} size={24}/>
                       </div>
                     </div>
