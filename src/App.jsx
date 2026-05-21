@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b55";
+const BUILD = "2026.05.21-b56";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -220,21 +220,29 @@ function getLocation() {
 function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
+    reader.onerror = () => resolve(null);
     reader.onload = (e) => {
+      const dataURL = e.target.result;
       const img = new Image();
+      // If the image can't be decoded/cropped (e.g. a format the canvas
+      // can't handle), fall back to the raw data so the photo still attaches
+      // instead of the upload silently hanging.
+      img.onerror = () => resolve(dataURL || null);
       img.onload = () => {
-        // Center-crop to a square so every saved photo shares the same
-        // shape as the 1080x1080 share card and displays uniformly.
-        const SIZE = 1000;
-        const side = Math.min(img.width, img.height);
-        const sx = (img.width - side) / 2;
-        const sy = (img.height - side) / 2;
-        const canvas = document.createElement("canvas");
-        canvas.width = SIZE; canvas.height = SIZE;
-        canvas.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE);
-        resolve(canvas.toDataURL("image/jpeg", 0.78));
+        try {
+          // Center-crop to a square so every saved photo shares the same
+          // shape as the 1080x1080 share card and displays uniformly.
+          const SIZE = 1000;
+          const side = Math.min(img.width, img.height);
+          const sx = (img.width - side) / 2;
+          const sy = (img.height - side) / 2;
+          const canvas = document.createElement("canvas");
+          canvas.width = SIZE; canvas.height = SIZE;
+          canvas.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE);
+          resolve(canvas.toDataURL("image/jpeg", 0.78));
+        } catch { resolve(dataURL || null); }
       };
-      img.src = e.target.result;
+      img.src = dataURL;
     };
     reader.readAsDataURL(file);
   });
@@ -1982,8 +1990,12 @@ export default function App() {
   }
 
   async function handlePhotoUpload(e) {
-    const file=e.target.files?.[0]; if(!file) return;
-    setSessionPhoto(await compressImage(file));
+    const file=e.target.files?.[0];
+    e.target.value="";   // reset so re-picking the SAME photo still fires onChange
+    if(!file) return;
+    const data = await compressImage(file);
+    if (data) setSessionPhoto(data);
+    else setError("Couldn't read that photo. Try a different one, or pick it from your library.");
   }
 
   async function startSession() {
