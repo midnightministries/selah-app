@@ -24,7 +24,7 @@ export default async (req) => {
   if (!password || String(password).length < 6) return J(400, { error: "Password must be at least 6 characters." });
 
   const store = selahStore();
-  const existing = await store.get(key(e), { type: "json" });
+  const existing = await store.get(key(e), { type: "json", consistency: "strong" });
 
   if (action === "signup") {
     if (existing) return J(409, { error: "An account with that email already exists. Try signing in." });

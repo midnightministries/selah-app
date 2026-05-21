@@ -19,7 +19,7 @@ export default async (req) => {
   const e = norm(email);
 
   const store = selahStore();
-  const rec = await store.get(key(e), { type: "json" });
+  const rec = await store.get(key(e), { type: "json", consistency: "strong" });
   if (!rec) return J(404, { error: "No account found." });
   if (!token || token !== rec.token) return J(401, { error: "Not authorized." });
 
