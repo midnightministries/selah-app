@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b21";
+const BUILD = "2026.05.20-b22";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2410,7 +2410,7 @@ export default function App() {
               </div>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",margin:"16px 0 8px"}}>Birthday</p>
               <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
-                style={{width:"100%",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark"}}/>
+                style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
             </div>
 
             {/* Clock and Timezone */}
@@ -2578,7 +2578,7 @@ export default function App() {
               </div>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Birthday</p>
               <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
-                style={{width:"100%",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:16,colorScheme:"dark"}}/>
+                style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:16,colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gender</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                 {["Male","Female","Prefer not to say"].map(g=>(
