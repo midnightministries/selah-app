@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b16";
+const BUILD = "2026.05.20-b17";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -258,12 +258,7 @@ function generateShareCard(session) {
       ctx.fillStyle = ov; ctx.fillRect(0, 0, S, S);
 
       const cx = S / 2;
-      // Glow halo
-      const halo = ctx.createRadialGradient(cx,112,0,cx,112,98);
-      halo.addColorStop(0,"rgba(201,168,76,0.32)"); halo.addColorStop(1,"rgba(201,168,76,0)");
-      ctx.fillStyle = halo;
-      ctx.beginPath(); ctx.ellipse(cx,112,98,92,0,0,Math.PI*2); ctx.fill();
-      // Proper chalk cross (gold-tinted) from the app's cross image
+      // Proper chalk cross (gold-tinted) from the app's cross image, no glow
       if (crossEl && crossEl.naturalWidth) {
         const chH = 158, chW = Math.round(chH * (crossEl.naturalWidth / crossEl.naturalHeight));
         const cc = document.createElement("canvas"); cc.width = chW; cc.height = chH;
@@ -452,6 +447,11 @@ function MMFooter({ onEggOpen, onHomeView }) {
 function ExportSheet({ session, onClose }) {
   const [state, setState] = useState("idle"); // idle | working | done
   const [shareFile, setShareFile] = useState(null);
+  const [drag, setDrag] = useState(0);
+  const dragStart = useRef(null);
+  function onTS(e){ dragStart.current = e.touches[0].clientY; }
+  function onTM(e){ if(dragStart.current==null) return; const dy=e.touches[0].clientY-dragStart.current; setDrag(dy>0?dy:0); }
+  function onTE(){ if(dragStart.current==null) return; const d=drag; dragStart.current=null; setDrag(0); if(d>90) onClose(); }
 
   // Pre-build the share card on open so the Share tap keeps its user-gesture
   // (navigator.share fails if heavy async runs before it — caused multi-tap).
@@ -487,12 +487,13 @@ function ExportSheet({ session, onClose }) {
       background:"rgba(10,8,4,0.85)",
       display:"flex",alignItems:"flex-end",justifyContent:"center"
     }} onClick={onClose}>
-      <div style={{
+      <div onClick={e=>e.stopPropagation()} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} style={{
         background:"#20130f",border:"1px solid #2e2408",
         borderRadius:"12px 12px 0 0",padding:"24px 20px 36px",
-        width:"100%",maxWidth:480
-      }} onClick={e=>e.stopPropagation()}>
-        <div style={{ width:36,height:3,background:"#3a3010",borderRadius:2,margin:"0 auto 20px" }}/>
+        width:"100%",maxWidth:480,
+        transform:`translateY(${drag}px)`, transition: drag?"none":"transform 0.2s ease"
+      }}>
+        <div style={{ width:44,height:4,background:"#5a4a20",borderRadius:2,margin:"0 auto 20px" }}/>
         <p style={{ fontFamily:"'Cinzel',serif",fontSize:12,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:16,textAlign:"center" }}>
           Save or Share Session
         </p>
@@ -531,10 +532,8 @@ function ExportSheet({ session, onClose }) {
           </div>
         </button>
 
-        <p style={{ fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",textAlign:"center",letterSpacing:"0.08em",marginTop:14,lineHeight:1.6 }}>
-          SAVE IN APPLE NOTES: tap Notes on the share sheet<br/>
-          FILE TITLE INCLUDES DATE + PASSAGE FOR EASY SORTING<br/>
-          AUTO-FOLDER CREATION AVAILABLE IN THE NATIVE APP
+        <p style={{ fontFamily:"'Crimson Text',serif",fontSize:13,color:"#8a7a4a",textAlign:"center",marginTop:14,lineHeight:1.7 }}>
+          To save in Apple Notes, tap Notes on the share sheet. The file title includes the date and passage for easy sorting. Auto-folder creation is available in the native app.
         </p>
 
         {(state === "working" || !shareFile) && (
@@ -1318,9 +1317,16 @@ export default function App() {
   const [useGps, setUseGps] = useState(true);
   const [photoView, setPhotoView] = useState(null);
   const [lightItem, setLightItem] = useState(null);
-  const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 1 && v <= 2) ? v : 1; });
+  const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 0.85 && v <= 1.6) ? v : 1.3; });
   const [showBright, setShowBright] = useState(false);
+  const [showTop, setShowTop] = useState(false);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 420);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const [sessionPhoto, setSessionPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [locLoading, setLocLoading] = useState(false);
@@ -2217,14 +2223,20 @@ export default function App() {
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
 
       {/* ══ PHOTO LIGHTBOX ══ */}
+      {showTop && (
+        <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",right:14,zIndex:110,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+      )}
+
       {showBright && (
         <div onClick={()=>setShowBright(false)} style={{position:"fixed",inset:0,zIndex:290}}>
           <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"#20130f",border:"1px solid #36241c",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
             <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>Brightness</p>
-            <input type="range" min="1" max="1.8" step="0.05" value={brightness} onChange={e=>setBrightness(parseFloat(e.target.value))} style={{width:"100%",accentColor:"#c9a84c"}}/>
+            <input type="range" min="0.85" max="1.6" step="0.01" value={brightness} onChange={e=>setBrightness(parseFloat(e.target.value))} style={{width:"100%",accentColor:"#c9a84c"}}/>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>DARKER</span>
-              <button onClick={()=>setBrightness(1)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
+              <button onClick={()=>setBrightness(1.3)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>BRIGHTER</span>
             </div>
           </div>
