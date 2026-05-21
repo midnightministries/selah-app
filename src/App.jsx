@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b20";
+const BUILD = "2026.05.20-b21";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -480,8 +480,8 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
         <button className="btn-primary" style={{width:"100%",padding:"13px",opacity:busy?0.6:1}} disabled={busy} onClick={submit}>
           {busy ? "Working…" : (mode==="signup" ? "Create Account" : "Sign In")}
         </button>
-        <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"#4a3e1a",textAlign:"center",marginTop:12,lineHeight:1.5}}>
-          Your log and content settings sync to your account. Brightness and text size stay set per device.
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#5a4a20",textAlign:"center",marginTop:12,lineHeight:1.55}}>
+          Why sign in: so your reading log and settings follow you to every device. Your photos and location stay on this device. If you would rather not, you can continue without an account.
         </p>
       </div>
       {onSkip && (
@@ -1383,6 +1383,54 @@ function TimezoneDropdown({ timezone, setTimezone }) {
   );
 }
 
+// ── Display controls popover (brightness + text size, smooth) ──
+function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose }) {
+  const [b, setB] = useState(brightness);
+  const [t, setT] = useState(textScale);
+  const raf = useRef(0);
+  function apply(bv, tv) {
+    const el = layerRef.current; if (!el) return;
+    el.style.filter = bv !== 1 ? `brightness(${bv})` : "none";
+    el.style.zoom = tv;
+  }
+  function schedule(bv, tv) {
+    if (raf.current) cancelAnimationFrame(raf.current);
+    raf.current = requestAnimationFrame(() => apply(bv, tv));
+  }
+  function changeB(v) { setB(v); schedule(v, t); }
+  function changeT(v) { setT(v); schedule(b, v); }
+  function commit() { onCommit(b, t); }
+  const pill = { background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
+  const cap = { fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em" };
+  const head = { fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase" };
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"#20130f",border:"1px solid #36241c",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+        <p style={{...head,marginBottom:10}}>Brightness</p>
+        <input type="range" min="0.85" max="1.45" step="0.01" value={b}
+          onChange={e=>changeB(parseFloat(e.target.value))}
+          onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
+          style={{width:"100%",accentColor:"#c9a84c"}}/>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+          <span style={cap}>DARKER</span>
+          <button onClick={()=>{ setB(1.22); apply(1.22,t); onCommit(1.22,t); }} style={pill}>Reset</button>
+          <span style={cap}>BRIGHTER</span>
+        </div>
+        <p style={{...head,margin:"16px 0 10px"}}>Text Size</p>
+        <input type="range" min="0.9" max="1.3" step="0.05" value={t}
+          onChange={e=>changeT(parseFloat(e.target.value))}
+          onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
+          style={{width:"100%",accentColor:"#c9a84c"}}/>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a"}}>A</span>
+          <button onClick={()=>{ setT(1); apply(b,1); onCommit(b,1); }} style={pill}>Reset</button>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"#4a3e1a"}}>A</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main App ─────────────────────────────────────────────────────────────
 export default function App() {
   const [view, setView] = useState("home");
@@ -1391,6 +1439,7 @@ export default function App() {
   const [bibleVersion, setBibleVersion] = useState(() => localStorage.getItem("selah_bible_version") || "NLT");
   const [gender, setGender] = useState(() => localStorage.getItem("selah_gender") || "Prefer not to say");
   const [age, setAge] = useState(() => localStorage.getItem("selah_age") || "Prefer not to say");
+  const [birthday, setBirthday] = useState(() => localStorage.getItem("selah_birthday") || "");
   const [clockFmt, setClockFmt] = useState(() => localStorage.getItem("selah_clock_fmt") || "12");
   const [timezone, setTimezone] = useState(() => localStorage.getItem("selah_timezone") || "device");
   const [form, setForm] = useState(() => {
@@ -1409,11 +1458,14 @@ export default function App() {
   const [useGps, setUseGps] = useState(true);
   const [photoView, setPhotoView] = useState(null);
   const [lightItem, setLightItem] = useState(null);
-  const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 0.85 && v <= 1.6) ? v : 1.22; });
+  const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 0.85 && v <= 1.45) ? v : 1.22; });
   const [textScale, setTextScale] = useState(() => { const v = parseFloat(localStorage.getItem("selah_textscale")); return (v >= 0.9 && v <= 1.3) ? v : 1; });
   useEffect(() => { localStorage.setItem("selah_textscale", String(textScale)); }, [textScale]);
+  useEffect(() => { localStorage.setItem("selah_birthday", birthday); }, [birthday]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const displayRef = useRef(null);
   const eggScrollRef = useRef(null);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   useEffect(() => {
@@ -1451,7 +1503,10 @@ export default function App() {
       const { photoData, ...rest } = s;
       return photoData ? { ...rest, hasPhoto: true } : rest;
     });
-    return { v: 1, sessions: lean, bibleVersion, gender, age, clockFmt, timezone, alarms };
+    let lastPosition = null;
+    try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
+    const setupDone = localStorage.getItem("selah_setup_done") === "1";
+    return { v: 1, sessions: lean, bibleVersion, gender, age, birthday, clockFmt, timezone, alarms, lastPosition, setupDone };
   }
   function applySync(data) {
     if (!data || typeof data !== "object") return;
@@ -1465,9 +1520,27 @@ export default function App() {
     if (data.bibleVersion) setBibleVersion(data.bibleVersion);
     if (data.gender) setGender(data.gender);
     if (data.age) setAge(data.age);
+    if (typeof data.birthday === "string") setBirthday(data.birthday);
     if (data.clockFmt) setClockFmt(data.clockFmt);
     if (data.timezone) setTimezone(data.timezone);
     if (data.alarms && typeof data.alarms === "object") setAlarms(data.alarms);
+    // Carry the reading position across devices: prefill the next session.
+    if (data.lastPosition && typeof data.lastPosition === "object") {
+      try { localStorage.setItem("selah_last_position", JSON.stringify(data.lastPosition)); } catch {}
+      const lp = data.lastPosition;
+      setForm(prev => ({
+        ...prev,
+        locationType: lp.locationType || prev.locationType,
+        startBook: lp.endBook || lp.startBook || prev.startBook,
+        startChapter: lp.endChapter || prev.startChapter,
+        startVerse: lp.endVerse || prev.startVerse,
+        endBook: lp.endBook || lp.startBook || prev.endBook,
+      }));
+    }
+    if (data.setupDone) localStorage.setItem("selah_setup_done", "1");
+  }
+  function setupIsDone(serverData) {
+    return (serverData && serverData.setupDone) || localStorage.getItem("selah_setup_done") === "1";
   }
   function handleAuthed(acc, serverData, isNew) {
     setAccount(acc); saveAccount(acc);
@@ -1476,17 +1549,24 @@ export default function App() {
     const hasServer = serverData && Object.keys(serverData).length > 0;
     if (!isNew && hasServer) {
       applySync(serverData);
-      setView("home");
+      setNeedsSetup(!setupIsDone(serverData));
     } else {
       // new signup, or login with nothing stored: push current local data up
       syncRequest("save", acc, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{});
-      setView(isNew ? "settings" : "home");
+      setNeedsSetup(!setupIsDone(null));
     }
+    setView("home");
   }
   function handleSkipAuth() {
     localStorage.setItem("selah_onboarded", "1");
     setAuthIntro(false);
-    setView("settings");
+    setNeedsSetup(localStorage.getItem("selah_setup_done") !== "1");
+    setView("home");
+  }
+  function completeSetup() {
+    localStorage.setItem("selah_setup_done", "1");
+    setNeedsSetup(false);
+    if (account) { syncRequest("save", account, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{}); }
   }
   function handleSignOut() {
     setAccount(null); saveAccount(null);
@@ -1499,7 +1579,7 @@ export default function App() {
     const onboarded = localStorage.getItem("selah_onboarded");
     if (account) {
       syncRequest("load", account, null)
-        .then(res => { if (res && res.data) applySync(res.data); setSyncState("synced"); })
+        .then(res => { if (res && res.data) { applySync(res.data); setNeedsSetup(!setupIsDone(res.data)); } setSyncState("synced"); })
         .catch(() => setSyncState("error"));
     } else if (!onboarded) {
       setAuthIntro(true);
@@ -1520,7 +1600,7 @@ export default function App() {
     }, 1500);
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, sessions, bibleVersion, gender, age, clockFmt, timezone, alarms]);
+  }, [account, sessions, bibleVersion, gender, age, birthday, clockFmt, timezone, alarms]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -1751,7 +1831,7 @@ export default function App() {
       {/* Pulsing gold edge-glow vignette */}
       <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(201,168,76,0.17), inset 0 0 ${glowRed}px rgba(110,28,28,0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none",filter:brightness!==1?`brightness(${brightness})`:"none",zoom:textScale}}>
+      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
@@ -1763,7 +1843,7 @@ export default function App() {
             </button>
           )}
           {view !== "session" && view !== "auth" && (
-            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:36,top:28,background:"transparent",border:"none",color:showBright?"#c9a84c":"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
+            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:31,top:28,background:"transparent",border:"none",color:showBright?"#c9a84c":"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
@@ -1773,6 +1853,9 @@ export default function App() {
           <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",cursor:"pointer"}}>SELAH</h1>
           <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"#4a3e1a",marginTop:3}}>Read. Mark. Return.</p>
         </div>
+
+        {/* DISPLAY LAYER — brightness + text-size apply here, not the header (keeps gold/cross true color) */}
+        <div ref={displayRef} style={{filter:brightness!==1?`brightness(${brightness})`:"none",zoom:textScale}}>
 
         {/* NAV */}
         {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && (
@@ -2264,6 +2347,15 @@ export default function App() {
                   <button className="btn-primary" style={{width:"100%",padding:"13px",marginBottom:10}} onClick={()=>{ setAuthIntro(false); setView("auth"); }}>Create Account or Sign In</button>
                 </>
               )}
+              <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid #2a1c14"}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>What syncs, what stays</p>
+                <p style={{fontSize:15,color:"#6a5a30",lineHeight:1.65,marginBottom:8}}>
+                  An account exists for one reason: so your reading carries across your devices. It stores your reading log (passages, notes, questions, answers, return verses, times), your reading position, and your content settings — translation, age group, birthday, gender, reminders, clock and time zone.
+                </p>
+                <p style={{fontSize:15,color:"#6a5a30",lineHeight:1.65}}>
+                  Your photos and GPS location never leave this device. Brightness and text size are set per device, so each screen reads right in its own light. Nothing is sold, shared, or used for anything but syncing your account.
+                </p>
+              </div>
             </div>
 
             {/* Bible Version */}
@@ -2316,6 +2408,9 @@ export default function App() {
                     }}>{a}</button>
                 ))}
               </div>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",margin:"16px 0 8px"}}>Birthday</p>
+              <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
+                style={{width:"100%",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark"}}/>
             </div>
 
             {/* Clock and Timezone */}
@@ -2428,6 +2523,7 @@ export default function App() {
           </div>
         )}
 
+        </div>{/* end display layer */}
       </div>
 
       <MMFooter onEggOpen={setEggOpen} onHomeView={view==="home"}/>
@@ -2441,22 +2537,58 @@ export default function App() {
       )}
 
       {showBright && (
-        <div onClick={()=>setShowBright(false)} style={{position:"fixed",inset:0,zIndex:290}}>
-          <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"#20130f",border:"1px solid #36241c",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>Brightness</p>
-            <input type="range" min="0.85" max="1.6" step="0.01" value={brightness} onChange={e=>setBrightness(parseFloat(e.target.value))} style={{width:"100%",accentColor:"#c9a84c"}}/>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>DARKER</span>
-              <button onClick={()=>setBrightness(1.22)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>BRIGHTER</span>
+        <DisplayControls
+          layerRef={displayRef}
+          brightness={brightness}
+          textScale={textScale}
+          onCommit={(bv,tv)=>{ setBrightness(bv); setTextScale(tv); }}
+          onClose={()=>setShowBright(false)}
+        />
+      )}
+
+      {/* ══ FIRST-TIME SETUP (floating over New Session) ══ */}
+      {needsSetup && (
+        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(6,5,2,0.78)",backdropFilter:"blur(2px)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"calc(env(safe-area-inset-top,0px) + 28px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+          <div style={{width:"100%",maxWidth:440}}>
+            <div style={{textAlign:"center",marginBottom:14}}>
+              <div style={{display:"flex",justifyContent:"center",marginBottom:10}}><CrossIcon size={34} glow={true}/></div>
+              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:"#e4dcc8",marginBottom:6}}>Set the Basics</h2>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#6a5a30",lineHeight:1.55,maxWidth:360,margin:"0 auto"}}>
+                A few quick things so SELAH meets you where you are. The model calibrates its language and questions to these. His Word does not change. You can adjust all of it anytime in Settings.
+              </p>
             </div>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",margin:"16px 0 10px"}}>Text Size</p>
-            <input type="range" min="0.9" max="1.3" step="0.05" value={textScale} onChange={e=>setTextScale(parseFloat(e.target.value))} style={{width:"100%",accentColor:"#c9a84c"}}/>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a"}}>A</span>
-              <button onClick={()=>setTextScale(1)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"#4a3e1a"}}>A</span>
+
+            <div className="card">
+              <p className="label">Bible Translation</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {BIBLE_VERSIONS.map(v=>(
+                  <button key={v} className={`version-pill ${bibleVersion===v?"active":""}`} onClick={()=>setBibleVersion(v)}>{v}</button>
+                ))}
+              </div>
             </div>
+
+            <div className="card">
+              <p className="label">I Am</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Age Group</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+                {["Kids (5-12)","Teen (13-17)","Adult (18+)","Prefer not to say"].map(a=>(
+                  <button key={a} className={`version-pill ${age===a?"active":""}`}
+                    onClick={()=>{ setAge(a); if (a.startsWith("Kids") && !["NIrV","ICB","NLT"].includes(bibleVersion)) setBibleVersion("NIrV"); }}>{a}</button>
+                ))}
+              </div>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Birthday</p>
+              <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
+                style={{width:"100%",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:16,colorScheme:"dark"}}/>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gender</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {["Male","Female","Prefer not to say"].map(g=>(
+                  <button key={g} className={`version-pill ${gender===g?"active":""}`} onClick={()=>setGender(g)}>{g}</button>
+                ))}
+              </div>
+            </div>
+
+            <button className="btn-primary" style={{width:"100%",padding:"14px",marginTop:4}} onClick={completeSetup}>Begin</button>
+            <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"#4a3e1a",textAlign:"center",marginTop:10,lineHeight:1.5}}>You can change any of this later under Settings.</p>
           </div>
         </div>
       )}
