@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b44";
+const BUILD = "2026.05.20-b45";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -268,7 +268,7 @@ function generateShareCard(session, opts) {
 
     const drawCard = () => {
       // scrim — lighter for verse layout, heavier when over a photo
-      const top = usePhoto ? 0.86 : 0.72, mid = usePhoto ? 0.62 : 0.5;
+      const top = usePhoto ? 0.72 : 0.72, mid = usePhoto ? 0.42 : 0.5;
       const ov = ctx.createLinearGradient(0,0,0,S);
       ov.addColorStop(0,`rgba(10,8,4,${top})`); ov.addColorStop(0.42,`rgba(10,8,4,${mid})`);
       ov.addColorStop(0.66,`rgba(10,8,4,${top})`); ov.addColorStop(1,"rgba(10,8,4,0.97)");
@@ -720,9 +720,11 @@ function ExportSheet({ session, onClose }) {
           <div style={{width:44,height:4,background:"var(--m3)",borderRadius:2,margin:"0 auto"}}/>
         </div>
 
-        {/* Live preview */}
-        <div style={{width:"100%",aspectRatio:"1 / 1",borderRadius:10,overflow:"hidden",border:"1px solid var(--border2)",marginBottom:16,background:"#0e0c06"}}>
-          {previewUrl ? <img src={previewUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/> : <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%"}}><span className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.1em"}}>BUILDING…</span></div>}
+        {/* Live preview — pinned so it stays visible while you adjust controls below */}
+        <div style={{position:"sticky",top:0,zIndex:5,background:"var(--surface)",paddingBottom:12,marginBottom:6}}>
+          <div style={{width:230,maxWidth:"66%",margin:"0 auto",aspectRatio:"1 / 1",borderRadius:10,overflow:"hidden",border:"1px solid var(--border2)",background:"#0e0c06"}}>
+            {previewUrl ? <img src={previewUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/> : <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%"}}><span className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.1em"}}>BUILDING…</span></div>}
+          </div>
         </div>
 
         <Seg label="On the card" options={contentOpts} value={opts.content} onPick={v=>set("content",v)}/>
@@ -1902,14 +1904,22 @@ export default function App() {
     const depth = getDepthLevel(visibleSessions, isKid);
     const kidNote = isKid ? ` This reader is a child between 5 and 12. Write everything for a young child. Use short, simple sentences and plain words a child knows. Explain any hard word in the verse the moment you use it. Keep the context to 2 or 3 short sentences that tell the story simply. Make the questions concrete and about what happened, who was there, and what they did, not abstract ideas. Notes should be short and clear. Return verses should be easy to picture. Stay warm and honest. Do not water down the truth, just say it in words a child understands. Never frighten or shame the child.` : "";
     const nivNote = bibleVersion === "NIV" ? ` For the NIV, follow the classic NIV wording. Do not adopt the 2011 revision's gender-neutral language choices.` : "";
+    const book = (activeSession?.startBook || form.startBook || "").trim();
+    const DENSE = ["Romans","Hebrews","Galatians","Ephesians","Colossians","Revelation","Daniel","Isaiah","Ezekiel","Leviticus","Job","1 Corinthians","2 Corinthians","Zechariah","Acts"];
+    const GENDER_BOOKS = ["Proverbs","Song of Solomon","Titus","Ephesians","1 Timothy","2 Timothy","1 Peter","Ruth","Esther","1 Corinthians"];
+    const bookNote = DENSE.includes(book)
+      ? ` ${book} is a dense, argument-driven book whose meaning depends on what came before it. Where a chapter opens on a connective like "therefore," ground the context in the preceding argument or book so the reader is not lost. Give fuller historical and theological context here than you would for narrative or wisdom.`
+      : ` This book reads more directly than the dense epistles; keep the context clear and grounded without bloating it, but never thin.`;
+    const genderNote = GENDER_BOOKS.includes(book)
+      ? ` This book speaks directly to how God designed men and women and what He wrote into us. Let the reader's gender (${gender}) meaningfully shape the application and examples here.`
+      : ` Gender (${gender}) may lightly inform examples but should not dominate; the text governs.`;
     const recentT = visibleSessions.filter(x=>x.timing).slice(0,5);
     let engageNote = "";
     if (recentT.length) {
-      const avgRead = Math.round(recentT.reduce((a,x)=>a+(x.timing.readingMin||0),0)/recentT.length);
-      const avgGap = Math.round(recentT.reduce((a,x)=>a+(x.timing.gapSec||0),0)/recentT.length);
-      engageNote = ` Engagement signals (do not mention to the reader): over the last ${recentT.length} sessions this reader averages ${avgRead} min reading and a ${avgGap} sec pause before answering. Longer reading and longer pauses mean they wrestle with the text and return to it, so push depth and rigor a notch. Very short reading and instant answers suggest skimming, so write questions that cannot be answered without returning to the passage.`;
+      const avg = (k)=>Math.round(recentT.reduce((a,x)=>a+(x.timing[k]||0),0)/recentT.length);
+      engageNote = ` Engagement signals (never mention to the reader): over the last ${recentT.length} sessions this reader averages ${avg("readingMin")} min reading, a ${avg("gapSec")} sec pause before answering, and ${avg("answeringSec")} sec writing answers. Long reading, long pauses, and a long answering span mean they wrestle, return to the text between questions, and labor over their words; push real depth and rigor and richer context. Short times mean skimming; tighten and force a return to the passage.`;
     }
-    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote}${engageNote} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
+    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote}${bookNote}${genderNote}${engageNote} Scale the depth and density of the context, the notes, and the questions to the depth level: at higher levels include more historical, literary, and theological grounding and connect to the surrounding chapters and books. Do not hand a beginner and a Harvest-level reader the same context for the same passage. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
     try {
       const resp = await fetch("/.netlify/functions/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -1941,8 +1951,9 @@ export default function App() {
     const readingMin = (_start && _readEnd) ? Math.max(0, Math.round((_readEnd-_start)/60000)) : null;
     const gapSec = (_readEnd && _fa) ? Math.max(0, Math.round((_fa-_readEnd)/1000)) : null;
     const totalMin = _start ? Math.max(0, Math.round((_now-_start)/60000)) : null;
-    const timing = { readingMin, gapSec, totalMin };
-    const engagement = `\n\nReader engagement signals (for calibration only, never mention to the reader): reading time ${readingMin==null?"unknown":readingMin+" min"}; pause before first answer ${gapSec==null?"unknown":gapSec+" sec"}; total session ${totalMin==null?"unknown":totalMin+" min"}. A longer pause before answering and longer reading suggest the reader wrestled and returned to the text; meet that with deeper, more rigorous feedback. Quick, short answers may be skimming; press them gently back to the passage.`;
+    const answeringSec = (_fa) ? Math.max(0, Math.round((_now-_fa)/1000)) : null;
+    const timing = { readingMin, gapSec, totalMin, answeringSec };
+    const engagement = `\n\nReader engagement signals (for calibration only, never mention to the reader): reading time ${readingMin==null?"unknown":readingMin+" min"}; pause before first answer ${gapSec==null?"unknown":gapSec+" sec"}; total session ${totalMin==null?"unknown":totalMin+" min"}; time spent writing answers ${answeringSec==null?"unknown":answeringSec+" sec"}. A long answering span (much longer than the read) means they went back to the Word for each question and labored over the response, real effort and engagement; meet that with deeper, more rigorous feedback. Quick, short answers may be skimming; press them gently back to the passage.`;
     const payload = "Passage: "+(activeSession?.passage||"")+"\n\nQuestions and answers:\n"+qLines+engagement;
     try {
       const resp = await fetch("/.netlify/functions/feedback", {
