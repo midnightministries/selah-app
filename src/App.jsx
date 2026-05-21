@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b34";
+const BUILD = "2026.05.20-b35";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1298,6 +1298,12 @@ function AboutScreen({ onBack }) {
             <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m3)"}}>For all who read in the dark</p>
           </div>
 
+          <Section label="What SELAH Is">
+            <P>SELAH is not a business. It is a tool, the first one Midnight Ministries has put into your hands, built for a purpose inside the ministry. Midnight Ministries is the work. SELAH is one thing the work produced.</P>
+            <P>It is a companion to your Bible. It does not replace it. Nothing should. Your Bible stays open beside it; SELAH holds the practice around it, the pause, the questions, the notes, the return.</P>
+            <P mb={0}>It will live everywhere you do: phone, tablet, and computer, as an app and on the web. There is no excuse not to have it. Read. Mark. Return.</P>
+          </Section>
+
           <Section label="Why This Exists">
             <P>Midnight Ministries was not built in a boardroom. It was built in the forge. Out of a season where the only anchor was His Word and the only company was God, a decision was made to stop waiting for permission to build what the people around us actually needed.</P>
             <P>Most people do not lack access to Scripture. They lack a practice. They open the Bible, read a few verses, close it, and carry nothing out. The knowledge sits on the page. The forge stays cold.</P>
@@ -2185,8 +2191,11 @@ export default function App() {
                     <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
                       What we carry moves down the line. Not only sin, but habit, hunger, and posture. So we put the Word in front of them early, and we read beside them. Not flattery. Formation.
                     </p>
-                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:14}}>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
                       You are not holding their place. You are handing them the torch.
+                    </p>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:14}}>
+                      What you carry, they will carry. Read like they are watching, because they are.
                     </p>
                     <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.14em",textTransform:"uppercase",textAlign:"right"}}>Midnight Ministries</p>
                   </div>
