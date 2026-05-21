@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b43";
+const BUILD = "2026.05.20-b44";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -715,7 +715,7 @@ function ExportSheet({ session, onClose }) {
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(10,8,4,0.85)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-      <div ref={sheetRef} onClick={e=>e.stopPropagation()} style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:"12px 12px 0 0",padding:"14px 18px 32px",width:"100%",maxWidth:480,maxHeight:"92vh",overflowY:"auto",WebkitOverflowScrolling:"touch",willChange:"transform"}}>
+      <div ref={sheetRef} onClick={e=>e.stopPropagation()} style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:"12px 12px 0 0",padding:"calc(env(safe-area-inset-top,0px) + 14px) 18px calc(env(safe-area-inset-bottom,0px) + 28px)",width:"100%",maxWidth:480,maxHeight:"86dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",willChange:"transform"}}>
         <div onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} style={{padding:"6px 0 14px",cursor:"grab"}}>
           <div style={{width:44,height:4,background:"var(--m3)",borderRadius:2,margin:"0 auto"}}/>
         </div>
