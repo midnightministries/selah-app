@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b22";
+const BUILD = "2026.05.20-b23";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -428,6 +428,24 @@ async function syncRequest(action, account, data) {
   const j = await r.json().catch(()=>({}));
   if (!r.ok) throw new Error(j.error || "Sync failed.");
   return j; // save: {ok,updatedAt} | load: {data,updatedAt}
+}
+
+// ── App icon themes (swap favicon + apple-touch at runtime) ──
+const ICON_THEMES = {
+  default: { label: "Gold Cross", base: "",            thumb: "/icon-192.png" },
+  red:     { label: "Blood Red",  base: "/icons/red",    thumb: "/icons/red/icon-192.png" },
+  nebula:  { label: "Nebula",     base: "/icons/nebula", thumb: "/icons/nebula/icon-192.png" },
+  camo:    { label: "Tiger Camo", base: "/icons/camo",   thumb: "/icons/camo/icon-192.png" },
+};
+function applyAppIcon(name) {
+  if (typeof document === "undefined") return;
+  const t = ICON_THEMES[name] || ICON_THEMES.default;
+  const b = t.base;
+  const set = (sel, file) => { const el = document.querySelector(sel); if (el) el.setAttribute("href", b + file); };
+  set('link[rel="apple-touch-icon"]', "/apple-touch-icon.png");
+  set('link[rel="icon"][sizes="32x32"]', "/favicon-32.png");
+  set('link[rel="icon"][sizes="16x16"]', "/favicon-16.png");
+  set('link[rel="icon"][type="image/x-icon"]', "/favicon.ico");
 }
 
 // ── Auth + onboarding screen ──
@@ -1440,6 +1458,7 @@ export default function App() {
   const [gender, setGender] = useState(() => localStorage.getItem("selah_gender") || "Prefer not to say");
   const [age, setAge] = useState(() => localStorage.getItem("selah_age") || "Prefer not to say");
   const [birthday, setBirthday] = useState(() => localStorage.getItem("selah_birthday") || "");
+  const [appIcon, setAppIcon] = useState(() => localStorage.getItem("selah_app_icon") || "default");
   const [clockFmt, setClockFmt] = useState(() => localStorage.getItem("selah_clock_fmt") || "12");
   const [timezone, setTimezone] = useState(() => localStorage.getItem("selah_timezone") || "device");
   const [form, setForm] = useState(() => {
@@ -1462,6 +1481,7 @@ export default function App() {
   const [textScale, setTextScale] = useState(() => { const v = parseFloat(localStorage.getItem("selah_textscale")); return (v >= 0.9 && v <= 1.3) ? v : 1; });
   useEffect(() => { localStorage.setItem("selah_textscale", String(textScale)); }, [textScale]);
   useEffect(() => { localStorage.setItem("selah_birthday", birthday); }, [birthday]);
+  useEffect(() => { localStorage.setItem("selah_app_icon", appIcon); applyAppIcon(appIcon); }, [appIcon]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -1506,7 +1526,7 @@ export default function App() {
     let lastPosition = null;
     try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
     const setupDone = localStorage.getItem("selah_setup_done") === "1";
-    return { v: 1, sessions: lean, bibleVersion, gender, age, birthday, clockFmt, timezone, alarms, lastPosition, setupDone };
+    return { v: 1, sessions: lean, bibleVersion, gender, age, birthday, appIcon, clockFmt, timezone, alarms, lastPosition, setupDone };
   }
   function applySync(data) {
     if (!data || typeof data !== "object") return;
@@ -1521,6 +1541,7 @@ export default function App() {
     if (data.gender) setGender(data.gender);
     if (data.age) setAge(data.age);
     if (typeof data.birthday === "string") setBirthday(data.birthday);
+    if (data.appIcon && ICON_THEMES[data.appIcon]) setAppIcon(data.appIcon);
     if (data.clockFmt) setClockFmt(data.clockFmt);
     if (data.timezone) setTimezone(data.timezone);
     if (data.alarms && typeof data.alarms === "object") setAlarms(data.alarms);
@@ -1600,7 +1621,7 @@ export default function App() {
     }, 1500);
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, sessions, bibleVersion, gender, age, birthday, clockFmt, timezone, alarms]);
+  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, clockFmt, timezone, alarms]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -2428,6 +2449,31 @@ export default function App() {
                 If your device drifts near state borders (Yuma area, AZ near CA), set manually.
               </p>
               <TimezoneDropdown timezone={timezone} setTimezone={setTimezone}/>
+            </div>
+
+            {/* Visuals */}
+            <div className="card">
+              <p className="label">Visuals</p>
+              <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>
+                Make it yours. The Word does not change; the look can.
+              </p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>App Icon</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:12,marginBottom:12}}>
+                {Object.entries(ICON_THEMES).map(([key,t])=>(
+                  <button key={key} onClick={()=>setAppIcon(key)}
+                    style={{background:"transparent",border:"none",padding:0,cursor:"pointer",textAlign:"center",width:64}}>
+                    <div style={{width:64,height:64,borderRadius:14,overflow:"hidden",border:appIcon===key?"2px solid #c9a84c":"2px solid #36241c",boxShadow:appIcon===key?"0 0 14px rgba(201,168,76,0.35)":"none",transition:"all 0.2s"}}>
+                      <img src={t.thumb} alt={t.label} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                    </div>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.06em",textTransform:"uppercase",marginTop:6,color:appIcon===key?"#c9a84c":"#5a4a20"}}>{t.label}</p>
+                  </button>
+                ))}
+              </div>
+              <div style={{background:"rgba(201,168,76,0.05)",border:"1px solid rgba(201,168,76,0.16)",borderRadius:6,padding:"11px 14px"}}>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#8a7a4a",lineHeight:1.6}}>
+                  On a computer the browser tab updates right away. On iPhone or iPad, pick your icon first, then add SELAH to your home screen and it carries that icon. Samsung and other Android phones currently only show the default icon. We are building the piece that lets the installed app override that, and it is coming.
+                </p>
+              </div>
             </div>
 
             {/* Support the Ministry */}
