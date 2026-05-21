@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b54";
+const BUILD = "2026.05.21-b55";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -738,7 +738,7 @@ function ExportSheet({ session, onClose }) {
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.95)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.6)",backdropFilter:"blur(6px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
@@ -795,7 +795,7 @@ function ExportSheet({ session, onClose }) {
             {tool==="rotate" && <input type="range" min="-45" max="45" step="1" value={selEl.rot||0} onChange={e=>setEl(sel,{rot:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
             {tool==="opacity" && <input type="range" min="0.1" max="1" step="0.05" value={selEl.opacity==null?1:selEl.opacity} onChange={e=>setEl(sel,{opacity:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.6)",backdropFilter:"blur(8px)",borderRadius:24,padding:"6px 8px"}}>
+          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.42)",backdropFilter:"blur(8px)",borderRadius:24,padding:"6px 8px"}}>
             {[["color","Color"],["size","Size"],["rotate","Turn"],["opacity","Fade"],["glow","Glow"]].map(([id,lbl])=>(
               <button key={id} onClick={()=>setTool(id)} style={{borderRadius:16,padding:"7px 11px",background:tool===id?"var(--accent)":"transparent",color:tool===id?"var(--ink)":"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>
             ))}
