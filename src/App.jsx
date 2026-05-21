@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b47";
+const BUILD = "2026.05.20-b48";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -330,6 +330,319 @@ function composeCard(session, layout) {
       finish();
     }
   });
+}
+
+// Generate formatted note text for export to Notes/Files
+function generateNoteText(session) {
+  const line = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+  const thin = "────────────────────────────────────────";
+  let txt = "";
+  txt += `SELAH SESSION LOG\n${line}\n\n`;
+  txt += `PASSAGE\n${session.passage}\n\n`;
+  txt += `DATE\n${formatDate(session.startTime)}\n\n`;
+  txt += `LOCATION\n${session.locationType !== "Other" ? session.locationType : session.otherLocation}`;
+  if (session.geoLabel) txt += ` — ${session.geoLabel}`;
+  txt += `\n\n`;
+  txt += `TIME IN THE WORD\n${elapsed(session.startTime, session.endTime)}\n\n`;
+  txt += `${line}\n\n`;
+
+  if (session.aiResult?.summary) {
+    txt += `SUMMARY\n${session.aiResult.summary}\n\n${thin}\n\n`;
+  }
+
+  if (session.aiResult?.questions?.length) {
+    txt += `QUESTIONS FROM THE TEXT\n`;
+    session.aiResult.questions.forEach((q,i) => { txt += `${String(i+1).padStart(2,"0")}. ${q}\n`; });
+    txt += `\n${thin}\n\n`;
+  }
+
+  if (session.aiResult?.notes?.length) {
+    txt += `FIELD NOTES\n`;
+    session.aiResult.notes.forEach(n => { txt += `— ${n}\n`; });
+    txt += `\n${thin}\n\n`;
+  }
+
+  if (session.aiResult?.returnVerses?.length) {
+    txt += `COME BACK TO\n`;
+    session.aiResult.returnVerses.forEach(v => { txt += `${v.ref}\n${v.reason}\n\n`; });
+    txt += `${thin}\n\n`;
+  }
+
+  if (session.personalNotes) {
+    txt += `YOUR NOTES\n${session.personalNotes}\n\n${thin}\n\n`;
+  }
+
+  txt += `${line}\nSelah by Midnight Ministries\n`;
+  txt += `Save in: Selah — Midnight Ministries (folder)\n`;
+  return txt;
+}
+
+async function shareAsNote(session) {
+  const text = generateNoteText(session);
+  const dateStr = new Date(session.startTime).toISOString().slice(0,10);
+  const passageShort = (session.passage||"Session").slice(0,40).replace(/[^a-zA-Z0-9 ]/g," ").trim();
+  const filename = `Selah — ${passageShort} — ${dateStr}.txt`;
+  const blob = new Blob([text], { type: "text/plain" });
+  const file = new File([blob], filename, { type: "text/plain" });
+
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "Selah — "+passageShort, text: "Session: "+session.passage });
+      return "shared";
+    } catch(e) {
+      if (e.name === "AbortError") return "cancelled";
+    }
+  }
+  // Fallback: download
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+  return "downloaded";
+}
+
+const STORAGE_KEY = "selah_sessions_v2";
+function loadSessions() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; } catch { return []; } }
+function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(s)); } catch {} }
+
+// ── Account + cloud sync (Netlify functions) ──
+const ACCOUNT_KEY = "selah_account";
+function loadAccount() { try { return JSON.parse(localStorage.getItem(ACCOUNT_KEY))||null; } catch { return null; } }
+function saveAccount(a) { try { if (a) localStorage.setItem(ACCOUNT_KEY, JSON.stringify(a)); else localStorage.removeItem(ACCOUNT_KEY); } catch {} }
+
+async function authRequest(action, email, password) {
+  const r = await fetch("/.netlify/functions/auth", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, email, password })
+  });
+  const j = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(j.error || "Something went wrong. Try again.");
+  return j; // { token, email, data }
+}
+
+async function syncRequest(action, account, data) {
+  if (!account) return null;
+  const r = await fetch("/.netlify/functions/sync", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, email: account.email, token: account.token, data })
+  });
+  const j = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(j.error || "Sync failed.");
+  return j; // save: {ok,updatedAt} | load: {data,updatedAt}
+}
+
+// ── App icon themes (swap favicon + apple-touch at runtime) ──
+const ICON_THEMES = {
+  default: { label: "Gold Cross", base: "",            thumb: "/icon-192.png" },
+  red:     { label: "Blood Red",  base: "/icons/red",    thumb: "/icons/red/icon-192.png" },
+  nebula:  { label: "Nebula",     base: "/icons/nebula", thumb: "/icons/nebula/icon-192.png" },
+  camo:    { label: "Tiger Camo", base: "/icons/camo",   thumb: "/icons/camo/icon-192.png" },
+  pinkneb: { label: "Pink Cross",  base: "/icons/pinkneb", thumb: "/icons/pinkneb/icon-192.png" },
+  pinksplatter: { label: "Pink Splatter", base: "/icons/pinksplatter", thumb: "/icons/pinksplatter/icon-192.png" },
+  redneb:  { label: "Red Cross",   base: "/icons/redneb",  thumb: "/icons/redneb/icon-192.png" },
+  selahred:{ label: "SELAH Red",   base: "/icons/selahred",thumb: "/icons/selahred/icon-192.png" },
+  tigerpurple:    { label: "Purple Tiger",   base: "/icons/tigerpurple",    thumb: "/icons/tigerpurple/icon-192.png" },
+  splatterpurple: { label: "Purple Splatter",base: "/icons/splatterpurple", thumb: "/icons/splatterpurple/icon-192.png" },
+};
+function applyAppIcon(name) {
+  if (typeof document === "undefined") return;
+  const t = ICON_THEMES[name] || ICON_THEMES.default;
+  const b = t.base;
+  const set = (sel, file) => { const el = document.querySelector(sel); if (el) el.setAttribute("href", b + file); };
+  set('link[rel="apple-touch-icon"]', "/apple-touch-icon.png");
+  set('link[rel="icon"][sizes="32x32"]', "/favicon-32.png");
+  set('link[rel="icon"][sizes="16x16"]', "/favicon-16.png");
+  set('link[rel="icon"][type="image/x-icon"]', "/favicon.ico");
+}
+
+// ── Color palettes (override the theme variable package) ──
+const PALETTES = {
+  midnight: { label: "Midnight", swatch: ["#190f0b","#c9a84c","#6e1c1c"], vars: {
+    "--bg":"#190f0b","--surface":"#20130f","--input":"#221610","--input2":"#160d0a",
+    "--border":"#36241c","--border2":"#2e2408","--accent":"#c9a84c","--accent2":"#a8832a",
+    "--ink":"#0e0c06","--text":"#e4dcc8","--text2":"#c8bfa0","--text3":"#c0b898","--text4":"#d4ccb8",
+    "--m1":"#8a7a4a","--m1b":"#8a7a5a","--m2":"#6a5a30","--m3":"#5a4a20","--m3b":"#5a4a2a","--m4":"#4a3e1a","--m5":"#3a3010",
+    "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28" } },
+  warm: { label: "Warm Amber", swatch: ["#241108","#f5894a","#a4734e"], vars: {
+    "--bg":"#241108","--surface":"#311a0e","--input":"#3a2012","--input2":"#2a1409",
+    "--border":"#4a2e1c","--border2":"#3e2616","--accent":"#f5894a","--accent2":"#d2632a",
+    "--ink":"#1a0d05","--text":"#f7e7d6","--text2":"#ecccb4","--text3":"#e2c0a6","--text4":"#f5e6d6",
+    "--m1":"#c79874","--m1b":"#c79874","--m2":"#a4734e","--m3":"#875b3c","--m3b":"#875b3c","--m4":"#6a4630","--m5":"#523524",
+    "--accent-rgb":"245,137,74","--blood-rgb":"150,40,40" } },
+  rose: { label: "Rose", swatch: ["#26101c","#f08fb5","#a86883"], vars: {
+    "--bg":"#26101c","--surface":"#341624","--input":"#3c1a2b","--input2":"#2a1320",
+    "--border":"#4e2840","--border2":"#432234","--accent":"#f08fb5","--accent2":"#cc6090",
+    "--ink":"#1c0c14","--text":"#f8e7ee","--text2":"#edccd8","--text3":"#e2c0cf","--text4":"#f3dde8",
+    "--m1":"#c98ba2","--m1b":"#c98ba2","--m2":"#a86883","--m3":"#8a536c","--m3b":"#8a536c","--m4":"#6c3f53","--m5":"#543141",
+    "--accent-rgb":"240,143,181","--blood-rgb":"160,50,90" } },
+  blossom: { label: "Blossom", swatch: ["#1d1336","#cf9bff","#8772aa"], vars: {
+    "--bg":"#1d1336","--surface":"#271a45","--input":"#2d1e4f","--input2":"#211541",
+    "--border":"#3c2c63","--border2":"#322455","--accent":"#cf9bff","--accent2":"#a86fe0",
+    "--ink":"#150c28","--text":"#f0e8fb","--text2":"#d8ccef","--text3":"#cdc0e6","--text4":"#e6dcf6",
+    "--m1":"#a995c9","--m1b":"#a995c9","--m2":"#8772aa","--m3":"#6f5b90","--m3b":"#6f5b90","--m4":"#564574","--m5":"#43355c",
+    "--accent-rgb":"207,155,255","--blood-rgb":"170,70,120" } },
+  cadet: { label: "Cadet Blue", swatch: ["#0b1a30","#4ec4ff","#5e7a9c"], vars: {
+    "--bg":"#0b1a30","--surface":"#11233f","--input":"#13294a","--input2":"#0e1d36",
+    "--border":"#25405f","--border2":"#1f3650","--accent":"#4ec4ff","--accent2":"#2e84cc",
+    "--ink":"#08121f","--text":"#e4eef8","--text2":"#c4d8ee","--text3":"#bacfe6","--text4":"#d8e6f4",
+    "--m1":"#7e9bbb","--m1b":"#7e9bbb","--m2":"#5e7a9c","--m3":"#4e6582","--m3b":"#4e6582","--m4":"#3e5168","--m5":"#314052",
+    "--accent-rgb":"78,196,255","--blood-rgb":"60,100,170" } },
+  steel: { label: "Steel", swatch: ["#14181d","#93b6cf","#6a7c8a"], vars: {
+    "--bg":"#14181d","--surface":"#1d232a","--input":"#212831","--input2":"#161b21",
+    "--border":"#333c46","--border2":"#2a323b","--accent":"#93b6cf","--accent2":"#5f87a4",
+    "--ink":"#0c1116","--text":"#e8edf2","--text2":"#cdd8e0","--text3":"#c2cfd8","--text4":"#dde6ed",
+    "--m1":"#8a9aa8","--m1b":"#8a9aa8","--m2":"#6a7c8a","--m3":"#586774","--m3b":"#586774","--m4":"#45525d","--m5":"#364049",
+    "--accent-rgb":"147,182,207","--blood-rgb":"100,120,150" } },
+  dark: { label: "Dark", swatch: ["#141215","#c7414c","#7a6f78"], vars: {
+    "--bg":"#141215","--surface":"#1d1a20","--input":"#221e26","--input2":"#17141a",
+    "--border":"#352f3e","--border2":"#2b2733","--accent":"#c7414c","--accent2":"#93303a",
+    "--ink":"#14080a","--text":"#ece6ea","--text2":"#d4ccd2","--text3":"#c8bfc6","--text4":"#f0eaef",
+    "--m1":"#9a8f98","--m1b":"#9a8f98","--m2":"#7a6f78","--m3":"#645b66","--m3b":"#645b66","--m4":"#4e4654","--m5":"#3c3542",
+    "--accent-rgb":"199,65,76","--blood-rgb":"150,40,40" } },
+};
+function ageFromBirthday(bday) {
+  if (!bday) return null;
+  const d = new Date(bday); if (isNaN(d)) return null;
+  const now = new Date();
+  let a = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+  return a;
+}
+function applyPalette(name) {
+  if (typeof document === "undefined") return;
+  const p = PALETTES[name] || PALETTES.midnight;
+  const root = document.documentElement;
+  Object.entries(p.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+}
+
+// ── Auth + onboarding screen ──
+function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
+  const [mode, setMode] = useState(initialMode || "signup");
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const inputStyle = { width:"100%", boxSizing:"border-box", background:"var(--input2)", border:"1px solid var(--border)", borderRadius:6, padding:"12px 14px", color:"var(--text)", fontFamily:"'Crimson Text',serif", fontSize:17, outline:"none", marginBottom:12 };
+  async function submit() {
+    setErr("");
+    const e = email.trim().toLowerCase();
+    if (!e.includes("@")) { setErr("Enter a valid email."); return; }
+    if (pw.length < 6) { setErr("Password must be at least 6 characters."); return; }
+    setBusy(true);
+    try {
+      const res = await authRequest(mode, e, pw);
+      onAuthed({ email: res.email, token: res.token }, res.data || {}, mode === "signup");
+    } catch (ex) { setErr(ex.message || "Something went wrong."); }
+    setBusy(false);
+  }
+  return (
+    <div className="fade-in">
+      {onBack && (
+        <button onClick={onBack} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Back</button>
+      )}
+      {intro && (
+        <div style={{textAlign:"center",marginBottom:18}}>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={40} glow={true}/></div>
+          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:24,fontWeight:700,letterSpacing:"0.12em",color:SELAH_CREAM,textShadow:"0 0 22px rgba(var(--accent-rgb),0.3)",marginBottom:6}}>SELAH</h2>
+          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.5,marginBottom:4}}>Read. Mark. Return.</p>
+          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",lineHeight:1.55,maxWidth:330,margin:"0 auto"}}>
+            Make an account to carry your log and settings across every device. Or step straight in. Your reading stays yours.
+          </p>
+        </div>
+      )}
+      <div className="card">
+        <div style={{display:"flex",gap:8,marginBottom:18}}>
+          {[["signup","Create Account"],["login","Sign In"]].map(([val,label])=>(
+            <button key={val} className={`version-pill ${mode===val?"active":""}`} onClick={()=>{ setMode(val); setErr(""); }} style={{flex:1}}>{label}</button>
+          ))}
+        </div>
+        <p className="label">Email</p>
+        <input type="email" autoComplete="email" inputMode="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle}/>
+        <p className="label">Password</p>
+        <input type="password" autoComplete={mode==="signup"?"new-password":"current-password"} value={pw} onChange={e=>setPw(e.target.value)} placeholder="At least 6 characters" style={inputStyle}
+          onKeyDown={e=>{ if(e.key==="Enter") submit(); }}/>
+        {err && <p style={{color:"#d98a8a",fontFamily:"'Crimson Text',serif",fontSize:15,marginBottom:12,lineHeight:1.5}}>{err}</p>}
+        <button className="btn-primary" style={{width:"100%",padding:"13px",opacity:busy?0.6:1}} disabled={busy} onClick={submit}>
+          {busy ? "Working…" : (mode==="signup" ? "Create Account" : "Sign In")}
+        </button>
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)",textAlign:"center",marginTop:12,lineHeight:1.55}}>
+          Why sign in: so your reading log and settings follow you to every device. Your photos and location stay on this device. If you would rather not, you can continue without an account.
+        </p>
+      </div>
+      {onSkip && (
+        <div style={{textAlign:"center",marginTop:4}}>
+          <button onClick={onSkip} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,padding:8}}>
+            Continue without an account
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Midnight Ministries footer (always visible) ──
+function MMFooter({ onEggOpen, onHomeView }) {
+  return (
+    <div style={{
+      position:"fixed", bottom:0, left:0, right:0, zIndex:100,
+      background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
+      paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
+      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+      pointerEvents:"none"
+    }}>
+      <svg width="0" height="0" style={{position:"absolute"}}>
+        <defs>
+          <filter id="chalk-mm" x="-5%" y="-30%" width="110%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="4" seed="7" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+            <feGaussianBlur in="displaced" stdDeviation="0.35" result="soft"/>
+            <feComposite in="soft" in2="SourceGraphic" operator="in" result="clipped"/>
+            <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="var(--accent)" floodOpacity="0.45"/>
+          </filter>
+        </defs>
+      </svg>
+      <span onClick={()=>{ if(onHomeView) onEggOpen("mm"); }} style={{
+        fontFamily:"'Cinzel',serif",
+        fontSize:12,
+        letterSpacing:"0.22em",
+        textTransform:"uppercase",
+        color:CROSS_RED,
+        textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",
+        filter:"url(#chalk-mm)",
+        paddingBottom:1,
+        cursor:onHomeView?"pointer":"default",
+        pointerEvents:"all"
+      }}>
+        MIDNIGHT MINISTRIES
+      </span>
+    </div>
+  );
+}
+
+// ── Export bottom sheet ──
+// ── Six-box PIN input ──
+function PinBoxes({ value, onChange, autoFocus }) {
+  const refs = useRef([]);
+  const set = (i, raw) => {
+    const d = (raw || "").replace(/\D/g, "");
+    if (d.length > 1) { const nv = d.slice(0, 6); onChange(nv); refs.current[Math.min(nv.length, 5)] && refs.current[Math.min(nv.length, 5)].focus(); return; }
+    const arr = (value || "").padEnd(6, " ").split("");
+    arr[i] = d || " ";
+    const nv = arr.join("").replace(/ /g, "").slice(0, 6);
+    onChange(nv);
+    if (d && i < 5 && refs.current[i + 1]) refs.current[i + 1].focus();
+  };
+  const onKey = (i, e) => { if (e.key === "Backspace" && !value[i] && i > 0 && refs.current[i - 1]) refs.current[i - 1].focus(); };
+  return (
+    <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
+      {[0,1,2,3,4,5].map(i => (
+        <input key={i} ref={el => refs.current[i] = el} value={value[i] || ""} inputMode="numeric" maxLength={1}
+          autoFocus={autoFocus && i === 0}
+          onChange={e => set(i, e.target.value)} onKeyDown={e => onKey(i, e)}
+          style={{ flex: 1, minWidth: 0, height: 54, textAlign: "center", background: "var(--input)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text)", fontFamily: "'Crimson Text',serif", fontSize: 26, outline: "none" }} />
+      ))}
+    </div>
+  );
 }
 
 function ExportSheet({ session, onClose }) {
