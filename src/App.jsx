@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b39";
+const BUILD = "2026.05.20-b40";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -454,7 +454,6 @@ const ICON_THEMES = {
   selahred:{ label: "SELAH Red",   base: "/icons/selahred",thumb: "/icons/selahred/icon-192.png" },
   tigerpurple:    { label: "Purple Tiger",   base: "/icons/tigerpurple",    thumb: "/icons/tigerpurple/icon-192.png" },
   splatterpurple: { label: "Purple Splatter",base: "/icons/splatterpurple", thumb: "/icons/splatterpurple/icon-192.png" },
-  monoblood:      { label: "Blood SELAH",    base: "/icons/monoblood",      thumb: "/icons/monoblood/icon-192.png" },
 };
 function applyAppIcon(name) {
   if (typeof document === "undefined") return;
