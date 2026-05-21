@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Design deliverables — kept outside the repo (in ../SELAH Assets) so pushes stay light
+PhysicalDeliverables/
