@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b17";
+const BUILD = "2026.05.20-b18";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -258,28 +258,28 @@ function generateShareCard(session) {
       ctx.fillStyle = ov; ctx.fillRect(0, 0, S, S);
 
       const cx = S / 2;
-      // Proper chalk cross (gold-tinted) from the app's cross image, no glow
+      // Cross top-left, SELAH top-center — same arrangement as the home header
       if (crossEl && crossEl.naturalWidth) {
-        const chH = 158, chW = Math.round(chH * (crossEl.naturalWidth / crossEl.naturalHeight));
+        const chH = 112, chW = Math.round(chH * (crossEl.naturalWidth / crossEl.naturalHeight));
         const cc = document.createElement("canvas"); cc.width = chW; cc.height = chH;
         const c2 = cc.getContext("2d");
         c2.drawImage(crossEl, 0, 0, chW, chH);
         c2.globalCompositeOperation = "source-atop";
         c2.fillStyle = "rgba(214,184,96,0.92)"; c2.fillRect(0, 0, chW, chH);
-        ctx.drawImage(cc, cx - chW/2, 34);
+        ctx.drawImage(cc, 88, 56);
       }
 
-      // SELAH wordmark
+      // SELAH wordmark — top center
       ctx.shadowColor = "rgba(201,168,76,0.2)"; ctx.shadowBlur = 12;
       ctx.fillStyle = "#e4dcc8"; ctx.font = "bold 100px Georgia, serif"; ctx.textAlign = "center";
-      ctx.fillText("SELAH", S/2, 254); ctx.shadowBlur = 0;
+      ctx.fillText("SELAH", S/2, 150); ctx.shadowBlur = 0;
 
       ctx.strokeStyle = "rgba(201,168,76,0.38)"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(S*0.25,280); ctx.lineTo(S*0.75,280); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(S*0.25,200); ctx.lineTo(S*0.75,200); ctx.stroke();
 
       ctx.fillStyle = "#c9a84c"; ctx.font = "italic 50px Georgia, serif";
       const pLines = wrapText(ctx, session.passage||"", S-120);
-      let py = 348; pLines.forEach(l=>{ ctx.fillText(l,S/2,py); py+=64; });
+      let py = 268; pLines.forEach(l=>{ ctx.fillText(l,S/2,py); py+=64; });
 
       if (session.aiResult?.summary) {
         ctx.fillStyle = "rgba(228,220,200,0.72)"; ctx.font = "italic 34px Georgia, serif";
@@ -447,11 +447,12 @@ function MMFooter({ onEggOpen, onHomeView }) {
 function ExportSheet({ session, onClose }) {
   const [state, setState] = useState("idle"); // idle | working | done
   const [shareFile, setShareFile] = useState(null);
-  const [drag, setDrag] = useState(0);
+  const sheetRef = useRef(null);
   const dragStart = useRef(null);
-  function onTS(e){ dragStart.current = e.touches[0].clientY; }
-  function onTM(e){ if(dragStart.current==null) return; const dy=e.touches[0].clientY-dragStart.current; setDrag(dy>0?dy:0); }
-  function onTE(){ if(dragStart.current==null) return; const d=drag; dragStart.current=null; setDrag(0); if(d>90) onClose(); }
+  const dragCur = useRef(0);
+  function onTS(e){ dragStart.current = e.touches[0].clientY; dragCur.current = 0; if(sheetRef.current) sheetRef.current.style.transition = "none"; }
+  function onTM(e){ if(dragStart.current==null) return; const dy = e.touches[0].clientY - dragStart.current; dragCur.current = dy>0?dy:0; if(sheetRef.current) sheetRef.current.style.transform = `translateY(${dragCur.current}px)`; }
+  function onTE(){ if(dragStart.current==null) return; const d = dragCur.current; dragStart.current = null; if(sheetRef.current){ sheetRef.current.style.transition = "transform 0.25s ease"; sheetRef.current.style.transform = "translateY(0)"; } if(d>90) onClose(); }
 
   // Pre-build the share card on open so the Share tap keeps its user-gesture
   // (navigator.share fails if heavy async runs before it — caused multi-tap).
@@ -487,11 +488,11 @@ function ExportSheet({ session, onClose }) {
       background:"rgba(10,8,4,0.85)",
       display:"flex",alignItems:"flex-end",justifyContent:"center"
     }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} style={{
+      <div ref={sheetRef} onClick={e=>e.stopPropagation()} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} style={{
         background:"#20130f",border:"1px solid #2e2408",
         borderRadius:"12px 12px 0 0",padding:"24px 20px 36px",
         width:"100%",maxWidth:480,
-        transform:`translateY(${drag}px)`, transition: drag?"none":"transform 0.2s ease"
+        willChange:"transform"
       }}>
         <div style={{ width:44,height:4,background:"#5a4a20",borderRadius:2,margin:"0 auto 20px" }}/>
         <p style={{ fontFamily:"'Cinzel',serif",fontSize:12,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:16,textAlign:"center" }}>
@@ -1317,7 +1318,9 @@ export default function App() {
   const [useGps, setUseGps] = useState(true);
   const [photoView, setPhotoView] = useState(null);
   const [lightItem, setLightItem] = useState(null);
-  const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 0.85 && v <= 1.6) ? v : 1.3; });
+  const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 0.85 && v <= 1.6) ? v : 1.22; });
+  const [textScale, setTextScale] = useState(() => { const v = parseFloat(localStorage.getItem("selah_textscale")); return (v >= 0.9 && v <= 1.3) ? v : 1; });
+  useEffect(() => { localStorage.setItem("selah_textscale", String(textScale)); }, [textScale]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
@@ -1574,7 +1577,7 @@ export default function App() {
       {/* Pulsing gold edge-glow vignette */}
       <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(201,168,76,0.17), inset 0 0 ${glowRed}px rgba(110,28,28,0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none",filter:brightness!==1?`brightness(${brightness})`:"none"}}>
+      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none",filter:brightness!==1?`brightness(${brightness})`:"none",zoom:textScale}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
@@ -2236,8 +2239,15 @@ export default function App() {
             <input type="range" min="0.85" max="1.6" step="0.01" value={brightness} onChange={e=>setBrightness(parseFloat(e.target.value))} style={{width:"100%",accentColor:"#c9a84c"}}/>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>DARKER</span>
-              <button onClick={()=>setBrightness(1.3)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
+              <button onClick={()=>setBrightness(1.22)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em"}}>BRIGHTER</span>
+            </div>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",margin:"16px 0 10px"}}>Text Size</p>
+            <input type="range" min="0.9" max="1.3" step="0.05" value={textScale} onChange={e=>setTextScale(parseFloat(e.target.value))} style={{width:"100%",accentColor:"#c9a84c"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a"}}>A</span>
+              <button onClick={()=>setTextScale(1)} style={{background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Reset</button>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"#4a3e1a"}}>A</span>
             </div>
           </div>
         </div>
