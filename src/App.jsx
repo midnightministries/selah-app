@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b31";
+const BUILD = "2026.05.20-b32";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1542,6 +1542,8 @@ export default function App() {
   const [birthday, setBirthday] = useState(() => localStorage.getItem("selah_birthday") || "");
   const [appIcon, setAppIcon] = useState(() => localStorage.getItem("selah_app_icon") || "default");
   const [palette, setPalette] = useState(() => localStorage.getItem("selah_palette") || "midnight");
+  const [profileIcon, setProfileIcon] = useState(() => localStorage.getItem("selah_profile_icon") || "default");
+  const [askProfile, setAskProfile] = useState(() => localStorage.getItem("selah_ask_profile") !== "0");
   const [clockFmt, setClockFmt] = useState(() => localStorage.getItem("selah_clock_fmt") || "12");
   const [timezone, setTimezone] = useState(() => localStorage.getItem("selah_timezone") || "device");
   const [form, setForm] = useState(() => {
@@ -1566,6 +1568,8 @@ export default function App() {
   useEffect(() => { localStorage.setItem("selah_birthday", birthday); }, [birthday]);
   useEffect(() => { localStorage.setItem("selah_app_icon", appIcon); applyAppIcon(appIcon); }, [appIcon]);
   useEffect(() => { localStorage.setItem("selah_palette", palette); applyPalette(palette); }, [palette]);
+  useEffect(() => { localStorage.setItem("selah_profile_icon", profileIcon); }, [profileIcon]);
+  useEffect(() => { localStorage.setItem("selah_ask_profile", askProfile ? "1" : "0"); }, [askProfile]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -1598,7 +1602,9 @@ export default function App() {
   const [authIntro, setAuthIntro] = useState(false);
   const [syncState, setSyncState] = useState("idle"); // idle | saving | synced | error
   const [kidName, setKidName] = useState("");
-  const [kidForm, setKidForm] = useState({ name:"", birthday:"", gender:"Prefer not to say", bible:"NIrV", palette:"midnight" });
+  const [kidForm, setKidForm] = useState({ name:"", birthday:"", gender:"Prefer not to say", bible:"NIrV", palette:"midnight", icon:"default" });
+  const [torchOpen, setTorchOpen] = useState(false);
+  const [showAddReader, setShowAddReader] = useState(false);
   const syncTimer = useRef(null);
 
   // ── Profiles (owner + up to 2 kids). Sessions are tagged with profileId and
@@ -1619,7 +1625,7 @@ export default function App() {
     let lastPosition = null;
     try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
     return {
-      bibleVersion, gender, age, birthday, palette,
+      bibleVersion, gender, age, birthday, palette, profileIcon,
       alarms,
       lastPosition,
       setupDone: localStorage.getItem("selah_setup_done") === "1",
@@ -1634,6 +1640,7 @@ export default function App() {
     setBirthday(typeof st.birthday === "string" ? st.birthday : "");
     setAlarms(st.alarms && typeof st.alarms === "object" ? st.alarms : {});
     setPalette(st.palette && PALETTES[st.palette] ? st.palette : "midnight");
+    setProfileIcon(st.profileIcon && ICON_THEMES[st.profileIcon] ? st.profileIcon : "default");
     try { localStorage.setItem("selah_last_position", JSON.stringify(st.lastPosition || null)); } catch {}
     localStorage.setItem("selah_setup_done", st.setupDone ? "1" : "0");
     const lp = st.lastPosition;
@@ -1664,6 +1671,7 @@ export default function App() {
       age: "Kids (5-12)",
       birthday: opts.birthday || "",
       palette: opts.palette || "midnight",
+      profileIcon: opts.icon || "default",
       alarms: {}, lastPosition: null, setupDone: true,
     };
     setProfiles(p => ({ ...p, [id]: { name: (opts.name || "Child").slice(0, 24), kid: true } }));
@@ -1692,7 +1700,7 @@ export default function App() {
     const snaps = { ...profileSnaps.current, [activeProfileId]: liveSettings() };
     const profileSettings = {};
     Object.keys(profiles).forEach(id => { profileSettings[id] = snaps[id] || {}; });
-    return { v: 2, appIcon, clockFmt, timezone, activeProfileId, profiles, profileSettings, sessions: lean };
+    return { v: 2, appIcon, askProfile, clockFmt, timezone, activeProfileId, profiles, profileSettings, sessions: lean };
   }
   function applySync(data) {
     if (!data || typeof data !== "object") return;
@@ -1700,6 +1708,7 @@ export default function App() {
     if (data.appIcon && ICON_THEMES[data.appIcon]) setAppIcon(data.appIcon);
     if (data.clockFmt) setClockFmt(data.clockFmt);
     if (data.timezone) setTimezone(data.timezone);
+    if (typeof data.askProfile === "boolean") setAskProfile(data.askProfile);
     const localById = {};
     sessions.forEach(s => { if (s.photoData) localById[s.id] = s.photoData; });
     if (data.v === 2 && data.profiles && data.profileSettings) {
@@ -1722,7 +1731,7 @@ export default function App() {
       profileSnaps.current = {};
       loadSettings({
         bibleVersion: data.bibleVersion, gender: data.gender, age: data.age, birthday: data.birthday,
-        palette: data.palette, alarms: data.alarms, lastPosition: data.lastPosition, setupDone: data.setupDone,
+        palette: data.palette, profileIcon: data.appIcon, alarms: data.alarms, lastPosition: data.lastPosition, setupDone: data.setupDone,
       });
     }
   }
@@ -1738,7 +1747,8 @@ export default function App() {
     if (!isNew && hasServer) {
       applySync(serverData);
       setNeedsSetup(!setupIsDone());
-      multiProfile = serverData.v === 2 && serverData.profiles && Object.keys(serverData.profiles).length > 1;
+      const ask = (typeof serverData.askProfile === 'boolean') ? serverData.askProfile : true;
+      multiProfile = ask && serverData.v === 2 && serverData.profiles && Object.keys(serverData.profiles).length > 1;
     } else {
       // new signup, or login with nothing stored: push current local data up
       syncRequest("save", acc, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{});
@@ -1793,7 +1803,7 @@ export default function App() {
     }, 1500);
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, clockFmt, timezone, alarms, profiles, activeProfileId]);
+  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, profileIcon, askProfile, clockFmt, timezone, alarms, profiles, activeProfileId]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -2047,8 +2057,10 @@ export default function App() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
-          <div style={{position:"absolute",left:6,top:"calc(env(safe-area-inset-top, 0px) + 39px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
-            <CrossIcon size={30} glow={false}/>
+          <div style={{position:"absolute",left:6,top:"calc(env(safe-area-inset-top, 0px) + 37px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
+            {profiles[activeProfileId] && profiles[activeProfileId].kid
+              ? <img src={(ICON_THEMES[profileIcon]||ICON_THEMES.default).thumb} alt="" width={32} height={32} style={{borderRadius:8,display:"block",border:"1px solid var(--border)"}}/>
+              : <CrossIcon size={30} glow={false}/>}
           </div>
           <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",cursor:"pointer"}}>SELAH</h1>
           <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m4)",marginTop:3}}>Read. Mark. Return.</p>
@@ -2087,15 +2099,19 @@ export default function App() {
               <h2 style={{fontFamily:"'Cinzel',serif",fontSize:22,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM}}>Who is Reading?</h2>
             </div>
             <div style={{display:"flex",flexWrap:"wrap",gap:18,justifyContent:"center"}}>
-              {Object.entries(profiles).map(([id,p])=>(
-                <button key={id} onClick={()=>{ switchProfile(id); setView("home"); }}
-                  style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:10,width:120,padding:0}}>
-                  <div style={{width:96,height:96,borderRadius:18,background:"var(--surface)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>
-                    <CrossIcon size={40}/>
-                  </div>
-                  <span style={{fontFamily:"'Cinzel',serif",fontSize:13,letterSpacing:"0.06em",color:"var(--text2)"}}>{p.name || (p.kid?"Child":"You")}</span>
-                </button>
-              ))}
+              {Object.entries(profiles).map(([id,p])=>{
+                const pic = (id===activeProfileId ? profileIcon : ((profileSnaps.current[id]||{}).profileIcon)) || "default";
+                const thumb = (ICON_THEMES[pic]||ICON_THEMES.default).thumb;
+                return (
+                  <button key={id} onClick={()=>{ switchProfile(id); setView("home"); }}
+                    style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:10,width:120,padding:0}}>
+                    <div style={{width:96,height:96,borderRadius:18,overflow:"hidden",border:"1px solid var(--border)",boxShadow:"0 6px 20px rgba(0,0,0,0.4)"}}>
+                      <img src={thumb} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                    </div>
+                    <span style={{fontFamily:"'Cinzel',serif",fontSize:13,letterSpacing:"0.06em",color:"var(--text2)"}}>{p.name || (p.kid?"Child":"You")}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -2108,80 +2124,131 @@ export default function App() {
           const canAddKid = ownerAge!==null && ownerAge>=18 && kidIds.length<3;
           const KIDV = ["NIrV","ICB","NLT"];
           const dateStyle = {width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"};
+          const tileThumb = (id) => (ICON_THEMES[(id===activeProfileId ? profileIcon : ((profileSnaps.current[id]||{}).profileIcon)) || "default"]||ICON_THEMES.default).thumb;
           return (
             <div className="fade-in">
               <button onClick={()=>setView("settings")} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Settings</button>
-              <div style={{textAlign:"center",marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:10}}><CrossIcon size={32} glow={true}/></div>
-                <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM}}>Profiles</h2>
-              </div>
 
+              {/* Collapsible teaching */}
               <div className="card">
-                <p className="label">Hand Them The Torch</p>
-                <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
-                  The most important ministry in any house and any church is the one raising the young. They are watching when we think they are not. They absorb what we live, not only what we say. We are not babysitting them. We are handing them the torch.
-                </p>
-                <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
-                  Scripture is clear that what we carry passes down the line. Not only sin, but habit, posture, and hunger. So we put the Word in front of them early and we read beside them. A profile here is for a young reader in your care, whether your own child or one God has set under your charge.
-                </p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",lineHeight:1.6}}>
-                  Draft text in your voice. Replace it with your own writing whenever you are ready.
-                </p>
+                <button onClick={()=>setTorchOpen(o=>!o)} style={{width:"100%",background:"transparent",border:"none",padding:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <span className="label" style={{marginBottom:0}}>The Next Watch</span>
+                  <span style={{color:"var(--accent)",fontSize:18,transform:torchOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>⌄</span>
+                </button>
+                {torchOpen && (
+                  <div style={{marginTop:14}}>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                      Discipleship is not a lecture series. It is atmosphere. The young read what we live long before they read what we say. They absorb the room.
+                    </p>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                      What we carry moves down the line. Not only sin, but habit, hunger, and posture. So we put the Word in front of them early, and we read beside them. Not flattery. Formation.
+                    </p>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                      A profile here is for a young reader in your care, your own or one set under your charge. You are not holding their place. You are handing them the torch.
+                    </p>
+                    <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m4)",lineHeight:1.6}}>
+                      Draft drawn from your own writing. Replace with your words whenever you are ready.
+                    </p>
+                  </div>
+                )}
               </div>
 
+              {/* Who is reading */}
               <div className="card">
                 <p className="label">Who is Reading</p>
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                <div style={{display:"flex",flexWrap:"wrap",gap:16}}>
                   {Object.entries(profiles).map(([id,p])=>(
-                    <button key={id} onClick={()=>switchProfile(id)} className={`version-pill ${activeProfileId===id?"active":""}`}>
-                      {p.name || (p.kid?"Child":"You")}{activeProfileId===id?" •":""}
+                    <button key={id} onClick={()=>switchProfile(id)}
+                      style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:78,padding:0}}>
+                      <div style={{width:64,height:64,borderRadius:14,overflow:"hidden",border:activeProfileId===id?"2px solid var(--accent)":"2px solid var(--border)",boxShadow:activeProfileId===id?"0 0 12px rgba(var(--accent-rgb),0.3)":"none"}}>
+                        <img src={tileThumb(id)} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                      </div>
+                      <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.04em",color:activeProfileId===id?"var(--accent)":"var(--m2)",textAlign:"center"}}>{p.name || (p.kid?"Child":"You")}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* This profile: name + icon */}
               <div className="card">
-                <p className="label">Add a Young Reader</p>
-                {canAddKid ? (
-                  <>
-                    <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
-                      Up to three young readers can be added under your account. Set them up here; you can adjust anytime.
-                    </p>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Name</p>
-                    <input value={kidForm.name} onChange={e=>setKidForm(f=>({...f,name:e.target.value}))} placeholder="First name"
-                      style={{width:"100%",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:14}}/>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Birthday</p>
-                    <input type="date" value={kidForm.birthday} onChange={e=>setKidForm(f=>({...f,birthday:e.target.value}))} style={{...dateStyle,marginBottom:14}}/>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Gender</p>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
-                      {["Male","Female","Prefer not to say"].map(g=>(
-                        <button key={g} className={`version-pill ${kidForm.gender===g?"active":""}`} onClick={()=>setKidForm(f=>({...f,gender:g}))}>{g}</button>
-                      ))}
-                    </div>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Bible (kids translations)</p>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
-                      {KIDV.map(v=>(
-                        <button key={v} className={`version-pill ${kidForm.bible===v?"active":""}`} onClick={()=>setKidForm(f=>({...f,bible:v}))}>{v}</button>
-                      ))}
-                    </div>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Their Palette</p>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
-                      {Object.entries(PALETTES).map(([key,p])=>(
-                        <button key={key} onClick={()=>setKidForm(f=>({...f,palette:key}))}
-                          style={{display:"flex",alignItems:"center",gap:6,background:"transparent",border:kidForm.palette===key?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:6,padding:"5px 9px",cursor:"pointer"}}>
-                          <span style={{display:"flex",borderRadius:4,overflow:"hidden"}}>{p.swatch.map((c,i)=><span key={i} style={{width:12,height:16,background:c}}/>)}</span>
-                          <span style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",color:kidForm.palette===key?"var(--accent)":"var(--m3)"}}>{p.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                    <button className="btn-primary" style={{width:"100%",padding:"13px"}}
-                      onClick={()=>{ if(kidForm.name.trim()){ createKidProfile({name:kidForm.name.trim(),birthday:kidForm.birthday,gender:kidForm.gender,bible:kidForm.bible,palette:kidForm.palette}); setKidForm({name:"",birthday:"",gender:"Prefer not to say",bible:"NIrV",palette:"midnight"}); setView("settings"); } }}>
-                      Add Reader
+                <p className="label">This Profile</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Profile Name</p>
+                <input value={profiles[activeProfileId]?.name || ""} onChange={e=>{ const v=e.target.value.slice(0,24); setProfiles(p=>({...p,[activeProfileId]:{...p[activeProfileId],name:v}})); }}
+                  placeholder={profiles[activeProfileId]?.kid?"Child's name":"Your name"}
+                  style={{width:"100%",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:14}}/>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>Profile Icon</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:10}}>
+                  {Object.entries(ICON_THEMES).map(([key,t])=>(
+                    <button key={key} onClick={()=>setProfileIcon(key)} style={{background:"transparent",border:"none",padding:0,cursor:"pointer"}}>
+                      <div style={{width:50,height:50,borderRadius:11,overflow:"hidden",border:profileIcon===key?"2px solid var(--accent)":"2px solid var(--border)"}}>
+                        <img src={t.thumb} alt={t.label} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                      </div>
                     </button>
-                  </>
+                  ))}
+                </div>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",lineHeight:1.5,marginTop:10}}>
+                  This icon shows at sign-in and at the top of the screen as a reminder of whose reading is open. It does not change your home-screen app icon, which you set under Visuals.
+                </p>
+              </div>
+
+              {/* Add a young reader */}
+              <div className="card">
+                <p className="label">Young Readers</p>
+                {canAddKid ? (
+                  !showAddReader ? (
+                    <button className="btn-primary" style={{width:"100%",padding:"13px"}} onClick={()=>setShowAddReader(true)}>Add a Young Reader</button>
+                  ) : (
+                    <>
+                      <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>Up to three young readers under your account. You can adjust anytime.</p>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Name</p>
+                      <input value={kidForm.name} onChange={e=>setKidForm(f=>({...f,name:e.target.value}))} placeholder="First name"
+                        style={{width:"100%",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:14}}/>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Birthday</p>
+                      <input type="date" value={kidForm.birthday} onChange={e=>setKidForm(f=>({...f,birthday:e.target.value}))} style={{...dateStyle,marginBottom:14}}/>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Gender</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+                        {["Male","Female","Prefer not to say"].map(g=>(
+                          <button key={g} className={`version-pill ${kidForm.gender===g?"active":""}`} onClick={()=>setKidForm(f=>({...f,gender:g}))}>{g}</button>
+                        ))}
+                      </div>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Bible (kids translations)</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+                        {KIDV.map(v=>(
+                          <button key={v} className={`version-pill ${kidForm.bible===v?"active":""}`} onClick={()=>setKidForm(f=>({...f,bible:v}))}>{v}</button>
+                        ))}
+                      </div>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Their Icon</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+                        {Object.entries(ICON_THEMES).map(([key,t])=>(
+                          <button key={key} onClick={()=>setKidForm(f=>({...f,icon:key}))} style={{background:"transparent",border:"none",padding:0,cursor:"pointer"}}>
+                            <div style={{width:42,height:42,borderRadius:9,overflow:"hidden",border:kidForm.icon===key?"2px solid var(--accent)":"2px solid var(--border)"}}>
+                              <img src={t.thumb} alt={t.label} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Their Palette</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
+                        {Object.entries(PALETTES).map(([key,p])=>(
+                          <button key={key} onClick={()=>setKidForm(f=>({...f,palette:key}))}
+                            style={{display:"flex",alignItems:"center",gap:6,background:"transparent",border:kidForm.palette===key?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:6,padding:"5px 9px",cursor:"pointer"}}>
+                            <span style={{display:"flex",borderRadius:4,overflow:"hidden"}}>{p.swatch.map((c,i)=><span key={i} style={{width:12,height:16,background:c}}/>)}</span>
+                            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",color:kidForm.palette===key?"var(--accent)":"var(--m3)"}}>{p.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        <button className="btn-ghost" style={{flex:1,padding:"12px"}} onClick={()=>{ setShowAddReader(false); setKidForm({name:"",birthday:"",gender:"Prefer not to say",bible:"NIrV",palette:"midnight",icon:"default"}); }}>Cancel</button>
+                        <button className="btn-primary" style={{flex:2,padding:"12px"}}
+                          onClick={()=>{ if(kidForm.name.trim()){ createKidProfile({name:kidForm.name.trim(),birthday:kidForm.birthday,gender:kidForm.gender,bible:kidForm.bible,palette:kidForm.palette,icon:kidForm.icon}); setKidForm({name:"",birthday:"",gender:"Prefer not to say",bible:"NIrV",palette:"midnight",icon:"default"}); setShowAddReader(false); setView("settings"); } }}>
+                          Add Reader
+                        </button>
+                      </div>
+                    </>
+                  )
                 ) : (
                   <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6}}>
-                    {kidIds.length>=3 ? "You have added the maximum of three young readers." : "Set your own birthday in Settings (you must be 18 or older) to add a young reader to your account."}
+                    {kidIds.length>=3 ? "You have added the maximum of three young readers." : "Set your own birthday in Settings (you must be 18 or older) to add a young reader."}
                   </p>
                 )}
                 {kidIds.length>0 && (
@@ -2195,6 +2262,20 @@ export default function App() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Sign-in behavior */}
+              <div className="card">
+                <p className="label">At Sign-In</p>
+                <button onClick={()=>setAskProfile(a=>!a)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"transparent",border:"none",padding:0,cursor:"pointer"}}>
+                  <span style={{fontSize:16,color:"var(--m2)",textAlign:"left",lineHeight:1.5,paddingRight:12}}>Ask who is reading at sign-in</span>
+                  <span style={{flexShrink:0,width:46,height:26,borderRadius:13,background:askProfile?"var(--accent)":"var(--border)",position:"relative",transition:"background 0.2s"}}>
+                    <span style={{position:"absolute",top:3,left:askProfile?23:3,width:20,height:20,borderRadius:"50%",background:"var(--text4)",transition:"left 0.2s"}}/>
+                  </span>
+                </button>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",lineHeight:1.5,marginTop:10}}>
+                  Off means you go straight into the last profile you used.
+                </p>
               </div>
             </div>
           );
