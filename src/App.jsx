@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b19";
+const BUILD = "2026.05.20-b20";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -403,6 +403,97 @@ async function shareAsNote(session) {
 const STORAGE_KEY = "selah_sessions_v2";
 function loadSessions() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; } catch { return []; } }
 function saveSessions(s) { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(s)); } catch {} }
+
+// ── Account + cloud sync (Netlify functions) ──
+const ACCOUNT_KEY = "selah_account";
+function loadAccount() { try { return JSON.parse(localStorage.getItem(ACCOUNT_KEY))||null; } catch { return null; } }
+function saveAccount(a) { try { if (a) localStorage.setItem(ACCOUNT_KEY, JSON.stringify(a)); else localStorage.removeItem(ACCOUNT_KEY); } catch {} }
+
+async function authRequest(action, email, password) {
+  const r = await fetch("/.netlify/functions/auth", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, email, password })
+  });
+  const j = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(j.error || "Something went wrong. Try again.");
+  return j; // { token, email, data }
+}
+
+async function syncRequest(action, account, data) {
+  if (!account) return null;
+  const r = await fetch("/.netlify/functions/sync", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, email: account.email, token: account.token, data })
+  });
+  const j = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(j.error || "Sync failed.");
+  return j; // save: {ok,updatedAt} | load: {data,updatedAt}
+}
+
+// ── Auth + onboarding screen ──
+function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
+  const [mode, setMode] = useState(initialMode || "signup");
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const inputStyle = { width:"100%", boxSizing:"border-box", background:"#160d0a", border:"1px solid #36241c", borderRadius:6, padding:"12px 14px", color:"#e4dcc8", fontFamily:"'Crimson Text',serif", fontSize:17, outline:"none", marginBottom:12 };
+  async function submit() {
+    setErr("");
+    const e = email.trim().toLowerCase();
+    if (!e.includes("@")) { setErr("Enter a valid email."); return; }
+    if (pw.length < 6) { setErr("Password must be at least 6 characters."); return; }
+    setBusy(true);
+    try {
+      const res = await authRequest(mode, e, pw);
+      onAuthed({ email: res.email, token: res.token }, res.data || {}, mode === "signup");
+    } catch (ex) { setErr(ex.message || "Something went wrong."); }
+    setBusy(false);
+  }
+  return (
+    <div className="fade-in">
+      {onBack && (
+        <button onClick={onBack} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Back</button>
+      )}
+      {intro && (
+        <div style={{textAlign:"center",marginBottom:18}}>
+          <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={40} glow={true}/></div>
+          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:24,fontWeight:700,letterSpacing:"0.12em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.3)",marginBottom:6}}>SELAH</h2>
+          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.5,marginBottom:4}}>Read. Mark. Return.</p>
+          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3e1a",lineHeight:1.55,maxWidth:330,margin:"0 auto"}}>
+            Make an account to carry your log and settings across every device. Or step straight in. Your reading stays yours.
+          </p>
+        </div>
+      )}
+      <div className="card">
+        <div style={{display:"flex",gap:8,marginBottom:18}}>
+          {[["signup","Create Account"],["login","Sign In"]].map(([val,label])=>(
+            <button key={val} className={`version-pill ${mode===val?"active":""}`} onClick={()=>{ setMode(val); setErr(""); }} style={{flex:1}}>{label}</button>
+          ))}
+        </div>
+        <p className="label">Email</p>
+        <input type="email" autoComplete="email" inputMode="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle}/>
+        <p className="label">Password</p>
+        <input type="password" autoComplete={mode==="signup"?"new-password":"current-password"} value={pw} onChange={e=>setPw(e.target.value)} placeholder="At least 6 characters" style={inputStyle}
+          onKeyDown={e=>{ if(e.key==="Enter") submit(); }}/>
+        {err && <p style={{color:"#d98a8a",fontFamily:"'Crimson Text',serif",fontSize:15,marginBottom:12,lineHeight:1.5}}>{err}</p>}
+        <button className="btn-primary" style={{width:"100%",padding:"13px",opacity:busy?0.6:1}} disabled={busy} onClick={submit}>
+          {busy ? "Working…" : (mode==="signup" ? "Create Account" : "Sign In")}
+        </button>
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"#4a3e1a",textAlign:"center",marginTop:12,lineHeight:1.5}}>
+          Your log and content settings sync to your account. Brightness and text size stay set per device.
+        </p>
+      </div>
+      {onSkip && (
+        <div style={{textAlign:"center",marginTop:4}}>
+          <button onClick={onSkip} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,padding:8}}>
+            Continue without an account
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Midnight Ministries footer (always visible) ──
 function MMFooter({ onEggOpen, onHomeView }) {
@@ -1346,8 +1437,90 @@ export default function App() {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [alarms, setAlarms] = useState(() => { try { return JSON.parse(localStorage.getItem("selah_alarms")||"{}"); } catch { return {}; } });
   const [eggOpen, setEggOpen] = useState(null); // "mm" | "cross" | null
+  const [account, setAccount] = useState(loadAccount);
+  const [authIntro, setAuthIntro] = useState(false);
+  const [syncState, setSyncState] = useState("idle"); // idle | saving | synced | error
+  const syncTimer = useRef(null);
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
+
+  // ── Cloud sync: gather / apply / handlers ──
+  function gatherSync() {
+    // Strip heavy base64 photo data; keep a flag so other devices know one exists.
+    const lean = sessions.map(s => {
+      const { photoData, ...rest } = s;
+      return photoData ? { ...rest, hasPhoto: true } : rest;
+    });
+    return { v: 1, sessions: lean, bibleVersion, gender, age, clockFmt, timezone, alarms };
+  }
+  function applySync(data) {
+    if (!data || typeof data !== "object") return;
+    if (Array.isArray(data.sessions)) {
+      // Re-attach any photos that live on this device, matched by id.
+      const localById = {};
+      sessions.forEach(s => { if (s.photoData) localById[s.id] = s.photoData; });
+      const merged = data.sessions.map(s => localById[s.id] ? { ...s, photoData: localById[s.id] } : s);
+      setSessions(merged); saveSessions(merged);
+    }
+    if (data.bibleVersion) setBibleVersion(data.bibleVersion);
+    if (data.gender) setGender(data.gender);
+    if (data.age) setAge(data.age);
+    if (data.clockFmt) setClockFmt(data.clockFmt);
+    if (data.timezone) setTimezone(data.timezone);
+    if (data.alarms && typeof data.alarms === "object") setAlarms(data.alarms);
+  }
+  function handleAuthed(acc, serverData, isNew) {
+    setAccount(acc); saveAccount(acc);
+    localStorage.setItem("selah_onboarded", "1");
+    setAuthIntro(false);
+    const hasServer = serverData && Object.keys(serverData).length > 0;
+    if (!isNew && hasServer) {
+      applySync(serverData);
+      setView("home");
+    } else {
+      // new signup, or login with nothing stored: push current local data up
+      syncRequest("save", acc, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{});
+      setView(isNew ? "settings" : "home");
+    }
+  }
+  function handleSkipAuth() {
+    localStorage.setItem("selah_onboarded", "1");
+    setAuthIntro(false);
+    setView("settings");
+  }
+  function handleSignOut() {
+    setAccount(null); saveAccount(null);
+    setSyncState("idle");
+    setView("home");
+  }
+
+  // On launch: first-timers see onboarding; signed-in users refresh from server.
+  useEffect(() => {
+    const onboarded = localStorage.getItem("selah_onboarded");
+    if (account) {
+      syncRequest("load", account, null)
+        .then(res => { if (res && res.data) applySync(res.data); setSyncState("synced"); })
+        .catch(() => setSyncState("error"));
+    } else if (!onboarded) {
+      setAuthIntro(true);
+      setView("auth");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced auto-sync of log + content settings (display stays per-device).
+  useEffect(() => {
+    if (!account) return;
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    setSyncState("saving");
+    syncTimer.current = setTimeout(() => {
+      syncRequest("save", account, gatherSync())
+        .then(()=>setSyncState("synced"))
+        .catch(()=>setSyncState("error"));
+    }, 1500);
+    return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, sessions, bibleVersion, gender, age, clockFmt, timezone, alarms]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -1582,14 +1755,14 @@ export default function App() {
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
-          {view !== "session" && (
+          {view !== "session" && view !== "auth" && (
             <button onClick={()=>setView("settings")} style={{position:"absolute",right:0,top:28,background:"transparent",border:"none",color:"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}
               onMouseOver={e=>e.currentTarget.style.color="#c9a84c"}
               onMouseOut={e=>e.currentTarget.style.color="#3a3010"}>
               <SettingsIcon/>
             </button>
           )}
-          {view !== "session" && (
+          {view !== "session" && view !== "auth" && (
             <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:36,top:28,background:"transparent",border:"none",color:showBright?"#c9a84c":"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
@@ -1602,7 +1775,7 @@ export default function App() {
         </div>
 
         {/* NAV */}
-        {view !== "session" && view !== "settings" && view !== "about" && (
+        {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && (
           <div style={{display:"flex",borderBottom:"1px solid #36241c",marginBottom:20}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
@@ -1610,6 +1783,17 @@ export default function App() {
             </button>
             <button className={`nav-tab ${view==="about"?"active":""}`} onClick={()=>setView("about")}>About</button>
           </div>
+        )}
+
+        {/* ══ AUTH / ONBOARDING ══ */}
+        {view === "auth" && (
+          <AuthScreen
+            initialMode="signup"
+            intro={authIntro}
+            onAuthed={handleAuthed}
+            onSkip={authIntro ? handleSkipAuth : null}
+            onBack={authIntro ? null : ()=>setView("settings")}
+          />
         )}
 
         {/* ══ HOME ══ */}
@@ -2059,6 +2243,29 @@ export default function App() {
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(201,168,76,0.5)",letterSpacing:"0.2em",textTransform:"uppercase"}}>MIDNIGHT MINISTRIES</p>
             </div>
 
+            {/* Account */}
+            <div className="card">
+              <p className="label">Account</p>
+              {account ? (
+                <>
+                  <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:6}}>Signed in as</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"#c9a84c",marginBottom:12,wordBreak:"break-all"}}>{account.email}</p>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:14,color:syncState==="error"?"#d98a8a":"#4a3e1a"}}>
+                    {syncState==="saving" ? "Syncing…" : syncState==="error" ? "Sync failed — will retry" : "Log and settings synced"}
+                  </p>
+                  <button className="btn-ghost" style={{width:"100%",padding:"12px"}} onClick={handleSignOut}>Sign Out</button>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"#4a3e1a",textAlign:"center",marginTop:10,lineHeight:1.5}}>Signing out leaves your log on this device. It stays safe in your account.</p>
+                </>
+              ) : (
+                <>
+                  <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>
+                    Create an account to carry your log and content settings across every device. Brightness and text size stay set per device.
+                  </p>
+                  <button className="btn-primary" style={{width:"100%",padding:"13px",marginBottom:10}} onClick={()=>{ setAuthIntro(false); setView("auth"); }}>Create Account or Sign In</button>
+                </>
+              )}
+            </div>
+
             {/* Bible Version */}
             <div className="card">
               <p className="label">Bible Translation</p>
@@ -2162,7 +2369,7 @@ export default function App() {
               <p className="label">Privacy</p>
               <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
                 <div style={{color:"#c9a84c",marginTop:2,flexShrink:0}}><ShieldIcon/></div>
-                <p style={{fontSize:16,lineHeight:1.65,color:"#6a5a30"}}>GPS location and photos are stored only on this device. Nothing is transmitted or synced. Share cards and notes are generated locally and only leave the device when you choose to send them.</p>
+                <p style={{fontSize:16,lineHeight:1.65,color:"#6a5a30"}}>Photos and GPS location stay on this device and are never uploaded. With an account, your reading log and content settings sync so you can pick up on any device; without one, nothing leaves this device. Share cards are generated locally and only leave when you choose to send them.</p>
               </div>
             </div>
             <div className="card">
