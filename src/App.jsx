@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b60";
+const BUILD = "2026.05.21-b61";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -268,7 +268,22 @@ const BG_OPTIONS = [
   ["plum","Plum","#1d0b18","#0b0610"],
   ["nightsky","Night Sky","#0c1424","#070a12"],
   ["forest","Forest","#0c1a12","#070d08"],
+  // second row — palette-derived fades
+  ["midnight","Midnight","#241510","#100a07"],
+  ["amber","Amber","#3a2410","#140c06"],
+  ["rose","Rose","#2c1018","#100609"],
+  ["cadet","Cadet","#16202c","#080c12"],
+  ["steel","Steel","#1c2026","#0a0c10"],
+  ["wine","Wine","#2e0c12","#100507"],
 ];
+// blend two #rrggbb hex colors; t=0 -> a, t=1 -> b
+function mixHex(a,b,t){
+  const pa=parseInt(a.slice(1),16), pb=parseInt(b.slice(1),16);
+  const ar=(pa>>16)&255, ag=(pa>>8)&255, ab=pa&255;
+  const br=(pb>>16)&255, bg=(pb>>8)&255, bb=pb&255;
+  const r=Math.round(ar+(br-ar)*t), g=Math.round(ag+(bg-ag)*t), bl=Math.round(ab+(bb-ab)*t);
+  return "#"+((1<<24)+(r<<16)+(g<<8)+bl).toString(16).slice(1);
+}
 const CARD_FONTS = { serif:"Georgia, serif", cinzel:"Cinzel, Georgia, serif", crimson:"'Crimson Text', Georgia, serif", sans:"Helvetica, Arial, sans-serif" };
 
 function defaultLayout(session, hasPhoto, fam) {
@@ -298,8 +313,12 @@ function composeCard(session, layout) {
     const els = layout.els;
     function paintBg(){
       const o = BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink")) || BG_OPTIONS[0];
-      if(o[2]===o[3]){ ctx.fillStyle=o[2]; ctx.fillRect(0,0,W,H); }
-      else { const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,o[2]); g.addColorStop(1,o[3]); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+      let top=o[2], bot=o[3];
+      if(layout.bgRev){ const t=top; top=bot; bot=t; }
+      const fade = layout.bgFade==null?1:layout.bgFade;
+      const end = mixHex(top, bot, fade);   // fade=0 -> solid top, fade=1 -> full bottom
+      if(top===end){ ctx.fillStyle=top; ctx.fillRect(0,0,W,H); }
+      else { const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,top); g.addColorStop(1,end); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
     }
     function drawText(el){
       if(!el.show || !el.text) return;
@@ -739,15 +758,21 @@ function ExportSheet({ session, onClose }) {
   const setEl=(k,p)=>setLayout(L=>({ ...L, els:{ ...L.els, [k]:{ ...L.els[k], ...p } } }));
   const setPhoto=(p)=>setLayout(L=>({ ...L, photo:{ ...L.photo, ...p } }));
   // remembers element positions per aspect so switching format keeps each one composed
-  const posMem = useRef({ square:{...DEFAULT_POS.square}, story:{...DEFAULT_POS.story} });
+  const posMem = useRef({
+    square:{ els:{...DEFAULT_POS.square}, photo:{zoom:1,x:0.5,y:0.5} },
+    story: { els:{...DEFAULT_POS.story},  photo:{zoom:1,x:0.5,y:0.5} },
+  });
   function switchAspect(na){
     setLayout(L=>{
       if(L.aspect===na) return L;
+      // remember this format's element positions AND photo zoom/position
       const cur={}; ["cross","selah","body","mm"].forEach(k=>{ const e=L.els[k]; if(e) cur[k]={xf:e.xf,yf:e.yf,size:e.size}; });
-      posMem.current[L.aspect]=cur;
-      const target=posMem.current[na]||DEFAULT_POS[na]; const els={...L.els};
-      Object.keys(target).forEach(k=>{ if(els[k]) els[k]={...els[k], ...target[k]}; });
-      return {...L, aspect:na, els};
+      posMem.current[L.aspect]={ els:cur, photo:{zoom:L.photo.zoom,x:L.photo.x,y:L.photo.y} };
+      const mem=posMem.current[na]||{};
+      const tEls=mem.els||DEFAULT_POS[na]; const els={...L.els};
+      Object.keys(tEls).forEach(k=>{ if(els[k]) els[k]={...els[k], ...tEls[k]}; });
+      const tPhoto=mem.photo||{zoom:1,x:0.5,y:0.5};
+      return {...L, aspect:na, els, photo:{...L.photo, ...tPhoto}};
     });
   }
 
@@ -759,7 +784,9 @@ function ExportSheet({ session, onClose }) {
   const minZoom=fitRatio/baseRatio;   // zoom-out limit: photo just fits inside frame
   const bgWpct=(nat.w*baseRatio*z)/W*100, bgHpct=(nat.h*baseRatio*z)/H*100;
   const bgOpt=BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink"))||BG_OPTIONS[0];
-  const stageBg=bgOpt[2]===bgOpt[3]?bgOpt[2]:`linear-gradient(180deg,${bgOpt[2]},${bgOpt[3]})`;
+  const bgTop = layout.bgRev?bgOpt[3]:bgOpt[2], bgBot = layout.bgRev?bgOpt[2]:bgOpt[3];
+  const bgEnd = mixHex(bgTop, bgBot, layout.bgFade==null?1:layout.bgFade);
+  const stageBg = bgTop===bgEnd ? bgTop : `linear-gradient(180deg,${bgTop},${bgEnd})`;
 
   function stageDown(e){
     ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId);
@@ -781,7 +808,7 @@ function ExportSheet({ session, onClose }) {
   function elDown(e,key){ e.stopPropagation(); setSel(key); setTool("color"); setShareOpen(false); dragRef.current={ type:"el", key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
 
   const FONT_ORDER=["serif","cinzel","crimson","sans"], FONT_LABEL={serif:"Serif",cinzel:"Cinzel",crimson:"Crimson",sans:"Sans"};
-  const CONTENT_ORDER=[["session","Verse"],...(hasRV?[["return","Return Verse"]]:[]),["anchor","Read · Mark · Return"]];
+  const CONTENT_ORDER=[["session","Passage"],...(hasRV?[["return","Verse"]]:[]),["anchor","RMR"]];
   function cycleContent(){ const i=CONTENT_ORDER.findIndex(c=>c[0]===layout.content); const next=CONTENT_ORDER[(i+1)%CONTENT_ORDER.length][0]; let text=session.passage||""; if(next==="return"&&hasRV) text=session.aiResult.returnVerses[0].ref; else if(next==="anchor") text="Read. Mark. Return."; setLayout(L=>({ ...L, content:next, els:{ ...L.els, body:{ ...L.els.body, text } } })); }
   const contentLabel = (CONTENT_ORDER.find(c=>c[0]===layout.content)||CONTENT_ORDER[0])[1];
 
@@ -796,7 +823,7 @@ function ExportSheet({ session, onClose }) {
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.82)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(20,15,9,0.95)",border:"1px solid rgba(201,168,76,0.7)",boxShadow:"0 2px 10px rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
@@ -818,7 +845,7 @@ function ExportSheet({ session, onClose }) {
         <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"var(--accent)",border:"none",color:"var(--ink)"})}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
-        <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel.length>8?"Verse":contentLabel}</button>
+        <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel}</button>
         <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={circle({fontFamily:CARD_FONTS[layout.font],fontSize:18})}>Aa</button>
         {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} style={circle({fontFamily:"'Cinzel',serif",fontSize:7,letterSpacing:"0.03em",textAlign:"center",lineHeight:1.1,padding:3})}>{layout.photo.show?"Hide Photo":"Show Photo"}</button>}
         <button onClick={()=>switchAspect(layout.aspect==="square"?"story":"square")} style={circle({fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.04em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
@@ -873,9 +900,14 @@ function ExportSheet({ session, onClose }) {
       {!selEl && (!hasPhoto || !layout.photo.show) && (
         <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 78px)",display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",alignItems:"center",zIndex:4}}>
           <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",letterSpacing:"0.12em",textTransform:"uppercase",width:"100%",textAlign:"center"}}>Background</span>
-          {BG_OPTIONS.map(([id,lbl,top,bot])=>(
-            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:34,height:34,borderRadius:"50%",background:top===bot?top:`linear-gradient(180deg,${top},${bot})`,border:(layout.bg||"ink")===id?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.35)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>
-          ))}
+          {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; return (
+            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:34,height:34,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:(layout.bg||"ink")===id?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.35)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>
+          ); })}
+          <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginTop:2}}>
+            <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Fade</span>
+            <Slider value={layout.bgFade==null?1:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={150}/>
+            <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 11px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid rgba(201,168,76,0.5)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
+          </div>
         </div>
       )}
     </div>
