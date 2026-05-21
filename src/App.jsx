@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b53";
+const BUILD = "2026.05.21-b54";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -270,10 +270,10 @@ function defaultLayout(session, hasPhoto, fam) {
     content: "session",
     photo: { show: !!hasPhoto, x: 0.5, y: 0.5 },
     els: {
-      cross: { kind:"cross", show:true, xf:0.12, yf:0.11, size:0.085, rot:0, color:"#d6b860" },
-      selah: { kind:"text", show:true, xf:0.5, yf:0.13, size:0.085, rot:0, color:"#ece0c6", weight:"bold", italic:false, text:"SELAH" },
-      body:  { kind:"text", show:true, xf:0.5, yf:0.5,  size:0.048, rot:0, color:"#c9a84c", weight:"", italic:true, text:(session.passage||"") },
-      mm:    { kind:"text", show:true, xf:0.5, yf:0.93, size:0.024, rot:0, color:"#c9a84c", weight:"", italic:false, text:"MIDNIGHT MINISTRIES" },
+      cross: { kind:"cross", show:true, xf:0.12, yf:0.11, size:0.085, rot:0, color:"#d6b860", opacity:1, glow:0, glowColor:"#0e0c06" },
+      selah: { kind:"text", show:true, xf:0.5, yf:0.13, size:0.085, rot:0, color:"#ece0c6", weight:"bold", italic:false, text:"SELAH", opacity:1, glow:0, glowColor:"#0e0c06" },
+      body:  { kind:"text", show:true, xf:0.5, yf:0.5,  size:0.048, rot:0, color:"#c9a84c", weight:"", italic:true, text:(session.passage||""), opacity:1, glow:0, glowColor:"#0e0c06" },
+      mm:    { kind:"text", show:true, xf:0.5, yf:0.93, size:0.024, rot:0, color:"#c9a84c", weight:"", italic:false, text:"MIDNIGHT MINISTRIES", opacity:1, glow:0, glowColor:"#0e0c06" },
     },
     fam,
   };
@@ -297,11 +297,15 @@ function composeCard(session, layout) {
       if(!el.show || !el.text) return;
       const fpx = el.size*W;
       ctx.save(); ctx.translate(el.xf*W, el.yf*H); ctx.rotate((el.rot||0)*Math.PI/180);
+      ctx.globalAlpha = (el.opacity==null?1:el.opacity);
       ctx.textAlign="center"; ctx.textBaseline="middle";
       ctx.font = `${el.weight||""} ${el.italic?"italic ":""}${fpx}px ${fam}`;
+      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*fpx*0.6; }
       ctx.fillStyle = el.color;
       const lines = wrapText(ctx, el.text, W*0.86);
       let y = -(lines.length-1)*fpx*0.6;
+      // paint glow first (heavier) then a crisp pass on top
+      if(el.glow){ lines.forEach((l,k)=>ctx.fillText(l,0,-(lines.length-1)*fpx*0.6+k*fpx*1.2)); ctx.shadowBlur=0; }
       lines.forEach(l=>{ ctx.fillText(l,0,y); y+=fpx*1.2; });
       ctx.restore();
     }
@@ -312,6 +316,8 @@ function composeCard(session, layout) {
       const t2=tmp.getContext("2d"); t2.drawImage(crossEl,0,0,tmp.width,tmp.height);
       t2.globalCompositeOperation="source-atop"; t2.fillStyle=el.color; t2.fillRect(0,0,tmp.width,tmp.height);
       ctx.save(); ctx.translate(el.xf*W, el.yf*H); ctx.rotate((el.rot||0)*Math.PI/180);
+      ctx.globalAlpha = (el.opacity==null?1:el.opacity);
+      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*ch*0.4; }
       ctx.drawImage(tmp,-cw/2,-ch/2,cw,ch); ctx.restore();
     }
     function finish(){
@@ -472,6 +478,8 @@ function applyAppIcon(name) {
   swap('link[rel="icon"][sizes="32x32"]', "icon", { type: "image/png", sizes: "32x32" }, "/favicon-32.png");
   swap('link[rel="icon"][sizes="16x16"]', "icon", { type: "image/png", sizes: "16x16" }, "/favicon-16.png");
   swap('link[rel="apple-touch-icon"]', "apple-touch-icon", { sizes: "180x180" }, "/apple-touch-icon.png");
+  // older Safari reads rel="shortcut icon"; harmless elsewhere
+  swap('link[rel="shortcut icon"]', "shortcut icon", {}, "/favicon.ico");
 }
 
 // ── Color palettes (override the theme variable package) ──
@@ -673,6 +681,7 @@ function ExportSheet({ session, onClose }) {
   const [nat, setNat] = useState({ w:1, h:1 });
   const [shareFile, setShareFile] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [tool, setTool] = useState("color");   // active control for the selected element
   const stageRef = useRef(null);
   const ptrs = useRef(new Map());
   const dragRef = useRef(null);
@@ -711,7 +720,7 @@ function ExportSheet({ session, onClose }) {
     else if(d.type==="el"){ setEl(d.key,{ xf:clamp(d.ox+(e.clientX-d.sx)/r.width,0.02,0.98), yf:clamp(d.oy+(e.clientY-d.sy)/r.height,0.02,0.98) }); }
   }
   function stageUp(e){ ptrs.current.delete(e.pointerId); if(ptrs.current.size<2) pinch.current=null; if(ptrs.current.size===0) dragRef.current=null; }
-  function elDown(e,key){ e.stopPropagation(); setSel(key); setShareOpen(false); dragRef.current={ type:"el", key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
+  function elDown(e,key){ e.stopPropagation(); setSel(key); setTool("color"); setShareOpen(false); dragRef.current={ type:"el", key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
 
   const FONT_ORDER=["serif","cinzel","crimson","sans"], FONT_LABEL={serif:"Serif",cinzel:"Cinzel",crimson:"Crimson",sans:"Sans"};
   const CONTENT_ORDER=[["session","Verse"],...(hasRV?[["return","Return Verse"]]:[]),["anchor","Read · Mark · Return"]];
@@ -722,7 +731,9 @@ function ExportSheet({ session, onClose }) {
 
   const elName={ cross:"Cross", selah:"SELAH", body:"Verse", mm:"Ministry" };
   const renderEl=(key)=>{ const el=layout.els[key]; if(!el.show) return null;
-    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", filter:sel===key?"drop-shadow(0 0 8px rgba(201,168,76,0.8))":"none" };
+    const selRing=sel===key?"drop-shadow(0 0 8px rgba(201,168,76,0.8))":"";
+    const elGlow=el.glow?`drop-shadow(0 0 ${(el.glow*12).toFixed(1)}px ${el.glowColor||"#0e0c06"})`:"";
+    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), filter:[elGlow,selRing].filter(Boolean).join(" ")||"none" };
     if(el.kind==="cross") return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%", backgroundColor:el.color, WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" }}/>;
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
@@ -741,64 +752,74 @@ function ExportSheet({ session, onClose }) {
         {["cross","selah","body","mm"].map(renderEl)}
       </div>
 
-      {/* top-left: frame toggle */}
-      <button onClick={()=>setLayout(L=>({...L,aspect:L.aspect==="square"?"story":"square"}))} style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 12px)",left:14,...circle({fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.04em"})}}>{layout.aspect==="square"?"1:1":"9:16"}</button>
+      {/* TOP-LEFT: close X (glow, no circle) */}
+      <button onClick={onClose} aria-label="Close" style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",left:18,background:"transparent",border:"none",cursor:"pointer",fontSize:44,lineHeight:1,color:"var(--accent)",textShadow:"0 0 14px rgba(var(--accent-rgb),0.85), 0 0 4px rgba(0,0,0,0.8)",padding:0,fontWeight:300,zIndex:4}}>×</button>
 
-      {/* top-right: content + font toggles */}
-      <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 12px)",right:14,display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
+      {/* TOP-RIGHT stack: Share, Verse/content, Font, Hide Photo, Format */}
+      <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
+        <div style={{position:"relative"}}>
+          {shareOpen && (
+            <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",right:60,top:0,display:"flex",flexDirection:"column",gap:8,width:210}}>
+              <button onClick={()=>{ handleShareImage(); }} disabled={!shareFile} className="btn-primary" style={{padding:"12px",opacity:shareFile?1:0.5}}>Share Image</button>
+              <button onClick={()=>{ shareAsNote(session); }} className="btn-ghost" style={{padding:"11px"}}>Save text to Notes / Files</button>
+            </div>
+          )}
+          <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"var(--accent)",border:"none",color:"var(--ink)"})}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </button>
+        </div>
         <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel.length>8?"Verse":contentLabel}</button>
         <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={circle({fontFamily:CARD_FONTS[layout.font],fontSize:18})}>Aa</button>
         {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} style={circle({fontFamily:"'Cinzel',serif",fontSize:7,letterSpacing:"0.03em",textAlign:"center",lineHeight:1.1,padding:3})}>{layout.photo.show?"Hide Photo":"Show Photo"}</button>}
+        <button onClick={()=>setLayout(L=>({...L,aspect:L.aspect==="square"?"story":"square"}))} style={circle({fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.04em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
       </div>
 
-      {/* selected element controls (floating, no reflow) */}
+      {/* SELECTED ELEMENT — floating bubbles at the very bottom, no box */}
       {selEl && (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 86px)",background:"rgba(14,10,6,0.55)",backdropFilter:"blur(8px)",border:"1px solid var(--border)",borderRadius:12,padding:"9px 12px"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-            <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{elName[sel]}</span>
-            <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"4px 10px",color:"var(--text2)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 12px)",display:"flex",flexDirection:"column",alignItems:"center",gap:10,zIndex:4}}>
+          <div style={{maxWidth:"94%",display:"flex",justifyContent:"center"}}>
+            {tool==="color" && (
+              <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+                {CARD_COLORS.map(([hex,lbl])=>(<button key={hex} title={lbl} onClick={()=>setEl(sel,{color:hex})} style={{width:30,height:30,borderRadius:"50%",background:hex,border:selEl.color===hex?"2px solid #fff":"1px solid rgba(255,255,255,0.4)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>))}
+              </div>
+            )}
+            {tool==="glow" && (
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                <div style={{display:"flex",flexWrap:"wrap",gap:9,justifyContent:"center"}}>
+                  {[["#0e0c06","Dark"],...CARD_COLORS.slice(0,7)].map(([hex,lbl])=>(<button key={hex} title={lbl} onClick={()=>setEl(sel,{glowColor:hex})} style={{width:26,height:26,borderRadius:"50%",background:hex,border:(selEl.glowColor||"#0e0c06")===hex?"2px solid #fff":"1px solid rgba(255,255,255,0.4)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>))}
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value={selEl.glow||0} onChange={e=>setEl(sel,{glow:parseFloat(e.target.value)})} style={{width:210,accentColor:"var(--accent)"}}/>
+              </div>
+            )}
+            {tool==="size" && <input type="range" min="0.02" max="0.16" step="0.004" value={selEl.size} onChange={e=>setEl(sel,{size:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
+            {tool==="rotate" && <input type="range" min="-45" max="45" step="1" value={selEl.rot||0} onChange={e=>setEl(sel,{rot:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
+            {tool==="opacity" && <input type="range" min="0.1" max="1" step="0.05" value={selEl.opacity==null?1:selEl.opacity} onChange={e=>setEl(sel,{opacity:parseFloat(e.target.value)})} style={{width:240,accentColor:"var(--accent)"}}/>}
           </div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:8}}>
-            {CARD_COLORS.map(([hex,lbl])=>(<button key={hex} title={lbl} onClick={()=>setEl(sel,{color:hex})} style={{width:26,height:26,borderRadius:"50%",background:hex,border:selEl.color===hex?"2px solid var(--accent)":"1px solid var(--border2)",cursor:"pointer",padding:0}}/>))}
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}><span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",width:42}}>SIZE</span><input type="range" min="0.02" max="0.16" step="0.004" value={selEl.size} onChange={e=>setEl(sel,{size:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/></div>
-          <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",width:42}}>ROTATE</span><input type="range" min="-45" max="45" step="1" value={selEl.rot||0} onChange={e=>setEl(sel,{rot:parseFloat(e.target.value)})} style={{flex:1,accentColor:"var(--accent)"}}/></div>
-        </div>
-      )}
-
-      {/* restore hidden pieces */}
-      {!selEl && Object.keys(layout.els).some(k=>!layout.els[k].show) && (
-        <div style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 86px)",display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center"}}>
-          {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(<button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); }} style={{background:"rgba(14,10,6,0.95)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",borderRadius:20,padding:"9px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.06em",cursor:"pointer"}}>+ {elName[k]}</button>))}
-        </div>
-      )}
-
-      {/* background picker (only when no photo is showing) */}
-      {!selEl && (!hasPhoto || !layout.photo.show) && (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 150px)",background:"rgba(14,10,6,0.6)",backdropFilter:"blur(6px)",border:"1px solid var(--border)",borderRadius:12,padding:"10px 12px"}}>
-          <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:8,textAlign:"center"}}>Background</p>
-          <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
-            {BG_OPTIONS.map(([id,lbl,top,bot])=>(
-              <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:34,height:34,borderRadius:"50%",background:top===bot?top:`linear-gradient(180deg,${top},${bot})`,border:(layout.bg||"ink")===id?"2px solid var(--accent)":"1px solid var(--border2)",cursor:"pointer",padding:0}}/>
+          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.6)",backdropFilter:"blur(8px)",borderRadius:24,padding:"6px 8px"}}>
+            {[["color","Color"],["size","Size"],["rotate","Turn"],["opacity","Fade"],["glow","Glow"]].map(([id,lbl])=>(
+              <button key={id} onClick={()=>setTool(id)} style={{borderRadius:16,padding:"7px 11px",background:tool===id?"var(--accent)":"transparent",color:tool===id?"var(--ink)":"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>
             ))}
+            <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{borderRadius:16,padding:"7px 11px",background:"transparent",color:"var(--text2)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
           </div>
         </div>
       )}
 
-      {/* bottom-left close — no circle, larger, themed glow */}
-      <button onClick={onClose} aria-label="Close" style={{position:"absolute",left:20,bottom:"calc(env(safe-area-inset-bottom,0px) + 14px)",background:"transparent",border:"none",cursor:"pointer",fontSize:46,lineHeight:1,color:"var(--accent)",textShadow:"0 0 14px rgba(var(--accent-rgb),0.85), 0 0 4px rgba(0,0,0,0.8)",padding:0,fontWeight:300}}>×</button>
-      {/* bottom-right share */}
-      <div style={{position:"absolute",right:18,bottom:"calc(env(safe-area-inset-bottom,0px) + 18px)"}}>
-        {shareOpen && (
-          <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",right:0,bottom:60,display:"flex",flexDirection:"column",gap:8,width:200}}>
-            <button onClick={()=>{ handleShareImage(); }} disabled={!shareFile} className="btn-primary" style={{padding:"12px",opacity:shareFile?1:0.5}}>Share Image</button>
-            <button onClick={()=>{ shareAsNote(session); }} className="btn-ghost" style={{padding:"11px"}}>Save text to Notes / Files</button>
-          </div>
-        )}
-        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"var(--accent)",border:"none",color:"var(--ink)"})}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        </button>
-      </div>
+      {/* restore hidden pieces (when nothing selected) */}
+      {!selEl && Object.keys(layout.els).some(k=>!layout.els[k].show) && (
+        <div style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 14px)",display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",zIndex:4}}>
+          {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(<button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); setTool("color"); }} style={{background:"rgba(14,10,6,0.95)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",borderRadius:20,padding:"9px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.06em",cursor:"pointer"}}>+ {elName[k]}</button>))}
+        </div>
+      )}
+
+      {/* background picker (when no photo showing and nothing selected) */}
+      {!selEl && (!hasPhoto || !layout.photo.show) && (
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 78px)",display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",alignItems:"center",zIndex:4}}>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",letterSpacing:"0.12em",textTransform:"uppercase",width:"100%",textAlign:"center"}}>Background</span>
+          {BG_OPTIONS.map(([id,lbl,top,bot])=>(
+            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:34,height:34,borderRadius:"50%",background:top===bot?top:`linear-gradient(180deg,${top},${bot})`,border:(layout.bg||"ink")===id?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.35)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
