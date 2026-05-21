@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b30";
+const BUILD = "2026.05.20-b31";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2034,20 +2034,20 @@ export default function App() {
       <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
 
         {/* HEADER */}
-        <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
+        <div style={{textAlign:"center",padding:"calc(env(safe-area-inset-top, 0px) + 28px) 0 18px",position:"relative"}}>
           {view !== "session" && view !== "auth" && view !== "profilepick" && (
-            <button onClick={()=>setView("settings")} style={{position:"absolute",right:0,top:28,background:"transparent",border:"none",color:"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}
+            <button onClick={()=>setView("settings")} style={{position:"absolute",right:0,top:"calc(env(safe-area-inset-top, 0px) + 28px)",background:"transparent",border:"none",color:"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}
               onMouseOver={e=>e.currentTarget.style.color="var(--accent)"}
               onMouseOut={e=>e.currentTarget.style.color="var(--m5)"}>
               <SettingsIcon/>
             </button>
           )}
           {view !== "session" && view !== "auth" && view !== "profilepick" && (
-            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:31,top:28,background:"transparent",border:"none",color:showBright?"var(--accent)":"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
+            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:31,top:"calc(env(safe-area-inset-top, 0px) + 28px)",background:"transparent",border:"none",color:showBright?"var(--accent)":"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
-          <div style={{position:"absolute",left:6,top:39,cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
+          <div style={{position:"absolute",left:6,top:"calc(env(safe-area-inset-top, 0px) + 39px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
             <CrossIcon size={30} glow={false}/>
           </div>
           <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",cursor:"pointer"}}>SELAH</h1>
