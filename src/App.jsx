@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b32";
+const BUILD = "2026.05.20-b33";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -979,7 +979,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
             <div style={{padding:"4px 0 20px",borderBottom:"1px solid var(--border)",marginBottom:16}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--border2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
               {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
-              {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3a18",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
+              {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m4)",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
               {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word will be here. So will He.</p>}
               <div style={{borderLeft:"2px solid var(--border2)",paddingLeft:14}}>
                 <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"var(--m2)",lineHeight:1.65,fontStyle:"italic",marginBottom:6}}>"{verse.text}"</p>
@@ -1088,7 +1088,7 @@ function EmptyDayPanel({ date, alarms, onSaveAlarm, suppressPast }) {
     <div style={{padding:"18px 16px"}}>
       <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--border2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
       {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
-      {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3a18",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
+      {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m4)",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
       {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word will be here. So will He.</p>}
       <div style={{borderLeft:"2px solid var(--border2)",paddingLeft:14,marginBottom:(isFuture||isToday)?16:0}}>
         <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"var(--m2)",lineHeight:1.65,fontStyle:"italic",marginBottom:6}}>"{verse.text}"</p>
@@ -2418,7 +2418,7 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div style={{background:"linear-gradient(160deg,#181208,var(--ink))",border:"1px solid var(--border2)",borderRadius:8,padding:"18px",marginBottom:14}}>
+              <div style={{background:"linear-gradient(160deg,var(--input2),var(--ink))",border:"1px solid var(--border2)",borderRadius:8,padding:"18px",marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",gap:12}}>
                   <div style={{flex:1}}>
                     <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Session Complete</p>
@@ -2435,9 +2435,9 @@ export default function App() {
 
             {/* GROUND — context, deeper */}
             {result.context && (
-              <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid var(--m5)",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
+              <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderLeft:"3px solid var(--m5)",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8}}>Ground</p>
-                <p style={{fontSize:16,lineHeight:1.78,color:"#5a5030"}}>{result.context}</p>
+                <p style={{fontSize:16,lineHeight:1.78,color:"var(--m2)"}}>{result.context}</p>
               </div>
             )}
 
@@ -2445,7 +2445,7 @@ export default function App() {
             {result.summary && (
               <div style={{borderLeft:"2px solid rgba(var(--accent-rgb),0.5)",paddingLeft:16,marginBottom:20}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:7}}>In One Sentence</p>
-                <p style={{color:"#a09060",fontSize:18,lineHeight:1.6}}>{result.summary}</p>
+                <p style={{color:"var(--m1)",fontSize:18,lineHeight:1.6}}>{result.summary}</p>
               </div>
             )}
 
@@ -2469,9 +2469,9 @@ export default function App() {
                 <ChevronIcon open={openSection.q}/>
               </div>
               {openSection.q && (
-                <div style={{borderTop:"1px solid #1e1a08",padding:"14px 18px 18px"}}>
+                <div style={{borderTop:"1px solid var(--border2)",padding:"14px 18px 18px"}}>
                   {result.questions?.map((q,i)=>(
-                    <div key={i} style={{marginBottom:20,paddingBottom:20,borderBottom:i<result.questions.length-1?"1px solid #1a1608":"none"}}>
+                    <div key={i} style={{marginBottom:20,paddingBottom:20,borderBottom:i<result.questions.length-1?"1px solid var(--border2)":"none"}}>
                       <div style={{display:"flex",gap:14,marginBottom:10,alignItems:"flex-start"}}>
                         <div style={{flexShrink:0,width:28,height:28,borderRadius:14,background:"rgba(var(--accent-rgb),0.08)",border:"1px solid rgba(var(--accent-rgb),0.15)",display:"flex",alignItems:"center",justifyContent:"center"}}>
                           <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m2)",fontWeight:600}}>{i+1}</span>
@@ -2505,7 +2505,7 @@ export default function App() {
                 <ChevronIcon open={openSection.n}/>
               </div>
               {openSection.n && (
-                <div style={{borderTop:"1px solid #1e1a08",padding:"14px 18px 18px"}}>
+                <div style={{borderTop:"1px solid var(--border2)",padding:"14px 18px 18px"}}>
                   {result.notes?.map((n,i)=>(
                     <div key={i} style={{display:"flex",gap:12,marginBottom:14,alignItems:"flex-start"}}>
                       <span style={{color:"rgba(var(--accent-rgb),0.4)",fontSize:18,minWidth:10,paddingTop:1,lineHeight:1}}>—</span>
@@ -2526,9 +2526,9 @@ export default function App() {
                 <ChevronIcon open={openSection.v}/>
               </div>
               {openSection.v && (
-                <div style={{borderTop:"1px solid #1e1a08"}}>
+                <div style={{borderTop:"1px solid var(--border2)"}}>
                   {result.returnVerses?.map((v,i)=>(
-                    <div key={i} style={{padding:"16px 18px",borderBottom:i<result.returnVerses.length-1?"1px solid #1a1608":"none"}}>
+                    <div key={i} style={{padding:"16px 18px",borderBottom:i<result.returnVerses.length-1?"1px solid var(--border2)":"none"}}>
                       <p style={{fontFamily:"'Cinzel',serif",fontSize:14,color:"var(--accent)",letterSpacing:"0.04em",marginBottom:8}}>{v.ref}</p>
                       <p style={{fontSize:16,color:"var(--m2)",lineHeight:1.6,fontStyle:"italic"}}>{v.reason}</p>
                     </div>
@@ -2557,7 +2557,7 @@ export default function App() {
                 <div style={{textAlign:"center",padding:"12px 0 18px"}}>
                   <div style={{color:"var(--border2)",marginBottom:10,display:"flex",justifyContent:"center"}}><BookIcon/></div>
                   <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--border2)",letterSpacing:"0.14em"}}>NO SESSIONS LOGGED YET</p>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3a18",marginTop:8}}>Tap today or a day ahead to set a reminder.</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginTop:8}}>Tap today or a day ahead to set a reminder.</p>
                 </div>
                 <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:10}}>
                   <EmptyDayPanel date={filterDate || (()=>{const d=new Date();d.setHours(0,0,0,0);return d;})()} alarms={alarms} onSaveAlarm={handleSaveAlarm} suppressPast/>
@@ -2640,9 +2640,9 @@ export default function App() {
                     {expandedSession===s.id && s.aiResult && (
                       <div style={{padding:"0 16px 16px",borderTop:"1px solid var(--border)"}}>
                         {s.aiResult.context && (
-                          <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid var(--m5)",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
+                          <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderLeft:"3px solid var(--m5)",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
                             <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Ground</p>
-                            <p style={{fontSize:14,lineHeight:1.7,color:"#5a5030"}}>{s.aiResult.context}</p>
+                            <p style={{fontSize:14,lineHeight:1.7,color:"var(--m2)"}}>{s.aiResult.context}</p>
                           </div>
                         )}
                         {s.aiResult.summary && (
@@ -2654,7 +2654,7 @@ export default function App() {
                         <hr className="divider"/>
                         <p className="label">Questions from the Text</p>
                         {s.aiResult.questions?.map((q,i)=>(
-                          <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:i<s.aiResult.questions.length-1?"1px solid #1a1608":"none"}}>
+                          <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:i<s.aiResult.questions.length-1?"1px solid var(--border2)":"none"}}>
                             <p style={{fontSize:15,color:"var(--text4)",lineHeight:1.6,marginBottom:6}}>{q}</p>
                             {s.questionAnswers?.[i] && (
                               <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
@@ -2749,7 +2749,7 @@ export default function App() {
                   <button className="btn-primary" style={{width:"100%",padding:"13px",marginBottom:10}} onClick={()=>{ setAuthIntro(false); setView("auth"); }}>Create Account or Sign In</button>
                 </>
               )}
-              <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid #2a1c14"}}>
+              <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--border)"}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>What syncs, what stays</p>
                 <p style={{fontSize:15,color:"var(--m2)",lineHeight:1.65,marginBottom:8}}>
                   An account exists for one reason: so your reading carries across your devices. It stores your reading log (passages, notes, questions, answers, return verses, times), your reading position, and your content settings — translation, age group, birthday, gender, reminders, clock and time zone.
@@ -2970,7 +2970,7 @@ export default function App() {
             </div>
             <div style={{textAlign:"center",paddingTop:8}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--border2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#2a2208",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:8}}>Build {BUILD}</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--border2)",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:8}}>Build {BUILD}</p>
             </div>
           </div>
         )}
@@ -2983,7 +2983,7 @@ export default function App() {
 
       {/* ══ PHOTO LIGHTBOX ══ */}
       {showTop && (
-        <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",right:14,zIndex:110,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
+        <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",right:14,zIndex:110,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
         </button>
       )}
@@ -3048,7 +3048,7 @@ export default function App() {
       {photoView && (
         <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.95)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",cursor:"pointer"}}>
           <div style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
+            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
             <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid var(--border)",display:"block"}}/>
             <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"var(--accent)",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",alignItems:"center",marginBottom:photoView.personalNotes?16:0}}>
@@ -3069,8 +3069,8 @@ export default function App() {
       {eggOpen && (
         <div ref={eggScrollRef} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
           onClick={()=>setEggOpen(null)}>
-          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
-          <button onClick={(e)=>{e.stopPropagation();eggScrollRef.current?.scrollTo({top:0,behavior:"smooth"});}} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 18px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.82,padding:0}}>
+          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
+          <button onClick={(e)=>{e.stopPropagation();eggScrollRef.current?.scrollTo({top:0,behavior:"smooth"});}} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 18px)",right:14,zIndex:500,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.82,padding:0}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
           <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:12,padding:"26px 22px 32px",width:"100%",maxWidth:480,margin:"58px auto 58px"}}
