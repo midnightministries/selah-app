@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b36";
+const BUILD = "2026.05.20-b37";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1609,7 +1609,8 @@ export default function App() {
   const [syncState, setSyncState] = useState("idle"); // idle | saving | synced | error
   const [kidName, setKidName] = useState("");
   const [kidForm, setKidForm] = useState({ name:"", birthday:"", gender:"Prefer not to say", bible:"NIrV", palette:"midnight", icon:"default" });
-  const [torchOpen, setTorchOpen] = useState(false);
+  const [torchOpen, setTorchOpen] = useState(true);
+  const [visualsOpen, setVisualsOpen] = useState(false);
   const [showAddReader, setShowAddReader] = useState(false);
   const syncTimer = useRef(null);
 
@@ -1684,6 +1685,7 @@ export default function App() {
     loadSettings(profileSnaps.current[id]);
     setActiveProfileId(id);
     setNeedsSetup(false);
+    setTorchOpen(false);
   }
   function deleteKidProfile(id) {
     if (!profiles[id] || !profiles[id].kid) return;
@@ -1810,6 +1812,13 @@ export default function App() {
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, profileIcon, askProfile, clockFmt, timezone, alarms, profiles, activeProfileId]);
+
+  // Profile structure changes (add/remove/switch) save immediately, not debounced.
+  useEffect(() => {
+    if (!account || !hydratedRef.current) return;
+    syncRequest("save", account, gatherSync()).then(()=>setSyncState("synced")).catch(()=>setSyncState("error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profiles, activeProfileId]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -1996,6 +2005,7 @@ export default function App() {
         ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
         input,select,textarea{background:var(--input);border:1px solid var(--border2);color:var(--text);border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
         input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb),0.08);}
+        input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,input:-webkit-autofill:active{-webkit-text-fill-color:var(--text)!important;-webkit-box-shadow:0 0 0 1000px var(--input) inset!important;caret-color:var(--text)!important;transition:background-color 9999s ease-in-out 0s;}
         select option{background:var(--input);}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
         input[type=number]{-moz-appearance:textfield;appearance:textfield;}
@@ -2183,7 +2193,7 @@ export default function App() {
                 {torchOpen && (
                   <div style={{marginTop:14}}>
                     <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
-                      Your profile here is for the young reader you disciple. Your own, or one set under your charge.
+                      The young readers section is for the ones you disciple. Your own, or one set under your charge.
                     </p>
                     <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
                       Discipleship is not a lecture series. It is atmosphere. The young read what we live long before they read what we say. They absorb the room.
@@ -2216,7 +2226,7 @@ export default function App() {
                       <input value={kidForm.name} onChange={e=>setKidForm(f=>({...f,name:e.target.value}))} placeholder="First name"
                         style={{width:"100%",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:14}}/>
                       <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Birthday</p>
-                      <input type="date" value={kidForm.birthday} onChange={e=>setKidForm(f=>({...f,birthday:e.target.value}))} style={{...dateStyle,marginBottom:14}}/>
+                      <input type="date" onClick={e=>{try{e.target.showPicker&&e.target.showPicker();}catch(_){}}} value={kidForm.birthday} onChange={e=>setKidForm(f=>({...f,birthday:e.target.value}))} style={{...dateStyle,marginBottom:14}}/>
                       <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Gender</p>
                       <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
                         {["Male","Female","Prefer not to say"].map(g=>(
@@ -2826,7 +2836,7 @@ export default function App() {
                 ))}
               </div>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",margin:"16px 0 8px"}}>Birthday</p>
-              <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
+              <input type="date" onClick={e=>{try{e.target.showPicker&&e.target.showPicker();}catch(_){}}} value={birthday} onChange={e=>setBirthday(e.target.value)}
                 style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input2)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
             </div>
 
@@ -2834,9 +2844,20 @@ export default function App() {
             {account && (
               <div className="card">
                 <p className="label">Profiles</p>
-                <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
-                  Read under your own profile, and disciple the young readers in your care under theirs. Each profile keeps its own log, translation, depth, and look.
-                </p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>Who is Reading</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:14,marginBottom:16}}>
+                  {Object.entries(profiles).map(([id,p])=>{
+                    const pic=(id===activeProfileId?profileIcon:((profileSnaps.current[id]||{}).profileIcon))||"default";
+                    return (
+                      <button key={id} onClick={()=>switchProfile(id)} style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6,width:64,padding:0}}>
+                        <div style={{width:54,height:54,borderRadius:12,overflow:"hidden",border:activeProfileId===id?"2px solid var(--accent)":"2px solid var(--border)",boxShadow:activeProfileId===id?"0 0 10px rgba(var(--accent-rgb),0.3)":"none"}}>
+                          <img src={(ICON_THEMES[pic]||ICON_THEMES.default).thumb} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                        </div>
+                        <span style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.04em",color:activeProfileId===id?"var(--accent)":"var(--m2)",textAlign:"center"}}>{p.name||(p.kid?"Child":"You")}</span>
+                      </button>
+                    );
+                  })}
+                </div>
                 <button className="btn-primary" style={{width:"100%",padding:"13px"}} onClick={()=>setView("profiles")}>Open Profiles</button>
               </div>
             )}
@@ -2860,7 +2881,11 @@ export default function App() {
 
             {/* Visuals */}
             <div className="card">
-              <p className="label">Visuals</p>
+              <button onClick={()=>setVisualsOpen(o=>!o)} style={{width:"100%",background:"transparent",border:"none",padding:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:visualsOpen?14:0}}>
+                <span className="label" style={{marginBottom:0}}>Visuals</span>
+                <span style={{color:"var(--accent)",fontSize:18,transform:visualsOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>⌄</span>
+              </button>
+              {visualsOpen && (<>
               <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
                 Make it yours. The Word does not change; the look can.
               </p>
@@ -2895,6 +2920,7 @@ export default function App() {
                   </button>
                 ))}
               </div>
+              </>)}
             </div>
 
             {/* Support the Ministry */}
@@ -3044,7 +3070,7 @@ export default function App() {
                 ))}
               </div>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Birthday</p>
-              <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
+              <input type="date" onClick={e=>{try{e.target.showPicker&&e.target.showPicker();}catch(_){}}} value={birthday} onChange={e=>setBirthday(e.target.value)}
                 style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input2)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:16,colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gender</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
