@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b62";
+const BUILD = "2026.05.21-b63";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2922,7 +2922,7 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:12,marginLeft:8,flexShrink:0}}>
-                        <button className="btn-danger" aria-label="Delete session" onClick={e=>{e.stopPropagation();deleteSession(s.id);}} style={{padding:0,width:40,height:36,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid #b5302f",background:"rgba(181,48,47,0.10)",color:"#b5302f",borderRadius:6}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b5302f" strokeWidth="2.6" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+                        <button className="btn-danger" aria-label="Delete session" onClick={e=>{e.stopPropagation();deleteSession(s.id);}} style={{padding:0,width:33,height:30,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid #b5302f",background:"rgba(181,48,47,0.10)",color:"#b5302f",borderRadius:6}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b5302f" strokeWidth="2.6" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
                         <ChevronIcon open={expandedSession===s.id} size={24}/>
                       </div>
                     </div>
