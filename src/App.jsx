@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b23";
+const BUILD = "2026.05.20-b24";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1405,19 +1405,16 @@ function TimezoneDropdown({ timezone, setTimezone }) {
 function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose }) {
   const [b, setB] = useState(brightness);
   const [t, setT] = useState(textScale);
-  const raf = useRef(0);
-  function apply(bv, tv) {
-    const el = layerRef.current; if (!el) return;
-    el.style.filter = bv !== 1 ? `brightness(${bv})` : "none";
-    el.style.zoom = tv;
-  }
-  function schedule(bv, tv) {
-    if (raf.current) cancelAnimationFrame(raf.current);
-    raf.current = requestAnimationFrame(() => apply(bv, tv));
-  }
-  function changeB(v) { setB(v); schedule(v, t); }
-  function changeT(v) { setT(v); schedule(b, v); }
-  function commit() { onCommit(b, t); }
+  const rafB = useRef(0);
+  const debT = useRef(0);
+  // Brightness uses CSS filter (GPU-composited, cheap) -> apply live each frame.
+  function applyFilter(bv) { const el = layerRef.current; if (el) el.style.filter = bv !== 1 ? `brightness(${bv})` : "none"; }
+  // Text size uses zoom (forces full layout reflow, costly) -> debounce so the
+  // thumb stays buttery while the page re-lays out only after you pause.
+  function applyZoom(tv) { const el = layerRef.current; if (el) el.style.zoom = tv; }
+  function changeB(v) { setB(v); if (rafB.current) cancelAnimationFrame(rafB.current); rafB.current = requestAnimationFrame(() => applyFilter(v)); }
+  function changeT(v) { setT(v); if (debT.current) clearTimeout(debT.current); debT.current = setTimeout(() => applyZoom(v), 110); }
+  function commit() { if (debT.current) clearTimeout(debT.current); applyFilter(b); applyZoom(t); onCommit(b, t); }
   const pill = { background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
   const cap = { fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em" };
   const head = { fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase" };
@@ -1431,17 +1428,17 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
           style={{width:"100%",accentColor:"#c9a84c"}}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
           <span style={cap}>DARKER</span>
-          <button onClick={()=>{ setB(1.22); apply(1.22,t); onCommit(1.22,t); }} style={pill}>Reset</button>
+          <button onClick={()=>{ setB(1.22); applyFilter(1.22); onCommit(1.22,t); }} style={pill}>Reset</button>
           <span style={cap}>BRIGHTER</span>
         </div>
         <p style={{...head,margin:"16px 0 10px"}}>Text Size</p>
-        <input type="range" min="0.9" max="1.3" step="0.05" value={t}
+        <input type="range" min="0.9" max="1.3" step="0.02" value={t}
           onChange={e=>changeT(parseFloat(e.target.value))}
           onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
           style={{width:"100%",accentColor:"#c9a84c"}}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
           <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a"}}>A</span>
-          <button onClick={()=>{ setT(1); apply(b,1); onCommit(b,1); }} style={pill}>Reset</button>
+          <button onClick={()=>{ setT(1); applyZoom(1); onCommit(b,1); }} style={pill}>Reset</button>
           <span style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"#4a3e1a"}}>A</span>
         </div>
       </div>
@@ -1486,6 +1483,7 @@ export default function App() {
   const [showTop, setShowTop] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
   const displayRef = useRef(null);
+  const hydratedRef = useRef(false);
   const eggScrollRef = useRef(null);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   useEffect(() => {
@@ -1576,6 +1574,7 @@ export default function App() {
       syncRequest("save", acc, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{});
       setNeedsSetup(!setupIsDone(null));
     }
+    hydratedRef.current = true; // safe to auto-save now
     setView("home");
   }
   function handleSkipAuth() {
@@ -1601,7 +1600,8 @@ export default function App() {
     if (account) {
       syncRequest("load", account, null)
         .then(res => { if (res && res.data) { applySync(res.data); setNeedsSetup(!setupIsDone(res.data)); } setSyncState("synced"); })
-        .catch(() => setSyncState("error"));
+        .catch(() => setSyncState("error"))
+        .finally(() => { hydratedRef.current = true; });
     } else if (!onboarded) {
       setAuthIntro(true);
       setView("auth");
@@ -1610,8 +1610,10 @@ export default function App() {
   }, []);
 
   // Debounced auto-sync of log + content settings (display stays per-device).
+  // Gated on hydration so a device can never overwrite the server with its
+  // local data before the initial load has come back.
   useEffect(() => {
-    if (!account) return;
+    if (!account || !hydratedRef.current) return;
     if (syncTimer.current) clearTimeout(syncTimer.current);
     setSyncState("saving");
     syncTimer.current = setTimeout(() => {
