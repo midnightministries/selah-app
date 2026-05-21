@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b61";
+const BUILD = "2026.05.21-b62";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -823,7 +823,7 @@ function ExportSheet({ session, onClose }) {
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(20,15,9,0.95)",border:"1px solid rgba(201,168,76,0.7)",boxShadow:"0 2px 10px rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.08)",border:"1px solid rgba(201,168,76,0.7)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
