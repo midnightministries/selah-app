@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b40";
+const BUILD = "2026.05.20-b41";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1552,6 +1552,11 @@ export default function App() {
   const [palette, setPalette] = useState(() => localStorage.getItem("selah_palette") || "midnight");
   const [profileIcon, setProfileIcon] = useState(() => localStorage.getItem("selah_profile_icon") || "default");
   const [askProfile, setAskProfile] = useState(() => localStorage.getItem("selah_ask_profile") !== "0");
+  const [passcode, setPasscode] = useState(() => localStorage.getItem("selah_passcode") || "");
+  const [lockPrompt, setLockPrompt] = useState(null);
+  const [lockEntry, setLockEntry] = useState("");
+  const [lockErr, setLockErr] = useState("");
+  const [pcDraft, setPcDraft] = useState("");
   const [clockFmt, setClockFmt] = useState(() => localStorage.getItem("selah_clock_fmt") || "12");
   const [timezone, setTimezone] = useState(() => localStorage.getItem("selah_timezone") || "device");
   const [form, setForm] = useState(() => {
@@ -1578,6 +1583,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem("selah_palette", palette); applyPalette(palette); }, [palette]);
   useEffect(() => { localStorage.setItem("selah_profile_icon", profileIcon); }, [profileIcon]);
   useEffect(() => { localStorage.setItem("selah_ask_profile", askProfile ? "1" : "0"); }, [askProfile]);
+  useEffect(() => { localStorage.setItem("selah_passcode", passcode); }, [passcode]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -1668,6 +1674,13 @@ export default function App() {
     setActiveProfileId(id);
     setNeedsSetup(!(profileSnaps.current[id] && profileSnaps.current[id].setupDone));
   }
+  function requestSwitch(id) {
+    if (passcode && profiles[activeProfileId] && profiles[activeProfileId].kid && profiles[id] && !profiles[id].kid) {
+      setLockPrompt(id); setLockEntry(""); setLockErr("");
+    } else {
+      switchProfile(id);
+    }
+  }
   function createKidProfile(opts) {
     opts = opts || {};
     const kidIds = Object.keys(profiles).filter(k => profiles[k].kid);
@@ -1710,7 +1723,7 @@ export default function App() {
     const snaps = { ...profileSnaps.current, [activeProfileId]: liveSettings() };
     const profileSettings = {};
     Object.keys(profiles).forEach(id => { profileSettings[id] = snaps[id] || {}; });
-    return { v: 2, appIcon, askProfile, clockFmt, timezone, activeProfileId, profiles, profileSettings, sessions: lean };
+    return { v: 2, appIcon, askProfile, passcode, clockFmt, timezone, activeProfileId, profiles, profileSettings, sessions: lean };
   }
   function applySync(data) {
     if (!data || typeof data !== "object") return;
@@ -1719,6 +1732,7 @@ export default function App() {
     if (data.clockFmt) setClockFmt(data.clockFmt);
     if (data.timezone) setTimezone(data.timezone);
     if (typeof data.askProfile === "boolean") setAskProfile(data.askProfile);
+    if (typeof data.passcode === "string") setPasscode(data.passcode);
     const localById = {};
     sessions.forEach(s => { if (s.photoData) localById[s.id] = s.photoData; });
     if (data.v === 2 && data.profiles && data.profileSettings) {
@@ -1813,7 +1827,7 @@ export default function App() {
     }, 1500);
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, profileIcon, askProfile, clockFmt, timezone, alarms, profiles, activeProfileId]);
+  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, profileIcon, askProfile, passcode, clockFmt, timezone, alarms, profiles, activeProfileId]);
 
   // Profile structure changes (add/remove/switch) save immediately, not debounced.
   useEffect(() => {
@@ -2153,7 +2167,7 @@ export default function App() {
                 <p className="label">Who is Reading</p>
                 <div style={{display:"flex",flexWrap:"wrap",gap:16}}>
                   {Object.entries(profiles).map(([id,p])=>(
-                    <button key={id} onClick={()=>switchProfile(id)}
+                    <button key={id} onClick={()=>requestSwitch(id)}
                       style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:78,padding:0}}>
                       <div style={{width:64,height:64,borderRadius:14,overflow:"hidden",border:activeProfileId===id?"2px solid var(--accent)":"2px solid var(--border)",boxShadow:activeProfileId===id?"0 0 12px rgba(var(--accent-rgb),0.3)":"none"}}>
                         <img src={tileThumb(id)} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
@@ -2302,6 +2316,26 @@ export default function App() {
                 <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",lineHeight:1.5,marginTop:10}}>
                   Off means you go straight into the last profile you used.
                 </p>
+              </div>
+              )}
+
+              {/* Profile lock (owner only) */}
+              {!isKidActive && (
+              <div className="card">
+                <p className="label">Profile Lock</p>
+                <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
+                  Set a 4 to 6 digit code. When it is on, a young reader cannot leave their profile and switch into yours without it. Good for when they have the device.
+                </p>
+                {passcode ? (
+                  <button className="btn-ghost" style={{width:"100%",padding:"12px"}} onClick={()=>{ if(window.confirm("Remove the profile lock?")) setPasscode(""); }}>Lock is on — Remove</button>
+                ) : (
+                  <div style={{display:"flex",gap:8}}>
+                    <input value={pcDraft} onChange={e=>setPcDraft(e.target.value.replace(/\D/g,"").slice(0,6))} inputMode="numeric" placeholder="4–6 digits"
+                      style={{flex:1,minWidth:0,boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:18,letterSpacing:"0.3em",outline:"none"}}/>
+                    <button className="btn-primary" style={{padding:"11px 16px",whiteSpace:"nowrap",opacity:pcDraft.length>=4?1:0.5}}
+                      onClick={()=>{ if(pcDraft.length>=4){ setPasscode(pcDraft); setPcDraft(""); } }}>Set Lock</button>
+                  </div>
+                )}
               </div>
               )}
             </div>
@@ -2851,7 +2885,7 @@ export default function App() {
                   {Object.entries(profiles).map(([id,p])=>{
                     const pic=(id===activeProfileId?profileIcon:((profileSnaps.current[id]||{}).profileIcon))||"default";
                     return (
-                      <button key={id} onClick={()=>switchProfile(id)} style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6,width:64,padding:0}}>
+                      <button key={id} onClick={()=>requestSwitch(id)} style={{background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6,width:64,padding:0}}>
                         <div style={{width:54,height:54,borderRadius:12,overflow:"hidden",border:activeProfileId===id?"2px solid var(--accent)":"2px solid var(--border)",boxShadow:activeProfileId===id?"0 0 10px rgba(var(--accent-rgb),0.3)":"none"}}>
                           <img src={(ICON_THEMES[pic]||ICON_THEMES.default).thumb} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                         </div>
@@ -3042,6 +3076,25 @@ export default function App() {
       )}
 
       {/* ══ FIRST-TIME SETUP (floating over New Session) ══ */}
+      {/* ══ PROFILE LOCK PROMPT ══ */}
+      {lockPrompt && (
+        <div style={{position:"fixed",inset:0,zIndex:460,background:"rgba(6,5,2,0.93)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{width:"100%",maxWidth:340,textAlign:"center"}}>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:14}}><CrossIcon size={30}/></div>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.1em",color:SELAH_CREAM,marginBottom:6}}>Enter Passcode</p>
+            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m3)",marginBottom:16}}>to switch into {profiles[lockPrompt]?.name || "this profile"}</p>
+            <input value={lockEntry} autoFocus inputMode="numeric" onChange={e=>{ setLockEntry(e.target.value.replace(/\D/g,"").slice(0,6)); setLockErr(""); }}
+              onKeyDown={e=>{ if(e.key==="Enter"){ if(lockEntry===passcode){ switchProfile(lockPrompt); setLockPrompt(null); setLockEntry(""); } else setLockErr("Incorrect code."); } }}
+              style={{width:"100%",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:8,padding:"14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:24,letterSpacing:"0.5em",textAlign:"center",outline:"none",marginBottom:lockErr?8:16}}/>
+            {lockErr && <p style={{color:"#d98a8a",fontSize:14,marginBottom:12}}>{lockErr}</p>}
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn-ghost" style={{flex:1,padding:"12px"}} onClick={()=>{ setLockPrompt(null); setLockEntry(""); setLockErr(""); }}>Cancel</button>
+              <button className="btn-primary" style={{flex:1,padding:"12px"}} onClick={()=>{ if(lockEntry===passcode){ switchProfile(lockPrompt); setLockPrompt(null); setLockEntry(""); } else setLockErr("Incorrect code."); }}>Unlock</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {needsSetup && (
         <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(6,5,2,0.78)",backdropFilter:"blur(2px)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"calc(env(safe-area-inset-top,0px) + 28px) 16px calc(env(safe-area-inset-bottom,0px) + 28px)",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
           <div style={{width:"100%",maxWidth:440}}>
