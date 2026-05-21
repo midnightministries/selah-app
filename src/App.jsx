@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b45";
+const BUILD = "2026.05.20-b46";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -253,69 +253,76 @@ function wrapText(ctx, text, maxWidth) {
 }
 
 function generateShareCard(session, opts) {
-  const o = Object.assign({ layout:"classic", font:"serif", textColor:"#c9a84c", opacity:1, filter:"none", content:"session", showPhoto:true }, opts||{});
+  const o = Object.assign({ aspect:"square", font:"serif", textColor:"#c9a84c", opacity:1, content:"session", showPhoto:true, offX:0, offY:0 }, opts||{});
+  const DIMS = { square:[1080,1080], portrait:[1080,1350], story:[1080,1920] };
+  const [W,H] = DIMS[o.aspect] || DIMS.square;
   return new Promise((resolve) => {
-    const S = 1080;
     const canvas = document.createElement("canvas");
-    canvas.width = S; canvas.height = S;
+    canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d");
     const crossEl = document.querySelector('img[src^="data:image/png;base64,iVBOR"]');
-    const FF = o.font === "cinzel" ? "Cinzel, Georgia, serif" : (o.font === "sans" ? "Helvetica, Arial, sans-serif" : "Georgia, serif");
-    function hx(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+    const FF = o.font === "cinzel" ? "Cinzel, Georgia, serif"
+             : o.font === "crimson" ? "'Crimson Text', Georgia, serif"
+             : o.font === "sans" ? "Helvetica, Arial, sans-serif"
+             : "Georgia, serif";
+    function hx(h){ h=(h||"").replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
     const [TR,TG,TB] = hx(o.textColor||"#c9a84c");
     const tc = (a)=>`rgba(${TR},${TG},${TB},${a*(o.opacity==null?1:o.opacity)})`;
-    const usePhoto = session.photoData && o.showPhoto && o.layout !== "verse";
+    const usePhoto = session.photoData && o.showPhoto;
+    // pull the active palette so the no-photo card matches the reader's theme
+    let pBg="#190f0b", pSurface="#20130f", pAcc="201,168,76";
+    try { const cs=getComputedStyle(document.documentElement);
+      pBg=(cs.getPropertyValue('--bg')||'').trim()||pBg;
+      pSurface=(cs.getPropertyValue('--surface')||'').trim()||pSurface;
+      pAcc=(cs.getPropertyValue('--accent-rgb')||'').trim()||pAcc;
+    } catch {}
 
     const drawCard = () => {
-      // scrim — lighter for verse layout, heavier when over a photo
-      const top = usePhoto ? 0.72 : 0.72, mid = usePhoto ? 0.42 : 0.5;
-      const ov = ctx.createLinearGradient(0,0,0,S);
+      const top = usePhoto ? 0.72 : 0.62, mid = usePhoto ? 0.42 : 0.4;
+      const ov = ctx.createLinearGradient(0,0,0,H);
       ov.addColorStop(0,`rgba(10,8,4,${top})`); ov.addColorStop(0.42,`rgba(10,8,4,${mid})`);
-      ov.addColorStop(0.66,`rgba(10,8,4,${top})`); ov.addColorStop(1,"rgba(10,8,4,0.97)");
-      ctx.fillStyle = ov; ctx.fillRect(0,0,S,S);
+      ov.addColorStop(0.7,`rgba(10,8,4,${top})`); ov.addColorStop(1,"rgba(10,8,4,0.97)");
+      ctx.fillStyle = ov; ctx.fillRect(0,0,W,H);
 
-      // brand: chalk cross (gold) top-left + SELAH cream top-center
       if (crossEl && crossEl.naturalWidth) {
-        const chH=112, chW=Math.round(chH*(crossEl.naturalWidth/crossEl.naturalHeight));
+        const chH=110, chW=Math.round(chH*(crossEl.naturalWidth/crossEl.naturalHeight));
         const cc=document.createElement("canvas"); cc.width=chW; cc.height=chH; const c2=cc.getContext("2d");
         c2.drawImage(crossEl,0,0,chW,chH); c2.globalCompositeOperation="source-atop";
-        c2.fillStyle="rgba(214,184,96,0.92)"; c2.fillRect(0,0,chW,chH); ctx.drawImage(cc,88,56);
+        c2.fillStyle="rgba(214,184,96,0.92)"; c2.fillRect(0,0,chW,chH); ctx.drawImage(cc,84,54);
       }
       ctx.shadowColor="rgba(201,168,76,0.2)"; ctx.shadowBlur=12;
-      ctx.fillStyle="#ece0c6"; ctx.font=`bold 100px ${FF}`; ctx.textAlign="center";
-      ctx.fillText("SELAH", S/2, 150); ctx.shadowBlur=0;
+      ctx.fillStyle="#ece0c6"; ctx.font=`bold 96px ${FF}`; ctx.textAlign="center";
+      ctx.fillText("SELAH", W/2, 150); ctx.shadowBlur=0;
       ctx.strokeStyle="rgba(201,168,76,0.38)"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(S*0.25,200); ctx.lineTo(S*0.75,200); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W*0.27,196); ctx.lineTo(W*0.73,196); ctx.stroke();
 
-      let py = 286;
-      const headline = (text,size)=>{ ctx.fillStyle=tc(1); ctx.font=`italic ${size}px ${FF}`; const ls=wrapText(ctx,text,S-140); ls.forEach(l=>{ ctx.fillText(l,S/2,py); py+=Math.round(size*1.28); }); };
-      const sub = (text,size,alpha)=>{ ctx.fillStyle=`rgba(228,220,200,${alpha})`; ctx.font=`italic ${size}px ${FF}`; const ls=wrapText(ctx,text,S-200); ls.forEach(l=>{ ctx.fillText(l,S/2,py); py+=Math.round(size*1.4); }); };
+      let py = Math.round(H*0.30);
+      const headline=(t,size)=>{ ctx.fillStyle=tc(1); ctx.font=`italic ${size}px ${FF}`; wrapText(ctx,t,W-140).forEach(l=>{ ctx.fillText(l,W/2,py); py+=Math.round(size*1.28); }); };
+      const sub=(t,size,alpha)=>{ ctx.fillStyle=`rgba(228,220,200,${alpha})`; ctx.font=`italic ${size}px ${FF}`; wrapText(ctx,t,W-200).forEach(l=>{ ctx.fillText(l,W/2,py); py+=Math.round(size*1.4); }); };
 
       if (o.content === "anchor") {
-        py = S*0.42; headline("Read. Mark. Return.", 64);
-        py += 20; ctx.fillStyle="rgba(201,168,76,0.6)"; ctx.font=`600 30px ${FF}`; ctx.fillText("Matthew 3:11", S/2, py);
+        py = Math.round(H*0.44); headline("Read. Mark. Return.", 64);
+        py += 18; ctx.fillStyle="rgba(201,168,76,0.6)"; ctx.font=`600 30px ${FF}`; ctx.fillText("Matthew 3:11", W/2, py);
       } else if (o.content === "return" && session.aiResult?.returnVerses?.[0]) {
         const rv = session.aiResult.returnVerses[0];
-        py = S*0.36; headline(rv.ref, 70);
+        py = Math.round(H*0.38); headline(rv.ref, 70);
         py += 16; sub(rv.reason||"", 36, 0.78);
       } else if (o.content === "passage") {
-        py = S*0.40; headline(session.passage||"", 56);
-      } else { // session (default)
-        headline(session.passage||"", 50);
+        py = Math.round(H*0.42); headline(session.passage||"", 56);
+      } else {
+        py = Math.round(H*0.28); headline(session.passage||"", 50);
         if (session.aiResult?.summary){ py+=10; sub(`"${session.aiResult.summary}"`, 34, 0.74); }
         const rv = session.aiResult?.returnVerses?.[0];
-        if (rv){ py+=8; ctx.fillStyle="rgba(201,168,76,0.55)"; ctx.font=`600 28px ${FF}`; ctx.fillText(rv.ref, S/2, py); }
+        if (rv){ py+=8; ctx.fillStyle="rgba(201,168,76,0.55)"; ctx.font=`600 28px ${FF}`; ctx.fillText(rv.ref, W/2, py); }
       }
 
-      // footer
       if (o.content === "session" || o.content === "passage") {
         const locLine=[session.locationType!=="Other"?session.locationType:session.otherLocation, session.geoLabel, formatDate(session.startTime)].filter(Boolean).join("  ·  ");
-        ctx.fillStyle="rgba(228,220,200,0.42)"; ctx.font=`400 27px ${FF}`; ctx.fillText(locLine, S/2, S-108);
+        ctx.fillStyle="rgba(228,220,200,0.42)"; ctx.font=`400 27px ${FF}`; ctx.fillText(locLine, W/2, H-108);
       }
       ctx.strokeStyle="rgba(201,168,76,0.22)"; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(S*0.3,S-88); ctx.lineTo(S*0.7,S-88); ctx.stroke();
-      ctx.fillStyle="rgba(201,168,76,0.55)"; ctx.font=`400 25px ${FF}`;
-      ctx.fillText("MIDNIGHT MINISTRIES", S/2, S-54);
+      ctx.beginPath(); ctx.moveTo(W*0.32,H-88); ctx.lineTo(W*0.68,H-88); ctx.stroke();
+      ctx.fillStyle="rgba(201,168,76,0.55)"; ctx.font=`400 25px ${FF}`; ctx.fillText("MIDNIGHT MINISTRIES", W/2, H-54);
 
       canvas.toBlob(blob=>resolve(blob),"image/png");
     };
@@ -323,23 +330,21 @@ function generateShareCard(session, opts) {
     if (usePhoto) {
       const img=new Image();
       img.onload=()=>{
-        ctx.fillStyle="#0e0c06"; ctx.fillRect(0,0,S,S);
-        ctx.save();
-        if (o.filter==="warm") ctx.filter="sepia(0.42) saturate(1.25) brightness(1.02)";
-        else if (o.filter==="mono") ctx.filter="grayscale(1) contrast(1.05)";
-        else if (o.filter==="fade") ctx.filter="brightness(1.08) contrast(0.86) saturate(0.82)";
-        const ratio=Math.max(S/img.width,S/img.height), dw=img.width*ratio, dh=img.height*ratio;
-        ctx.drawImage(img,(S-dw)/2,(S-dh)/2,dw,dh); ctx.restore();
+        ctx.fillStyle="#0e0c06"; ctx.fillRect(0,0,W,H);
+        const ratio=Math.max(W/img.width,H/img.height), dw=img.width*ratio, dh=img.height*ratio;
+        const dx=(W-dw)/2 + (o.offX||0)*((dw-W)/2);
+        const dy=(H-dh)/2 + (o.offY||0)*((dh-H)/2);
+        ctx.drawImage(img,dx,dy,dw,dh);
         drawCard();
       };
       img.src=session.photoData;
     } else {
-      ctx.fillStyle="#0e0c06"; ctx.fillRect(0,0,S,S);
-      const grad=ctx.createLinearGradient(0,0,S,S); grad.addColorStop(0,"#1a1408"); grad.addColorStop(1,"#0a0804");
-      ctx.fillStyle=grad; ctx.fillRect(0,0,S,S);
-      const radial=ctx.createRadialGradient(S*0.3,S*0.4,0,S*0.3,S*0.4,S*0.7);
-      radial.addColorStop(0,"rgba(201,168,76,0.08)"); radial.addColorStop(1,"rgba(0,0,0,0)");
-      ctx.fillStyle=radial; ctx.fillRect(0,0,S,S);
+      ctx.fillStyle=pBg; ctx.fillRect(0,0,W,H);
+      const grad=ctx.createLinearGradient(0,0,W,H); grad.addColorStop(0,pSurface); grad.addColorStop(1,pBg);
+      ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+      const radial=ctx.createRadialGradient(W*0.3,H*0.34,0,W*0.3,H*0.34,Math.max(W,H)*0.7);
+      radial.addColorStop(0,`rgba(${pAcc},0.10)`); radial.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.fillStyle=radial; ctx.fillRect(0,0,W,H);
       drawCard();
     }
   });
@@ -660,8 +665,9 @@ function PinBoxes({ value, onChange, autoFocus }) {
 function ExportSheet({ session, onClose }) {
   const hasRV = !!(session.aiResult && session.aiResult.returnVerses && session.aiResult.returnVerses[0]);
   const hasPhoto = !!session.photoData;
-  const [opts, setOpts] = useState({ layout:"classic", font:"serif", textColor:"#c9a84c", opacity:1, filter:"none", content:"session", showPhoto:true });
+  const [opts, setOpts] = useState({ aspect:"square", font:"serif", textColor:"#c9a84c", opacity:1, content:"session", showPhoto:true, offX:0, offY:0 });
   const set = (k,v)=>setOpts(o=>({...o,[k]:v}));
+  const aspectPad = { square:"100%", portrait:"125%", story:"177.78%" };
   const [state, setState] = useState("idle");
   const [shareFile, setShareFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -711,7 +717,7 @@ function ExportSheet({ session, onClose }) {
   const contentOpts = [["session","Session"],["passage","Passage"]];
   if (hasRV) contentOpts.push(["return","Return Verse"]);
   contentOpts.push(["anchor","Read. Mark. Return."]);
-  const showFilters = hasPhoto && opts.showPhoto && opts.layout==="classic";
+  const photoOn = hasPhoto && opts.showPhoto;
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(10,8,4,0.85)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
@@ -722,24 +728,29 @@ function ExportSheet({ session, onClose }) {
 
         {/* Live preview — pinned so it stays visible while you adjust controls below */}
         <div style={{position:"sticky",top:0,zIndex:5,background:"var(--surface)",paddingBottom:12,marginBottom:6}}>
-          <div style={{width:230,maxWidth:"66%",margin:"0 auto",aspectRatio:"1 / 1",borderRadius:10,overflow:"hidden",border:"1px solid var(--border2)",background:"#0e0c06"}}>
-            {previewUrl ? <img src={previewUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/> : <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%"}}><span className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.1em"}}>BUILDING…</span></div>}
+          <div style={{width:opts.aspect==="story"?200:300,maxWidth:"82%",margin:"0 auto",position:"relative",paddingBottom:`min(${aspectPad[opts.aspect]||"100%"}, ${opts.aspect==="story"?"480px":"320px"})`,borderRadius:10,overflow:"hidden",border:"1px solid var(--border2)",background:"#0e0c06"}}>
+            {previewUrl ? <img src={previewUrl} alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/> : <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}><span className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.1em"}}>BUILDING…</span></div>}
           </div>
         </div>
 
         <Seg label="On the card" options={contentOpts} value={opts.content} onPick={v=>set("content",v)}/>
-        <Seg label="Layout" options={[["classic","Classic"],["verse","Verse only"]]} value={opts.layout} onPick={v=>set("layout",v)}/>
-        {hasPhoto && opts.layout==="classic" && (
+        <Seg label="Frame" options={[["square","Square"],["portrait","Portrait"],["story","Story"]]} value={opts.aspect} onPick={v=>set("aspect",v)}/>
+        {hasPhoto && (
           <Seg label="Photo" options={[[true,"Show photo"],[false,"Hide photo"]]} value={opts.showPhoto} onPick={v=>set("showPhoto",v)}/>
         )}
-        {showFilters && (
-          <Seg label="Photo filter" options={[["none","None"],["warm","Warm"],["mono","Mono"],["fade","Fade"]]} value={opts.filter} onPick={v=>set("filter",v)}/>
+        {photoOn && (
+          <div style={{marginBottom:14}}>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Move photo — up / down</p>
+            <input type="range" min="-1" max="1" step="0.04" value={opts.offY} onChange={e=>set("offY",parseFloat(e.target.value))} style={{width:"100%",accentColor:"var(--accent)",marginBottom:10}}/>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Move photo — left / right</p>
+            <input type="range" min="-1" max="1" step="0.04" value={opts.offX} onChange={e=>set("offX",parseFloat(e.target.value))} style={{width:"100%",accentColor:"var(--accent)"}}/>
+          </div>
         )}
-        <Seg label="Font" options={[["serif","Serif"],["cinzel","Cinzel"]]} value={opts.font} onPick={v=>set("font",v)}/>
+        <Seg label="Font" options={[["serif","Serif"],["cinzel","Cinzel"],["crimson","Crimson"],["sans","Sans"]]} value={opts.font} onPick={v=>set("font",v)}/>
 
         <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Text color</p>
-        <div style={{display:"flex",gap:10,marginBottom:14}}>
-          {[["#c9a84c","Gold"],["#ece0c6","Cream"],["#f5f0e6","White"]].map(([hex,lbl])=>(
+        <div style={{display:"flex",flexWrap:"wrap",gap:10,marginBottom:14}}>
+          {[["#c9a84c","Gold"],["#ece0c6","Cream"],["#b5302f","Blood Red"],["#b07fe0","Purple"]].map(([hex,lbl])=>(
             <button key={hex} onClick={()=>set("textColor",hex)} style={{display:"flex",alignItems:"center",gap:7,background:"transparent",border:opts.textColor===hex?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:6,padding:"6px 10px",cursor:"pointer"}}>
               <span style={{width:18,height:18,borderRadius:"50%",background:hex,border:"1px solid var(--border2)"}}/>
               <span style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",color:opts.textColor===hex?"var(--accent)":"var(--m3)"}}>{lbl}</span>
