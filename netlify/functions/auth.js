@@ -1,28 +1,29 @@
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
 
-const J = (code, obj) => ({
-  statusCode: code,
-  headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-  body: JSON.stringify(obj),
-});
+const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
+const J = (code, obj) => new Response(JSON.stringify(obj), { status: code, headers });
 const norm = (e) => String(e || "").trim().toLowerCase();
 const key = (e) => "user/" + norm(e);
 const hashPw = (pw, salt) => crypto.scryptSync(String(pw), salt, 64).toString("hex");
+function selahStore() {
+  const siteID = process.env.BLOBS_SITE_ID, token = process.env.BLOBS_TOKEN;
+  return (siteID && token) ? getStore({ name: "selah", siteID, token }) : getStore("selah");
+}
 
-export const handler = async (event) => {
-  if (event.httpMethod === "OPTIONS") return J(200, {});
-  if (event.httpMethod !== "POST") return J(405, { error: "Method Not Allowed" });
+export default async (req) => {
+  if (req.method === "OPTIONS") return J(200, {});
+  if (req.method !== "POST") return J(405, { error: "Method Not Allowed" });
 
   let body;
-  try { body = JSON.parse(event.body || "{}"); } catch { return J(400, { error: "Bad request." }); }
+  try { body = await req.json(); } catch { return J(400, { error: "Bad request." }); }
   const { action, email, password } = body;
   const e = norm(email);
 
   if (!e || !e.includes("@")) return J(400, { error: "Enter a valid email." });
   if (!password || String(password).length < 6) return J(400, { error: "Password must be at least 6 characters." });
 
-  const store = getStore("selah");
+  const store = selahStore();
   const existing = await store.get(key(e), { type: "json" });
 
   if (action === "signup") {
