@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b28";
+const BUILD = "2026.05.20-b29";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -472,48 +472,36 @@ const PALETTES = {
     "--ink":"#0e0c06","--text":"#e4dcc8","--text2":"#c8bfa0","--text3":"#c0b898","--text4":"#d4ccb8",
     "--m1":"#8a7a4a","--m1b":"#8a7a5a","--m2":"#6a5a30","--m3":"#5a4a20","--m3b":"#5a4a2a","--m4":"#4a3e1a","--m5":"#3a3010",
     "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28" } },
-  rose: { label: "Rose", swatch: ["#1b0f15","#e6a9c0","#7d566a"], vars: {
-    "--bg":"#170b11","--surface":"#231019","--input":"#2a1420","--input2":"#1d0d16",
-    "--border":"#43253a","--border2":"#3a2030","--accent":"#e6a9c0","--accent2":"#c77fa0",
-    "--ink":"#1a0c12","--text":"#f4e7ed","--text2":"#e8cdd9","--text3":"#dcc0cf","--text4":"#f0e2ea",
-    "--m1":"#b88297","--m1b":"#b88297","--m2":"#996c80","--m3":"#7d566a","--m3b":"#7d566a","--m4":"#5e3f4f","--m5":"#4a3140",
-    "--accent-rgb":"230,169,192","--blood-rgb":"150,50,90" } },
-  warm: { label: "Warm", swatch: ["#1a0f0a","#f0936e","#8f6a58"], vars: {
-    "--bg":"#1a0f0a","--surface":"#241510","--input":"#2a1812","--input2":"#1d100b",
-    "--border":"#3e2a20","--border2":"#34221a","--accent":"#f0936e","--accent2":"#c96a4a",
-    "--ink":"#1a0f0a","--text":"#f3e7d8","--text2":"#e2cdbc","--text3":"#d8c2b0","--text4":"#f2e8db",
-    "--m1":"#b89180","--m1b":"#b89180","--m2":"#8f6a58","--m3":"#75564a","--m3b":"#75564a","--m4":"#5a4038","--m5":"#46302a",
-    "--accent-rgb":"240,147,110","--blood-rgb":"150,40,40" } },
-  cool: { label: "Cool", swatch: ["#0a0f16","#57a6c8","#5e7488"], vars: {
-    "--bg":"#0a0f16","--surface":"#121b26","--input":"#14202c","--input2":"#0e1620",
-    "--border":"#2a3a4a","--border2":"#243240","--accent":"#57a6c8","--accent2":"#3a7da0",
-    "--ink":"#0a121c","--text":"#e6edf2","--text2":"#c6d6e2","--text3":"#bccfda","--text4":"#dce8f0",
-    "--m1":"#7e94a6","--m1b":"#7e94a6","--m2":"#5e7488","--m3":"#4e6072","--m3b":"#4e6072","--m4":"#3e4e5e","--m5":"#313e4a",
-    "--accent-rgb":"87,166,200","--blood-rgb":"60,90,150" } },
-  soft: { label: "Soft", swatch: ["#14130f","#d6cfb6","#82806e"], vars: {
-    "--bg":"#14130f","--surface":"#1e1c16","--input":"#22201a","--input2":"#181610",
-    "--border":"#38342c","--border2":"#2e2b24","--accent":"#d6cfb6","--accent2":"#a6a08a",
-    "--ink":"#1a1810","--text":"#efece0","--text2":"#d6d2c2","--text3":"#cbc7b6","--text4":"#f2efe6",
-    "--m1":"#a6a290","--m1b":"#a6a290","--m2":"#82806e","--m3":"#6a685a","--m3b":"#6a685a","--m4":"#524f44","--m5":"#403e34",
-    "--accent-rgb":"214,207,182","--blood-rgb":"110,28,28" } },
-  modern: { label: "Modern", swatch: ["#15110f","#cf9e8f","#8c6f66"], vars: {
-    "--bg":"#15110f","--surface":"#201a17","--input":"#251e1a","--input2":"#191412",
-    "--border":"#3a302b","--border2":"#2f2823","--accent":"#cf9e8f","--accent2":"#a87f7f",
-    "--ink":"#1a120e","--text":"#f1e8df","--text2":"#ddccc2","--text3":"#d0c0b6","--text4":"#f0e6dd",
-    "--m1":"#b29488","--m1b":"#b29488","--m2":"#8c6f66","--m3":"#735a52","--m3b":"#735a52","--m4":"#594540","--m5":"#453532",
-    "--accent-rgb":"207,158,143","--blood-rgb":"150,40,40" } },
-  natural: { label: "Natural", swatch: ["#0b120d","#2e9d6e","#5e8068"], vars: {
-    "--bg":"#0b120d","--surface":"#13201a","--input":"#16241c","--input2":"#0f1812",
-    "--border":"#2a3a2e","--border2":"#243227","--accent":"#2e9d6e","--accent2":"#1f7050",
-    "--ink":"#0a140c","--text":"#e6efe6","--text2":"#c8ddcd","--text3":"#bdd4c2","--text4":"#dae8dc",
-    "--m1":"#7e9e88","--m1b":"#7e9e88","--m2":"#5e8068","--m3":"#4e6e58","--m3b":"#4e6e58","--m4":"#3e5a46","--m5":"#314838",
-    "--accent-rgb":"46,157,110","--blood-rgb":"150,40,40" } },
-  vintage: { label: "Vintage", swatch: ["#101413","#8fb0b4","#6a8682"], vars: {
-    "--bg":"#101413","--surface":"#19201e","--input":"#1d2422","--input2":"#131817",
-    "--border":"#2f3a37","--border2":"#27322f","--accent":"#8fb0b4","--accent2":"#6a8a8e",
-    "--ink":"#101413","--text":"#e9efed","--text2":"#cdddd8","--text3":"#c2d4ce","--text4":"#dde8e5",
-    "--m1":"#8aa6a2","--m1b":"#8aa6a2","--m2":"#6a8682","--m3":"#586e6a","--m3b":"#586e6a","--m4":"#455a56","--m5":"#364845",
-    "--accent-rgb":"143,176,180","--blood-rgb":"116,98,98" } },
+  warm: { label: "Warm Amber", swatch: ["#241108","#f5894a","#a4734e"], vars: {
+    "--bg":"#241108","--surface":"#311a0e","--input":"#3a2012","--input2":"#2a1409",
+    "--border":"#4a2e1c","--border2":"#3e2616","--accent":"#f5894a","--accent2":"#d2632a",
+    "--ink":"#1a0d05","--text":"#f7e7d6","--text2":"#ecccb4","--text3":"#e2c0a6","--text4":"#f5e6d6",
+    "--m1":"#c79874","--m1b":"#c79874","--m2":"#a4734e","--m3":"#875b3c","--m3b":"#875b3c","--m4":"#6a4630","--m5":"#523524",
+    "--accent-rgb":"245,137,74","--blood-rgb":"150,40,40" } },
+  rose: { label: "Rose", swatch: ["#26101c","#f08fb5","#a86883"], vars: {
+    "--bg":"#26101c","--surface":"#341624","--input":"#3c1a2b","--input2":"#2a1320",
+    "--border":"#4e2840","--border2":"#432234","--accent":"#f08fb5","--accent2":"#cc6090",
+    "--ink":"#1c0c14","--text":"#f8e7ee","--text2":"#edccd8","--text3":"#e2c0cf","--text4":"#f3dde8",
+    "--m1":"#c98ba2","--m1b":"#c98ba2","--m2":"#a86883","--m3":"#8a536c","--m3b":"#8a536c","--m4":"#6c3f53","--m5":"#543141",
+    "--accent-rgb":"240,143,181","--blood-rgb":"160,50,90" } },
+  blossom: { label: "Blossom", swatch: ["#1d1336","#cf9bff","#8772aa"], vars: {
+    "--bg":"#1d1336","--surface":"#271a45","--input":"#2d1e4f","--input2":"#211541",
+    "--border":"#3c2c63","--border2":"#322455","--accent":"#cf9bff","--accent2":"#a86fe0",
+    "--ink":"#150c28","--text":"#f0e8fb","--text2":"#d8ccef","--text3":"#cdc0e6","--text4":"#e6dcf6",
+    "--m1":"#a995c9","--m1b":"#a995c9","--m2":"#8772aa","--m3":"#6f5b90","--m3b":"#6f5b90","--m4":"#564574","--m5":"#43355c",
+    "--accent-rgb":"207,155,255","--blood-rgb":"170,70,120" } },
+  cadet: { label: "Cadet Blue", swatch: ["#0b1a30","#4ec4ff","#5e7a9c"], vars: {
+    "--bg":"#0b1a30","--surface":"#11233f","--input":"#13294a","--input2":"#0e1d36",
+    "--border":"#25405f","--border2":"#1f3650","--accent":"#4ec4ff","--accent2":"#2e84cc",
+    "--ink":"#08121f","--text":"#e4eef8","--text2":"#c4d8ee","--text3":"#bacfe6","--text4":"#d8e6f4",
+    "--m1":"#7e9bbb","--m1b":"#7e9bbb","--m2":"#5e7a9c","--m3":"#4e6582","--m3b":"#4e6582","--m4":"#3e5168","--m5":"#314052",
+    "--accent-rgb":"78,196,255","--blood-rgb":"60,100,170" } },
+  steel: { label: "Steel", swatch: ["#14181d","#93b6cf","#6a7c8a"], vars: {
+    "--bg":"#14181d","--surface":"#1d232a","--input":"#212831","--input2":"#161b21",
+    "--border":"#333c46","--border2":"#2a323b","--accent":"#93b6cf","--accent2":"#5f87a4",
+    "--ink":"#0c1116","--text":"#e8edf2","--text2":"#cdd8e0","--text3":"#c2cfd8","--text4":"#dde6ed",
+    "--m1":"#8a9aa8","--m1b":"#8a9aa8","--m2":"#6a7c8a","--m3":"#586774","--m3b":"#586774","--m4":"#45525d","--m5":"#364049",
+    "--accent-rgb":"147,182,207","--blood-rgb":"100,120,150" } },
   dark: { label: "Dark", swatch: ["#141215","#c7414c","#7a6f78"], vars: {
     "--bg":"#141215","--surface":"#1d1a20","--input":"#221e26","--input2":"#17141a",
     "--border":"#352f3e","--border2":"#2b2733","--accent":"#c7414c","--accent2":"#93303a",
@@ -521,6 +509,15 @@ const PALETTES = {
     "--m1":"#9a8f98","--m1b":"#9a8f98","--m2":"#7a6f78","--m3":"#645b66","--m3b":"#645b66","--m4":"#4e4654","--m5":"#3c3542",
     "--accent-rgb":"199,65,76","--blood-rgb":"150,40,40" } },
 };
+function ageFromBirthday(bday) {
+  if (!bday) return null;
+  const d = new Date(bday); if (isNaN(d)) return null;
+  const now = new Date();
+  let a = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+  return a;
+}
 function applyPalette(name) {
   if (typeof document === "undefined") return;
   const p = PALETTES[name] || PALETTES.midnight;
@@ -1600,7 +1597,77 @@ export default function App() {
   const [account, setAccount] = useState(loadAccount);
   const [authIntro, setAuthIntro] = useState(false);
   const [syncState, setSyncState] = useState("idle"); // idle | saving | synced | error
+  const [kidName, setKidName] = useState("");
   const syncTimer = useRef(null);
+
+  // ── Profiles (owner + up to 2 kids). Sessions are tagged with profileId and
+  //   kept in one device store; per-profile content settings swap on switch. ──
+  const [profiles, setProfiles] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("selah_profiles") || '{"owner":{"name":"You","kid":false}}'); }
+    catch { return { owner: { name: "You", kid: false } }; }
+  });
+  const [activeProfileId, setActiveProfileId] = useState(() => localStorage.getItem("selah_active_profile") || "owner");
+  const profileSnaps = useRef({}); // saved per-profile content settings for inactive profiles
+  useEffect(() => { localStorage.setItem("selah_profiles", JSON.stringify(profiles)); }, [profiles]);
+  useEffect(() => { localStorage.setItem("selah_active_profile", activeProfileId); }, [activeProfileId]);
+
+  const visibleSessions = sessions.filter(s => (s.profileId || "owner") === activeProfileId);
+
+  // Snapshot the live content settings (these belong to the active profile).
+  function liveSettings() {
+    let lastPosition = null;
+    try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
+    return {
+      bibleVersion, gender, age, birthday,
+      alarms,
+      lastPosition,
+      setupDone: localStorage.getItem("selah_setup_done") === "1",
+    };
+  }
+  // Load a profile's content settings into the live state.
+  function loadSettings(st) {
+    st = st || {};
+    setBibleVersion(st.bibleVersion || "NLT");
+    setGender(st.gender || "Prefer not to say");
+    setAge(st.age || "Prefer not to say");
+    setBirthday(typeof st.birthday === "string" ? st.birthday : "");
+    setAlarms(st.alarms && typeof st.alarms === "object" ? st.alarms : {});
+    try { localStorage.setItem("selah_last_position", JSON.stringify(st.lastPosition || null)); } catch {}
+    localStorage.setItem("selah_setup_done", st.setupDone ? "1" : "0");
+    const lp = st.lastPosition;
+    if (lp) setForm(prev => ({ ...prev,
+      locationType: lp.locationType || prev.locationType,
+      startBook: lp.endBook || lp.startBook || prev.startBook,
+      startChapter: lp.endChapter || prev.startChapter,
+      startVerse: lp.endVerse || prev.startVerse,
+      endBook: lp.endBook || lp.startBook || prev.endBook,
+    }));
+  }
+  function switchProfile(id) {
+    if (id === activeProfileId || !profiles[id]) return;
+    profileSnaps.current[activeProfileId] = liveSettings();      // save current
+    loadSettings(profileSnaps.current[id] || {});                // load target
+    setActiveProfileId(id);
+    setNeedsSetup(!(profileSnaps.current[id] && profileSnaps.current[id].setupDone));
+  }
+  function createKidProfile(name) {
+    const kidIds = Object.keys(profiles).filter(k => profiles[k].kid);
+    if (kidIds.length >= 2) return;
+    const id = "kid_" + Date.now();
+    profileSnaps.current[activeProfileId] = liveSettings();
+    profileSnaps.current[id] = { bibleVersion: "NIrV", gender: "Prefer not to say", age: "Kids (5-12)", birthday: "", alarms: {}, lastPosition: null, setupDone: false };
+    setProfiles(p => ({ ...p, [id]: { name: (name || "Child").slice(0, 24), kid: true } }));
+    loadSettings(profileSnaps.current[id]);
+    setActiveProfileId(id);
+    setNeedsSetup(true);
+  }
+  function deleteKidProfile(id) {
+    if (!profiles[id] || !profiles[id].kid) return;
+    setSessions(prev => { const next = prev.filter(s => (s.profileId || "owner") !== id); saveSessions(next); return next; });
+    delete profileSnaps.current[id];
+    setProfiles(p => { const n = { ...p }; delete n[id]; return n; });
+    if (activeProfileId === id) { loadSettings(profileSnaps.current["owner"] || {}); setActiveProfileId("owner"); }
+  }
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
 
@@ -1609,48 +1676,49 @@ export default function App() {
     // Strip heavy base64 photo data; keep a flag so other devices know one exists.
     const lean = sessions.map(s => {
       const { photoData, ...rest } = s;
-      return photoData ? { ...rest, hasPhoto: true } : rest;
+      const tagged = { ...rest, profileId: rest.profileId || "owner" };
+      return s.photoData ? { ...tagged, hasPhoto: true } : tagged;
     });
-    let lastPosition = null;
-    try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
-    const setupDone = localStorage.getItem("selah_setup_done") === "1";
-    return { v: 1, sessions: lean, bibleVersion, gender, age, birthday, appIcon, palette, clockFmt, timezone, alarms, lastPosition, setupDone };
+    const snaps = { ...profileSnaps.current, [activeProfileId]: liveSettings() };
+    const profileSettings = {};
+    Object.keys(profiles).forEach(id => { profileSettings[id] = snaps[id] || {}; });
+    return { v: 2, appIcon, palette, clockFmt, timezone, activeProfileId, profiles, profileSettings, sessions: lean };
   }
   function applySync(data) {
     if (!data || typeof data !== "object") return;
-    if (Array.isArray(data.sessions)) {
-      // Re-attach any photos that live on this device, matched by id.
-      const localById = {};
-      sessions.forEach(s => { if (s.photoData) localById[s.id] = s.photoData; });
-      const merged = data.sessions.map(s => localById[s.id] ? { ...s, photoData: localById[s.id] } : s);
-      setSessions(merged); saveSessions(merged);
-    }
-    if (data.bibleVersion) setBibleVersion(data.bibleVersion);
-    if (data.gender) setGender(data.gender);
-    if (data.age) setAge(data.age);
-    if (typeof data.birthday === "string") setBirthday(data.birthday);
+    // account-level settings
     if (data.appIcon && ICON_THEMES[data.appIcon]) setAppIcon(data.appIcon);
     if (data.palette && PALETTES[data.palette]) setPalette(data.palette);
     if (data.clockFmt) setClockFmt(data.clockFmt);
     if (data.timezone) setTimezone(data.timezone);
-    if (data.alarms && typeof data.alarms === "object") setAlarms(data.alarms);
-    // Carry the reading position across devices: prefill the next session.
-    if (data.lastPosition && typeof data.lastPosition === "object") {
-      try { localStorage.setItem("selah_last_position", JSON.stringify(data.lastPosition)); } catch {}
-      const lp = data.lastPosition;
-      setForm(prev => ({
-        ...prev,
-        locationType: lp.locationType || prev.locationType,
-        startBook: lp.endBook || lp.startBook || prev.startBook,
-        startChapter: lp.endChapter || prev.startChapter,
-        startVerse: lp.endVerse || prev.startVerse,
-        endBook: lp.endBook || lp.startBook || prev.endBook,
-      }));
+    const localById = {};
+    sessions.forEach(s => { if (s.photoData) localById[s.id] = s.photoData; });
+    if (data.v === 2 && data.profiles && data.profileSettings) {
+      const merged = (Array.isArray(data.sessions) ? data.sessions : []).map(s => localById[s.id] ? { ...s, photoData: localById[s.id] } : s);
+      setSessions(merged); saveSessions(merged);
+      setProfiles(data.profiles);
+      profileSnaps.current = { ...data.profileSettings };
+      const aid = (data.activeProfileId && data.profiles[data.activeProfileId]) ? data.activeProfileId : "owner";
+      setActiveProfileId(aid);
+      loadSettings(profileSnaps.current[aid] || {});
+    } else {
+      // legacy v1 -> migrate into a single owner profile
+      const merged = (Array.isArray(data.sessions) ? data.sessions : []).map(s => {
+        const t = localById[s.id] ? { ...s, photoData: localById[s.id] } : s;
+        return { ...t, profileId: t.profileId || "owner" };
+      });
+      setSessions(merged); saveSessions(merged);
+      setProfiles({ owner: { name: "You", kid: false } });
+      setActiveProfileId("owner");
+      profileSnaps.current = {};
+      loadSettings({
+        bibleVersion: data.bibleVersion, gender: data.gender, age: data.age, birthday: data.birthday,
+        alarms: data.alarms, lastPosition: data.lastPosition, setupDone: data.setupDone,
+      });
     }
-    if (data.setupDone) localStorage.setItem("selah_setup_done", "1");
   }
-  function setupIsDone(serverData) {
-    return (serverData && serverData.setupDone) || localStorage.getItem("selah_setup_done") === "1";
+  function setupIsDone() {
+    return localStorage.getItem("selah_setup_done") === "1";
   }
   function handleAuthed(acc, serverData, isNew) {
     setAccount(acc); saveAccount(acc);
@@ -1659,11 +1727,11 @@ export default function App() {
     const hasServer = serverData && Object.keys(serverData).length > 0;
     if (!isNew && hasServer) {
       applySync(serverData);
-      setNeedsSetup(!setupIsDone(serverData));
+      setNeedsSetup(!setupIsDone());
     } else {
       // new signup, or login with nothing stored: push current local data up
       syncRequest("save", acc, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{});
-      setNeedsSetup(!setupIsDone(null));
+      setNeedsSetup(!setupIsDone());
     }
     hydratedRef.current = true; // safe to auto-save now
     setView("home");
@@ -1690,7 +1758,7 @@ export default function App() {
     const onboarded = localStorage.getItem("selah_onboarded");
     if (account) {
       syncRequest("load", account, null)
-        .then(res => { if (res && res.data) { applySync(res.data); setNeedsSetup(!setupIsDone(res.data)); } setSyncState("synced"); })
+        .then(res => { if (res && res.data) { applySync(res.data); setNeedsSetup(!setupIsDone()); } setSyncState("synced"); })
         .catch(() => setSyncState("error"))
         .finally(() => { hydratedRef.current = true; });
     } else if (!onboarded) {
@@ -1714,7 +1782,7 @@ export default function App() {
     }, 1500);
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, clockFmt, timezone, alarms]);
+  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, clockFmt, timezone, alarms, profiles, activeProfileId]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -1809,7 +1877,7 @@ export default function App() {
     const endTime = new Date().toISOString();
     const passage = `${activeSession.startBook} ${activeSession.startChapter}${activeSession.startVerse?":"+activeSession.startVerse:""} through ${form.endBook} ${form.endChapter}${form.endVerse?":"+form.endVerse:""}`;
     const isKid = age.startsWith("Kids");
-    const depth = getDepthLevel(sessions, isKid);
+    const depth = getDepthLevel(visibleSessions, isKid);
     const kidNote = isKid ? ` This reader is a child between 5 and 12. Write everything for a young child. Use short, simple sentences and plain words a child knows. Explain any hard word in the verse the moment you use it. Keep the context to 2 or 3 short sentences that tell the story simply. Make the questions concrete and about what happened, who was there, and what they did, not abstract ideas. Notes should be short and clear. Return verses should be easy to picture. Stay warm and honest. Do not water down the truth, just say it in words a child understands. Never frighten or shame the child.` : "";
     const nivNote = bibleVersion === "NIV" ? ` For the NIV, follow the classic NIV wording. Do not adopt the 2011 revision's gender-neutral language choices.` : "";
     const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
@@ -1821,7 +1889,7 @@ export default function App() {
       const data = await resp.json();
       const raw = data.content?.find(b=>b.type==="text")?.text||"";
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
-      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender };
+      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender, profileId:activeProfileId };
       try { localStorage.setItem('selah_last_position', JSON.stringify({ endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse })); } catch {}
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
@@ -1983,7 +2051,7 @@ export default function App() {
           <div style={{display:"flex",borderBottom:"1px solid var(--border)",marginBottom:20}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
-              Log {sessions.length>0&&`(${sessions.length})`}
+              Log {visibleSessions.length>0&&`(${visibleSessions.length})`}
             </button>
             <button className={`nav-tab ${view==="about"?"active":""}`} onClick={()=>setView("about")}>About</button>
           </div>
@@ -2270,8 +2338,8 @@ export default function App() {
         {/* ══ HISTORY ══ */}
         {view === "history" && (
           <div className="fade-in" style={{overflowAnchor:"none"}}>
-            <SessionCalendar sessions={sessions} onDaySelect={handleCalendarDay} alarms={alarms} onSaveAlarm={handleSaveAlarm} onFilterChange={setFilterDate} activeDate={filterDate}/>
-            {sessions.length === 0 ? (
+            <SessionCalendar sessions={visibleSessions} onDaySelect={handleCalendarDay} alarms={alarms} onSaveAlarm={handleSaveAlarm} onFilterChange={setFilterDate} activeDate={filterDate}/>
+            {visibleSessions.length === 0 ? (
               <>
                 <div style={{textAlign:"center",padding:"12px 0 18px"}}>
                   <div style={{color:"var(--border2)",marginBottom:10,display:"flex",justifyContent:"center"}}><BookIcon/></div>
@@ -2286,17 +2354,17 @@ export default function App() {
               const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
               const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
               const activeFd = filterDate || (() => { const d=new Date(); d.setHours(0,0,0,0); return d; })();
-              const filteredSessions = sessions.filter(s => { const d=new Date(s.startTime); return d.getFullYear()===activeFd.getFullYear()&&d.getMonth()===activeFd.getMonth()&&d.getDate()===activeFd.getDate(); });
+              const filteredSessions = visibleSessions.filter(s => { const d=new Date(s.startTime); return d.getFullYear()===activeFd.getFullYear()&&d.getMonth()===activeFd.getMonth()&&d.getDate()===activeFd.getDate(); });
               return (
               <>
                 {/* Global strip — always visible, always total */}
-                <StatsStrip sessions={sessions}/>
+                <StatsStrip sessions={visibleSessions}/>
                 {/* Filter bar — permanent, always visible */}
                 {(() => {
                   const fd = filterDate || (() => { const d=new Date(); d.setHours(0,0,0,0); return d; })();
                   const isToday = (() => { const t=new Date(); t.setHours(0,0,0,0); return fd.getTime()===t.getTime(); })();
                   // Sorted unique session dates
-                  const sessionDates = [...new Set(sessions.map(s => { const d=new Date(s.startTime); d.setHours(0,0,0,0); return d.getTime(); }))].sort((a,b)=>a-b);
+                  const sessionDates = [...new Set(visibleSessions.map(s => { const d=new Date(s.startTime); d.setHours(0,0,0,0); return d.getTime(); }))].sort((a,b)=>a-b);
                   const curTime = fd.getTime();
                   const prevTime = sessionDates.filter(t=>t<curTime).slice(-1)[0];
                   const nextTime = sessionDates.filter(t=>t>curTime)[0];
@@ -2479,6 +2547,52 @@ export default function App() {
               </div>
             </div>
 
+            {/* Profiles (signed-in only) */}
+            {account && (()=>{
+              const ownerBday = activeProfileId==="owner" ? birthday : ((profileSnaps.current["owner"]||{}).birthday || "");
+              const ownerAge = ageFromBirthday(ownerBday);
+              const kidIds = Object.keys(profiles).filter(k=>profiles[k].kid);
+              const canAddKid = ownerAge!==null && ownerAge>=18 && kidIds.length<2;
+              return (
+                <div className="card">
+                  <p className="label">Profiles</p>
+                  <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
+                    Each profile keeps its own reading log, translation, and depth. The whole household reads under one account.
+                  </p>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+                    {Object.entries(profiles).map(([id,p])=>(
+                      <button key={id} onClick={()=>switchProfile(id)}
+                        className={`version-pill ${activeProfileId===id?"active":""}`}>
+                        {p.kid ? "🔥 " : ""}{p.name || (p.kid?"Child":"You")}
+                      </button>
+                    ))}
+                  </div>
+                  {kidIds.length>0 && (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
+                      {kidIds.map(id=>(
+                        <button key={id} onClick={()=>{ if(window.confirm(`Remove ${profiles[id].name||"this child"}'s profile and all of their sessions? This cannot be undone.`)) deleteKidProfile(id); }}
+                          style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"5px 10px",color:"var(--m3)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>
+                          Remove {profiles[id].name||"child"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {canAddKid ? (
+                    <div style={{display:"flex",gap:8}}>
+                      <input value={kidName} onChange={e=>setKidName(e.target.value)} placeholder="Child's name"
+                        style={{flex:1,minWidth:0,background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"10px 12px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none"}}/>
+                      <button className="btn-primary" style={{padding:"10px 16px",whiteSpace:"nowrap"}}
+                        onClick={()=>{ if(kidName.trim()){ createKidProfile(kidName.trim()); setKidName(""); } }}>Add Child</button>
+                    </div>
+                  ) : (
+                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",lineHeight:1.5}}>
+                      {kidIds.length>=2 ? "You've added the maximum of two child profiles." : "Set your birthday above (18+) to add a child profile to your account."}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Bible Version */}
             <div className="card">
               <p className="label">Bible Translation</p>
@@ -2631,14 +2745,14 @@ export default function App() {
               <p className="label">Storage</p>
               <p style={{fontSize:16,lineHeight:1.65,color:"var(--m2)",marginBottom:14}}>All sessions including photos are saved in your browser. Clearing browser data removes your log. Export to Notes or Files for permanent records.</p>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.08em"}}>
-                {sessions.length} session{sessions.length!==1?"s":""} — {sessions.filter(s=>s.photoData).length} with photos
+                {visibleSessions.length} session{visibleSessions.length!==1?"s":""} — {visibleSessions.filter(s=>s.photoData).length} with photos
               </p>
             </div>
 
             {/* Depth level */}
-            {sessions.length > 0 && (()=>{
-              const d = getDepthLevel(sessions, isKidAge);
-              const totalMins = sessions.reduce((a,s)=>a+Math.round((new Date(s.endTime)-new Date(s.startTime))/60000),0);
+            {visibleSessions.length > 0 && (()=>{
+              const d = getDepthLevel(visibleSessions, isKidAge);
+              const totalMins = visibleSessions.reduce((a,s)=>a+Math.round((new Date(s.endTime)-new Date(s.startTime))/60000),0);
               const levels = isKidAge ? ["Spark","Ember","Flame","Torch","Wildfire"] : ["Seed","Root","Branch","Fruit","Harvest"];
               return (
                 <div className="card">
@@ -2650,7 +2764,7 @@ export default function App() {
                     </div>
                     <div>
                       <p style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"var(--accent)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:3}}>{d.name}</p>
-                      <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)"}}>{sessions.length} sessions · {totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h"} in His Word</p>
+                      <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)"}}>{visibleSessions.length} sessions · {totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h"} in His Word</p>
                     </div>
                   </div>
                   <div style={{display:"flex",gap:4}}>
@@ -2668,7 +2782,7 @@ export default function App() {
               <p className="label">Clear All Data</p>
               <p style={{fontSize:15,color:"var(--m3)",marginBottom:14,lineHeight:1.5}}>Removes every session from this device. Cannot be undone.</p>
               <button className="btn-danger" style={{width:"100%",padding:"12px"}}
-                onClick={()=>{ if(window.confirm("Delete all sessions? This cannot be undone.")) { setSessions([]); saveSessions([]); }}}>
+                onClick={()=>{ if(window.confirm("Delete all sessions for this profile? This cannot be undone.")) { setSessions(prev=>{const n=prev.filter(s=>(s.profileId||"owner")!==activeProfileId); saveSessions(n); return n;}); }}}>
                 Clear All Sessions
               </button>
             </div>
