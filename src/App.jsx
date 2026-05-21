@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b65";
+const BUILD = "2026.05.21-b66";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -129,9 +129,9 @@ function ShieldIcon() {
     </svg>
   );
 }
-function SettingsIcon() {
+function SettingsIcon({ size=16 }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
@@ -729,8 +729,8 @@ function Slider({ value, min, max, step, onChange, onCommit, width=240 }) {
 // Good element positions per format, so switching 1:1 <-> 9:16 always lands
 // the lettering and cross composed for that frame.
 const DEFAULT_POS = {
-  square: { cross:{xf:0.12,yf:0.11,size:0.085}, selah:{xf:0.5,yf:0.13,size:0.085}, body:{xf:0.5,yf:0.5,size:0.048}, mm:{xf:0.5,yf:0.93,size:0.024} },
-  story:  { cross:{xf:0.13,yf:0.09,size:0.08},  selah:{xf:0.5,yf:0.115,size:0.08}, body:{xf:0.5,yf:0.47,size:0.046}, mm:{xf:0.5,yf:0.955,size:0.024} },
+  square: { cross:{xf:0.12,yf:0.11,size:0.085}, selah:{xf:0.5,yf:0.13,size:0.085}, body:{xf:0.5,yf:0.5,size:0.048}, mm:{xf:0.5,yf:0.93,size:0.028} },
+  story:  { cross:{xf:0.13,yf:0.09,size:0.08},  selah:{xf:0.5,yf:0.115,size:0.08}, body:{xf:0.5,yf:0.47,size:0.046}, mm:{xf:0.5,yf:0.955,size:0.028} },
 };
 
 function ExportSheet({ session, onClose }) {
@@ -740,9 +740,10 @@ function ExportSheet({ session, onClose }) {
     const L=defaultLayout(session, hasPhoto);
     const ap=L.aspect, dp=DEFAULT_POS[ap]||DEFAULT_POS.square, els={...L.els};
     Object.keys(dp).forEach(k=>{ if(els[k]) els[k]={...els[k], ...dp[k]}; });
-    // default colors from the active palette; Midnight Ministries stays blood red
-    const acc=(typeof document!=="undefined" && getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())||"#c9a84c";
-    ["cross","selah","body"].forEach(k=>{ if(els[k]) els[k]={...els[k], color:acc}; });
+    // legible defaults: red cross (matches Midnight Ministries), cream text.
+    // Auto-contrast (below) flips the text to black on a light photo.
+    if(els.cross) els.cross={...els.cross, color:"#b5302f"};
+    ["selah","body"].forEach(k=>{ if(els[k]) els[k]={...els[k], color:"#ece0c6"}; });
     if(els.mm) els.mm={...els.mm, color:"#b5302f"};
     return { ...L, els, font:"serif", photo:{ show:!!hasPhoto, x:0.5, y:0.5, zoom:1 } };
   });
@@ -780,7 +781,18 @@ function ExportSheet({ session, onClose }) {
     });
   }
 
-  useEffect(()=>{ if(session.photoData){ const im=new Image(); im.onload=()=>setNat({w:im.width,h:im.height}); im.src=session.photoData; } },[]);
+  useEffect(()=>{ if(session.photoData){ const im=new Image(); im.onload=()=>{
+    setNat({w:im.width,h:im.height});
+    // auto-contrast: sample the photo; if it's light, flip the text to black so it reads
+    try{
+      const c=document.createElement("canvas"); c.width=24;c.height=24;
+      const cx=c.getContext("2d"); cx.drawImage(im,0,0,24,24);
+      const d=cx.getImageData(0,0,24,24).data; let s=0;
+      for(let i=0;i<d.length;i+=4){ s += 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; }
+      const lum = s/((d.length/4)*255);
+      if(lum>0.5){ setLayout(L=>({...L, els:{...L.els, selah:{...L.els.selah,color:"#0e0c06"}, body:{...L.els.body,color:"#0e0c06"}}})); }
+    }catch{}
+  }; im.src=session.photoData; } },[]);
   useEffect(()=>{ let alive=true; const t=setTimeout(()=>{ composeCard(session, layout).then(b=>{ if(alive&&b) setShareFile(new File([b],"selah-session.png",{type:"image/png"})); }); },120); return ()=>{ alive=false; clearTimeout(t); }; },[layout]);
 
   const baseRatio=Math.max(W/nat.w,H/nat.h), z=layout.photo.zoom||1;
@@ -842,12 +854,12 @@ function ExportSheet({ session, onClose }) {
       </div>
 
       {/* TOP-LEFT: close X (glow, no circle) */}
-      <button onClick={onClose} aria-label="Close" style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",left:18,background:"transparent",border:"none",cursor:"pointer",fontSize:44,lineHeight:1,color:"var(--accent)",textShadow:"0 0 14px rgba(var(--accent-rgb),0.85), 0 0 4px rgba(0,0,0,0.8)",padding:0,fontWeight:300,zIndex:4}}>×</button>
+      <button onClick={onClose} aria-label="Close" style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 6px)",left:18,background:"transparent",border:"none",cursor:"pointer",fontSize:52,lineHeight:1,color:"var(--accent)",textShadow:"0 0 14px rgba(var(--accent-rgb),0.85), 0 0 4px rgba(0,0,0,0.8)",padding:0,fontWeight:300,zIndex:4}}>×</button>
 
       {/* TOP-RIGHT stack: Share, Verse/content, Font, Hide Photo, Format */}
       <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
-        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"var(--accent)",border:"none",color:"var(--ink)"})}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.8)",border:"none",color:"var(--ink)",textShadow:"none"})}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
         <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel}</button>
         <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={circle({fontFamily:CARD_FONTS[layout.font],fontSize:18})}>Aa</button>
@@ -2254,7 +2266,7 @@ export default function App() {
         .btn-danger{background:transparent;color:#8a3020;border:1px solid #3a1810;border-radius:4px;padding:6px 12px;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .btn-danger:hover{border-color:#c04030;color:#c04030;}
         .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px;}
-        .label{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:var(--m2);text-transform:uppercase;display:block;margin-bottom:8px;}
+        .label{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:var(--m2);text-transform:uppercase;display:block;margin-bottom:8px;overflow-wrap:break-word;word-break:break-word;}
         .divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
         .fade-in{animation:fadeIn 0.35s ease forwards;}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -2299,12 +2311,12 @@ export default function App() {
             <button onClick={()=>setView("settings")} style={{position:"absolute",right:0,top:"calc(env(safe-area-inset-top, 0px) + 28px)",background:"transparent",border:"none",color:"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}
               onMouseOver={e=>e.currentTarget.style.color="var(--accent)"}
               onMouseOut={e=>e.currentTarget.style.color="var(--m5)"}>
-              <SettingsIcon/>
+              <SettingsIcon size={19}/>
             </button>
           )}
           {view !== "session" && view !== "auth" && view !== "profilepick" && (
-            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:31,top:"calc(env(safe-area-inset-top, 0px) + 28px)",background:"transparent",border:"none",color:showBright?"var(--accent)":"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
+            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:33,top:"calc(env(safe-area-inset-top, 0px) + 28px)",background:"transparent",border:"none",color:showBright?"var(--accent)":"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
           <div style={{position:"absolute",left:(profiles[activeProfileId] && profiles[activeProfileId].kid)?10:6,top:"calc(env(safe-area-inset-top, 0px) + 34px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
@@ -2668,7 +2680,8 @@ export default function App() {
 
             <div className="card">
               <label className="label">Your notes (optional)</label>
-              <textarea rows={3} placeholder="What hit you. What you noticed. What you're carrying out." style={{resize:"vertical"}}
+              <p style={{fontSize:14,color:"var(--m4)",fontStyle:"italic",lineHeight:1.55,marginBottom:8,overflowWrap:"break-word"}}>What you noticed. What you're carrying out. What you want to hold onto.</p>
+              <textarea rows={3} placeholder="Write here…" style={{resize:"vertical"}}
                 value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/>
             </div>
 
