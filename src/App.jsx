@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b64";
+const BUILD = "2026.05.21-b65";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -702,7 +702,7 @@ function PinBoxes({ value, onChange, autoFocus }) {
 
 // Custom slider: filled track follows the thumb exactly, thumb reaches both
 // ends, fully smooth (no native range quirks).
-function Slider({ value, min, max, step, onChange, width=240 }) {
+function Slider({ value, min, max, step, onChange, onCommit, width=240 }) {
   const ref = useRef(null);
   const drag = useRef(false);
   const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
@@ -715,7 +715,7 @@ function Slider({ value, min, max, step, onChange, width=240 }) {
   };
   const down = (e) => { e.stopPropagation(); drag.current = true; ref.current?.setPointerCapture?.(e.pointerId); setFromX(e.clientX); };
   const move = (e) => { if (drag.current) setFromX(e.clientX); };
-  const up = (e) => { drag.current = false; ref.current?.releasePointerCapture?.(e.pointerId); };
+  const up = (e) => { if(drag.current && onCommit) onCommit(); drag.current = false; ref.current?.releasePointerCapture?.(e.pointerId); };
   return (
     <div ref={ref} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
       style={{position:"relative",width,height:30,maxWidth:"82vw",touchAction:"none",cursor:"pointer",display:"flex",alignItems:"center"}}>
@@ -1637,31 +1637,25 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
     debT.current = setTimeout(() => applyZoom(v), 100); // guarantee final value lands
   }
   function commit() { if (debT.current) clearTimeout(debT.current); applyFilter(b); applyZoom(t); onCommit(b, t); }
-  const pill = { background:"transparent",border:"1px solid var(--border)",borderRadius:4,padding:"3px 9px",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
-  const cap = { fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.08em" };
-  const head = { fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase" };
+  const pill = { background:"transparent",border:"1px solid var(--border)",borderRadius:4,padding:"3px 9px",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
+  const cap = { fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--m4)",letterSpacing:"0.08em" };
+  const head = { fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
       <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
-        <input type="range" min="0.85" max="1.45" step="0.01" value={b}
-          onChange={e=>changeB(parseFloat(e.target.value))}
-          onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
-          style={{width:"100%",accentColor:"var(--accent)"}}/>
+        <Slider value={b} min={0.85} max={1.45} step={0.01} onChange={changeB} onCommit={commit} width="100%"/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
           <span style={cap}>DARKER</span>
           <button onClick={()=>{ setB(1.22); applyFilter(1.22); onCommit(1.22,t); }} style={pill}>Reset</button>
           <span style={cap}>BRIGHTER</span>
         </div>
         <p style={{...head,margin:"16px 0 10px"}}>Text Size</p>
-        <input type="range" min="0.9" max="1.3" step="0.01" value={t}
-          onChange={e=>changeT(parseFloat(e.target.value))}
-          onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
-          style={{width:"100%",accentColor:"var(--accent)"}}/>
+        <Slider value={t} min={0.9} max={1.3} step={0.01} onChange={changeT} onCommit={commit} width="100%"/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-          <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)"}}>A</span>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,color:"var(--m4)"}}>A</span>
           <button onClick={()=>{ setT(1); applyZoom(1); onCommit(b,1); }} style={pill}>Reset</button>
-          <span style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"var(--m4)"}}>A</span>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:17,fontWeight:700,color:"var(--m4)"}}>A</span>
         </div>
       </div>
     </div>
