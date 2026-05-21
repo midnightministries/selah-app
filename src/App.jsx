@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b35";
+const BUILD = "2026.05.20-b36";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -595,7 +595,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
-      background:"rgba(8,6,3,1)", borderTop:"1px solid #251812",
+      background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
       paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
       pointerEvents:"none"
@@ -965,7 +965,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
           const vKey = date.toISOString().slice(0,10) + Math.floor(Date.now()/500).toString();
           const verse = isPast ? pickVerse(VERSES_PAST, vKey) : isToday ? pickVerse(VERSES_TODAY, vKey) : pickVerse(VERSES_FUTURE, vKey);
           return session ? (
-            <div style={{background:"#281a12",border:"1px solid var(--border2)",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
+            <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
               onClick={()=>{ onSessionClick(session.id); onClose(); }}>
               <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--accent)",marginBottom:6}}>{session.passage}</p>
               <div style={{display:"flex",gap:12,alignItems:"center",color:"var(--m4)",fontSize:12}}>
@@ -1010,7 +1010,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
             ) : null}
 
             {showAlarm && (
-              <div style={{background:"#281a12",border:"1px solid var(--border2)",borderRadius:7,padding:"16px",marginBottom:10}}>
+              <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:7,padding:"16px",marginBottom:10}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
                 <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginBottom:14,lineHeight:1.5}}>
                   Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.
@@ -1113,7 +1113,7 @@ function EmptyDayPanel({ date, alarms, onSaveAlarm, suppressPast }) {
           ) : null}
 
           {showAlarm && (
-            <div style={{background:"#281a12",border:"1px solid var(--border2)",borderRadius:7,padding:"16px"}}>
+            <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:7,padding:"16px"}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
               <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginBottom:14,lineHeight:1.5}}>Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.</p>
               <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:6}}>Time</label>
@@ -1993,7 +1993,7 @@ export default function App() {
         }
         html,body{background:var(--bg);-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
-        ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
+        ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
         input,select,textarea{background:var(--input);border:1px solid var(--border2);color:var(--text);border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
         input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb),0.08);}
         select option{background:var(--input);}
