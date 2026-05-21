@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b56";
+const BUILD = "2026.05.21-b57";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -230,16 +230,16 @@ function compressImage(file) {
       img.onerror = () => resolve(dataURL || null);
       img.onload = () => {
         try {
-          // Center-crop to a square so every saved photo shares the same
-          // shape as the 1080x1080 share card and displays uniformly.
-          const SIZE = 1000;
-          const side = Math.min(img.width, img.height);
-          const sx = (img.width - side) / 2;
-          const sy = (img.height - side) / 2;
+          // Keep the WHOLE photo (no square crop) so the share editor can frame
+          // it for 1:1 or 9:16 without losing the top/bottom. Just downscale.
+          const MAX = 1280;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          const w = Math.max(1, Math.round(img.width * scale));
+          const h = Math.max(1, Math.round(img.height * scale));
           const canvas = document.createElement("canvas");
-          canvas.width = SIZE; canvas.height = SIZE;
-          canvas.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, SIZE, SIZE);
-          resolve(canvas.toDataURL("image/jpeg", 0.78));
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
         } catch { resolve(dataURL || null); }
       };
       img.src = dataURL;
@@ -274,7 +274,7 @@ const CARD_FONTS = { serif:"Georgia, serif", cinzel:"Cinzel, Georgia, serif", cr
 function defaultLayout(session, hasPhoto, fam) {
   fam = fam || "Georgia, serif";
   return {
-    aspect: "square",
+    aspect: (session && session.photoAspect) || "square",
     content: "session",
     photo: { show: !!hasPhoto, x: 0.5, y: 0.5 },
     els: {
@@ -1643,6 +1643,7 @@ export default function App() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const [sessionPhoto, setSessionPhoto] = useState(null);
+  const [photoAspect, setPhotoAspect] = useState("square");   // "square" (1:1) | "story" (9:16), chosen at capture
   const [loading, setLoading] = useState(false);
   const [locLoading, setLocLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -1986,7 +1987,7 @@ export default function App() {
     } catch {
       setForm({ locationType:"Home",otherLocation:"",startBook:"Genesis",startChapter:"",startVerse:"",endBook:"Genesis",endChapter:"",endVerse:"",notes:"" });
     }
-    setResult(null); setActiveSession(null); setError(""); setSessionPhoto(null); setQuestionAnswers({}); setAnswerFeedback([]); setFeedbackSubmitted(false); firstAnswerAt.current = null; questionStamps.current = [];
+    setResult(null); setActiveSession(null); setError(""); setSessionPhoto(null); setPhotoAspect("square"); setQuestionAnswers({}); setAnswerFeedback([]); setFeedbackSubmitted(false); firstAnswerAt.current = null; questionStamps.current = [];
   }
 
   async function handlePhotoUpload(e) {
@@ -2041,7 +2042,7 @@ export default function App() {
       const data = await resp.json();
       const raw = data.content?.find(b=>b.type==="text")?.text||"";
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
-      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender, profileId:activeProfileId };
+      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, photoAspect, bibleVersion, gender, profileId:activeProfileId };
       try { localStorage.setItem('selah_last_position', JSON.stringify({ endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse })); } catch {}
       firstAnswerAt.current = null; questionStamps.current = [];
       setSessions(prev=>[completed,...prev]);
@@ -2552,10 +2553,18 @@ export default function App() {
             <div className="card">
               <label className="label" style={{display:"flex",alignItems:"center",gap:6}}><CameraIcon/>Capture the Moment (optional)</label>
               {sessionPhoto ? (
-                <div className="photo-preview">
-                  <img src={sessionPhoto} alt="Session"/>
-                  <button className="photo-remove" onClick={()=>setSessionPhoto(null)}>Remove</button>
-                </div>
+                <>
+                  <div className="photo-preview" style={{aspectRatio: photoAspect==="story"?"9 / 16":"1 / 1", width: photoAspect==="story"?"auto":"100%", maxHeight:420, margin:"0 auto"}}>
+                    <img src={sessionPhoto} alt="Session" style={{width:"100%",height:"100%",objectFit:"cover",maxHeight:"none",display:"block"}}/>
+                    <button className="photo-remove" onClick={()=>{ setSessionPhoto(null); setPhotoAspect("square"); }}>Remove</button>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginTop:10}}>
+                    {[["square","1:1"],["story","9:16"]].map(([id,lbl])=>(
+                      <button key={id} onClick={()=>setPhotoAspect(id)} style={{flex:1,padding:"9px",borderRadius:6,border:photoAspect===id?"1px solid var(--accent)":"1px solid var(--border2)",background:photoAspect===id?"rgba(var(--accent-rgb),0.12)":"transparent",color:photoAspect===id?"var(--accent)":"var(--m4)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.08em",cursor:"pointer"}}>{lbl}</button>
+                    ))}
+                  </div>
+                  <p style={{fontSize:12,color:"var(--m5)",textAlign:"center",marginTop:6}}>Sets the share format. You can fine-tune it later.</p>
+                </>
               ) : (
                 <div className="photo-drop" onClick={()=>photoInputRef.current?.click()}>
                   <div style={{color:"var(--m4)"}}><CameraIcon/></div>
