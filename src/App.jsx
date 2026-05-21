@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b25";
+const BUILD = "2026.05.20-b26";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -70,13 +70,13 @@ function FooterCross({ size = 14 }) {
           <feGaussianBlur in="displaced" stdDeviation="0.4"/>
         </filter>
         <radialGradient id="halo-foot" cx="50%" cy="48%" r="52%">
-          <stop offset="0%" stopColor="#c9a84c" stopOpacity="0.25"/>
-          <stop offset="100%" stopColor="#c9a84c" stopOpacity="0"/>
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.25"/>
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0"/>
         </radialGradient>
       </defs>
       <ellipse cx="20" cy="27" rx="16" ry="20" fill="url(#halo-foot)"/>
-      <rect x="17" y="3" width="6" height="54" rx="1.5" fill="#c9a84c" filter="url(#chalk-foot)"/>
-      <rect x="4" y="20" width="32" height="6" rx="1.5" fill="#c9a84c" filter="url(#chalk-foot)"/>
+      <rect x="17" y="3" width="6" height="54" rx="1.5" fill="var(--accent)" filter="url(#chalk-foot)"/>
+      <rect x="4" y="20" width="32" height="6" rx="1.5" fill="var(--accent)" filter="url(#chalk-foot)"/>
     </svg>
   );
 }
@@ -448,6 +448,40 @@ function applyAppIcon(name) {
   set('link[rel="icon"][type="image/x-icon"]', "/favicon.ico");
 }
 
+// ── Color palettes (override the theme variable package) ──
+const PALETTES = {
+  midnight: { label: "Midnight", swatch: ["#190f0b","#c9a84c","#6e1c1c"], vars: {
+    "--bg":"#190f0b","--surface":"#20130f","--input":"#221610","--input2":"#160d0a",
+    "--border":"#36241c","--border2":"#2e2408","--accent":"#c9a84c","--accent2":"#a8832a",
+    "--ink":"#0e0c06","--text":"#e4dcc8","--text2":"#c8bfa0","--text3":"#c0b898","--text4":"#d4ccb8",
+    "--m1":"#8a7a4a","--m1b":"#8a7a5a","--m2":"#6a5a30","--m3":"#5a4a20","--m3b":"#5a4a2a","--m4":"#4a3e1a","--m5":"#3a3010",
+    "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28" } },
+  rose: { label: "Rose", swatch: ["#1b0f15","#e6a9c0","#7d566a"], vars: {
+    "--bg":"#170b11","--surface":"#231019","--input":"#2a1420","--input2":"#1d0d16",
+    "--border":"#43253a","--border2":"#3a2030","--accent":"#e6a9c0","--accent2":"#c77fa0",
+    "--ink":"#1a0c12","--text":"#f4e7ed","--text2":"#e8cdd9","--text3":"#dcc0cf","--text4":"#f0e2ea",
+    "--m1":"#b88297","--m1b":"#b88297","--m2":"#996c80","--m3":"#7d566a","--m3b":"#7d566a","--m4":"#5e3f4f","--m5":"#4a3140",
+    "--accent-rgb":"230,169,192","--blood-rgb":"150,50,90" } },
+  evergreen: { label: "Evergreen", swatch: ["#0b120c","#8fce99","#3e6a48"], vars: {
+    "--bg":"#0b120c","--surface":"#13201a","--input":"#16241c","--input2":"#0f1812",
+    "--border":"#2a3a2e","--border2":"#243227","--accent":"#8fce99","--accent2":"#579a64",
+    "--ink":"#0a140c","--text":"#e3efe5","--text2":"#c6ddca","--text3":"#bcd4c0","--text4":"#d8e8db",
+    "--m1":"#7e9e84","--m1b":"#7e9e84","--m2":"#628668","--m3":"#507256","--m3b":"#507256","--m4":"#3e5a44","--m5":"#314836",
+    "--accent-rgb":"143,206,153","--blood-rgb":"40,110,70" } },
+  sky: { label: "Sky", swatch: ["#0a0f16","#86b6e4","#3a587a"], vars: {
+    "--bg":"#0a0f16","--surface":"#121b26","--input":"#14202c","--input2":"#0e1620",
+    "--border":"#2a3a4a","--border2":"#243240","--accent":"#86b6e4","--accent2":"#4f86b8",
+    "--ink":"#0a121c","--text":"#e3ebf3","--text2":"#c6d8ea","--text3":"#bccfe0","--text4":"#d8e4f0",
+    "--m1":"#7e94ae","--m1b":"#7e94ae","--m2":"#62788c","--m3":"#506276","--m3b":"#506276","--m4":"#3e4e5e","--m5":"#313e4a",
+    "--accent-rgb":"134,182,228","--blood-rgb":"60,90,150" } },
+};
+function applyPalette(name) {
+  if (typeof document === "undefined") return;
+  const p = PALETTES[name] || PALETTES.midnight;
+  const root = document.documentElement;
+  Object.entries(p.vars).forEach(([k, v]) => root.style.setProperty(k, v));
+}
+
 // ── Auth + onboarding screen ──
 function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
   const [mode, setMode] = useState(initialMode || "signup");
@@ -455,7 +489,7 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
   const [pw, setPw] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const inputStyle = { width:"100%", boxSizing:"border-box", background:"#160d0a", border:"1px solid #36241c", borderRadius:6, padding:"12px 14px", color:"#e4dcc8", fontFamily:"'Crimson Text',serif", fontSize:17, outline:"none", marginBottom:12 };
+  const inputStyle = { width:"100%", boxSizing:"border-box", background:"var(--input2)", border:"1px solid var(--border)", borderRadius:6, padding:"12px 14px", color:"var(--text)", fontFamily:"'Crimson Text',serif", fontSize:17, outline:"none", marginBottom:12 };
   async function submit() {
     setErr("");
     const e = email.trim().toLowerCase();
@@ -471,14 +505,14 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
   return (
     <div className="fade-in">
       {onBack && (
-        <button onClick={onBack} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Back</button>
+        <button onClick={onBack} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Back</button>
       )}
       {intro && (
         <div style={{textAlign:"center",marginBottom:18}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={40} glow={true}/></div>
-          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:24,fontWeight:700,letterSpacing:"0.12em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.3)",marginBottom:6}}>SELAH</h2>
-          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.5,marginBottom:4}}>Read. Mark. Return.</p>
-          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3e1a",lineHeight:1.55,maxWidth:330,margin:"0 auto"}}>
+          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:24,fontWeight:700,letterSpacing:"0.12em",color:"var(--text2)",textShadow:"0 0 22px rgba(var(--accent-rgb),0.3)",marginBottom:6}}>SELAH</h2>
+          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.5,marginBottom:4}}>Read. Mark. Return.</p>
+          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",lineHeight:1.55,maxWidth:330,margin:"0 auto"}}>
             Make an account to carry your log and settings across every device. Or step straight in. Your reading stays yours.
           </p>
         </div>
@@ -498,13 +532,13 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
         <button className="btn-primary" style={{width:"100%",padding:"13px",opacity:busy?0.6:1}} disabled={busy} onClick={submit}>
           {busy ? "Working…" : (mode==="signup" ? "Create Account" : "Sign In")}
         </button>
-        <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#5a4a20",textAlign:"center",marginTop:12,lineHeight:1.55}}>
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)",textAlign:"center",marginTop:12,lineHeight:1.55}}>
           Why sign in: so your reading log and settings follow you to every device. Your photos and location stay on this device. If you would rather not, you can continue without an account.
         </p>
       </div>
       {onSkip && (
         <div style={{textAlign:"center",marginTop:4}}>
-          <button onClick={onSkip} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,padding:8}}>
+          <button onClick={onSkip} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,padding:8}}>
             Continue without an account
           </button>
         </div>
@@ -530,7 +564,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
             <feGaussianBlur in="displaced" stdDeviation="0.35" result="soft"/>
             <feComposite in="soft" in2="SourceGraphic" operator="in" result="clipped"/>
-            <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="#c9a84c" floodOpacity="0.45"/>
+            <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="var(--accent)" floodOpacity="0.45"/>
           </filter>
         </defs>
       </svg>
@@ -539,8 +573,8 @@ function MMFooter({ onEggOpen, onHomeView }) {
         fontSize:12,
         letterSpacing:"0.22em",
         textTransform:"uppercase",
-        color:"#c8bfa0",
-        textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",
+        color:"var(--text2)",
+        textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",
         filter:"url(#chalk-mm)",
         paddingBottom:1,
         cursor:onHomeView?"pointer":"default",
@@ -598,28 +632,28 @@ function ExportSheet({ session, onClose }) {
       display:"flex",alignItems:"flex-end",justifyContent:"center"
     }} onClick={onClose}>
       <div ref={sheetRef} onClick={e=>e.stopPropagation()} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} style={{
-        background:"#20130f",border:"1px solid #2e2408",
+        background:"var(--surface)",border:"1px solid var(--border2)",
         borderRadius:"12px 12px 0 0",padding:"24px 20px 36px",
         width:"100%",maxWidth:480,
         willChange:"transform"
       }}>
-        <div style={{ width:44,height:4,background:"#5a4a20",borderRadius:2,margin:"0 auto 20px" }}/>
-        <p style={{ fontFamily:"'Cinzel',serif",fontSize:12,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:16,textAlign:"center" }}>
+        <div style={{ width:44,height:4,background:"var(--m3)",borderRadius:2,margin:"0 auto 20px" }}/>
+        <p style={{ fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--m2)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:16,textAlign:"center" }}>
           Save or Share Session
         </p>
 
         {/* Share as image */}
         <button onClick={handleShareImage} disabled={!shareFile} style={{
           display:"flex",alignItems:"center",gap:14,width:"100%",
-          background:"transparent",border:"1px solid #2e2408",borderRadius:7,
+          background:"transparent",border:"1px solid var(--border2)",borderRadius:7,
           padding:"14px 16px",cursor:"pointer",marginBottom:10,transition:"border-color 0.2s"
         }}
-          onMouseOver={e=>e.currentTarget.style.borderColor="#c9a84c"}
-          onMouseOut={e=>e.currentTarget.style.borderColor="#2e2408"}>
-          <div style={{ color:"#c9a84c",flexShrink:0 }}><ShareIcon/></div>
+          onMouseOver={e=>e.currentTarget.style.borderColor="var(--accent)"}
+          onMouseOut={e=>e.currentTarget.style.borderColor="var(--border2)"}>
+          <div style={{ color:"var(--accent)",flexShrink:0 }}><ShareIcon/></div>
           <div style={{ textAlign:"left" }}>
-            <p style={{ fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:3 }}>Share as Image</p>
-            <p style={{ fontFamily:"'Crimson Text',serif",fontSize:14,color:"#5a4a20",fontStyle:"italic" }}>
+            <p style={{ fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:3 }}>Share as Image</p>
+            <p style={{ fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)",fontStyle:"italic" }}>
               1080×1080 card — Instagram, Facebook, Messages, WhatsApp
             </p>
           </div>
@@ -628,33 +662,33 @@ function ExportSheet({ session, onClose }) {
         {/* Save as note */}
         <button onClick={handleSaveNote} disabled={state==="working"} style={{
           display:"flex",alignItems:"center",gap:14,width:"100%",
-          background:"transparent",border:"1px solid #2e2408",borderRadius:7,
+          background:"transparent",border:"1px solid var(--border2)",borderRadius:7,
           padding:"14px 16px",cursor:"pointer",marginBottom:10,transition:"border-color 0.2s"
         }}
-          onMouseOver={e=>e.currentTarget.style.borderColor="#c9a84c"}
-          onMouseOut={e=>e.currentTarget.style.borderColor="#2e2408"}>
-          <div style={{ color:"#c9a84c",flexShrink:0 }}><NotesIcon/></div>
+          onMouseOver={e=>e.currentTarget.style.borderColor="var(--accent)"}
+          onMouseOut={e=>e.currentTarget.style.borderColor="var(--border2)"}>
+          <div style={{ color:"var(--accent)",flexShrink:0 }}><NotesIcon/></div>
           <div style={{ textAlign:"left" }}>
-            <p style={{ fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:3 }}>Save to Notes or Files</p>
-            <p style={{ fontFamily:"'Crimson Text',serif",fontSize:14,color:"#5a4a20",fontStyle:"italic" }}>
+            <p style={{ fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:3 }}>Save to Notes or Files</p>
+            <p style={{ fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)",fontStyle:"italic" }}>
               Formatted text — opens share sheet to Apple Notes, Files, or any app
             </p>
           </div>
         </button>
 
-        <p style={{ fontFamily:"'Crimson Text',serif",fontSize:13,color:"#8a7a4a",textAlign:"center",marginTop:14,lineHeight:1.7 }}>
+        <p style={{ fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m1)",textAlign:"center",marginTop:14,lineHeight:1.7 }}>
           To save in Apple Notes, tap Notes on the share sheet. The file title includes the date and passage for easy sorting. Auto-folder creation is available in the native app.
         </p>
 
         {(state === "working" || !shareFile) && (
-          <p style={{ fontFamily:"'Cinzel',serif",fontSize:12,color:"#c9a84c",textAlign:"center",marginTop:12,letterSpacing:"0.1em" }}
+          <p style={{ fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--accent)",textAlign:"center",marginTop:12,letterSpacing:"0.1em" }}
             className="pulse">{!shareFile ? "PREPARING IMAGE..." : "BUILDING..."}</p>
         )}
 
         <button onClick={onClose} style={{
           width:"100%",marginTop:16,padding:"12px",
-          background:"transparent",border:"1px solid #2e2408",borderRadius:6,
-          fontFamily:"'Cinzel',serif",fontSize:12,color:"#4a3e1a",
+          background:"transparent",border:"1px solid var(--border2)",borderRadius:6,
+          fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--m4)",
           letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"
         }}>Cancel</button>
       </div>
@@ -705,21 +739,21 @@ function AnswerInput({ value, onChange, feedback }) {
       {!open && (
         <div onClick={()=>{ setDraft(value||""); setOpen(true); }} style={{
           display:"flex",alignItems:"center",justifyContent:"space-between",
-          background:"#20130f",border:"1px solid #2e2408",borderRadius:6,
+          background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:6,
           padding:"10px 14px",cursor:"pointer",transition:"border-color 0.2s",marginTop:10
         }}
-          onMouseOver={e=>e.currentTarget.style.borderColor="#c9a84c"}
-          onMouseOut={e=>e.currentTarget.style.borderColor="#2e2408"}>
+          onMouseOver={e=>e.currentTarget.style.borderColor="var(--accent)"}
+          onMouseOut={e=>e.currentTarget.style.borderColor="var(--border2)"}>
           <p style={{
             fontFamily:value?"'Crimson Text',serif":"'Cinzel',serif",
-            fontSize:value?15:10,color:value?"#8a7a5a":"#3a3010",
+            fontSize:value?15:10,color:value?"var(--m1b)":"var(--m5)",
             letterSpacing:value?"0":"0.1em",textTransform:value?"none":"uppercase",
             fontStyle:value?"italic":"normal",
             flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"
           }}>
             {value||"Write your answer"}
           </p>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4a3e1a" strokeWidth="2" style={{marginLeft:10,flexShrink:0}}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--m4)" strokeWidth="2" style={{marginLeft:10,flexShrink:0}}>
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
@@ -727,7 +761,7 @@ function AnswerInput({ value, onChange, feedback }) {
       )}
 
       {open && (
-        <div style={{marginTop:10,background:"#20130f",border:"1px solid #c9a84c",borderRadius:6,overflow:"hidden"}}>
+        <div style={{marginTop:10,background:"var(--surface)",border:"1px solid var(--accent)",borderRadius:6,overflow:"hidden"}}>
           <textarea
             autoFocus
             rows={5}
@@ -735,23 +769,23 @@ function AnswerInput({ value, onChange, feedback }) {
             onChange={e=>setDraft(e.target.value)}
             placeholder="Write your answer here..."
             style={{
-              width:"100%",background:"#20130f",border:"none",
-              color:"#d4ccb8",fontFamily:"'Crimson Text',Georgia,serif",
+              width:"100%",background:"var(--surface)",border:"none",
+              color:"var(--text4)",fontFamily:"'Crimson Text',Georgia,serif",
               fontSize:16,lineHeight:1.65,padding:"12px 14px",
               resize:"none",outline:"none",display:"block"
             }}
           />
-          <div style={{display:"flex",borderTop:"1px solid #36241c",padding:"8px 12px",justifyContent:"flex-end",gap:8}}>
-            <button onClick={cancel} style={{background:"transparent",border:"1px solid #2e2408",borderRadius:4,padding:"6px 14px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
-            <button onClick={done} style={{background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.4)",borderRadius:4,padding:"6px 16px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
+          <div style={{display:"flex",borderTop:"1px solid var(--border)",padding:"8px 12px",justifyContent:"flex-end",gap:8}}>
+            <button onClick={cancel} style={{background:"transparent",border:"1px solid var(--border2)",borderRadius:4,padding:"6px 14px",fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
+            <button onClick={done} style={{background:"rgba(var(--accent-rgb),0.12)",border:"1px solid rgba(var(--accent-rgb),0.4)",borderRadius:4,padding:"6px 16px",fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
           </div>
         </div>
       )}
 
       {feedback && !open && (
-        <div style={{marginTop:8,background:"rgba(201,168,76,0.04)",border:"1px solid rgba(201,168,76,0.12)",borderRadius:5,padding:"10px 14px"}}>
-          <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:5}}>Response</p>
-          <p style={{fontSize:15,lineHeight:1.65,color:"#8a7a5a"}}>{feedback}</p>
+        <div style={{marginTop:8,background:"rgba(var(--accent-rgb),0.04)",border:"1px solid rgba(var(--accent-rgb),0.12)",borderRadius:5,padding:"10px 14px"}}>
+          <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:5}}>Response</p>
+          <p style={{fontSize:15,lineHeight:1.65,color:"var(--m1b)"}}>{feedback}</p>
         </div>
       )}
     </div>
@@ -765,11 +799,11 @@ function StatsStrip({ sessions }) {
   const uniqueBooks = new Set(sessions.map(s=>s.startBook)).size;
   const stats = [["Sessions",sessions.length],["Books",uniqueBooks],["Time",totalTime]];
   return (
-    <div style={{display:"flex",background:"#20130f",border:"1px solid #36241c",borderRadius:7,overflow:"hidden",marginBottom:18}}>
+    <div style={{display:"flex",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:7,overflow:"hidden",marginBottom:18}}>
       {stats.map(([l,v],i)=>(
-        <div key={l} style={{flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid #36241c":"none"}}>
-          <p style={{fontFamily:"'Cinzel',serif",fontSize:16,color:"#c9a84c",fontWeight:600}}>{v}</p>
-          <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3}}>{l}</p>
+        <div key={l} style={{flex:1,padding:"12px 8px",textAlign:"center",borderRight:i<stats.length-1?"1px solid var(--border)":"none"}}>
+          <p style={{fontFamily:"'Cinzel',serif",fontSize:16,color:"var(--accent)",fontWeight:600}}>{v}</p>
+          <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3}}>{l}</p>
         </div>
       ))}
     </div>
@@ -874,13 +908,13 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
   return (
     <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(10,8,4,0.88)",display:"flex",alignItems:"flex-end",justifyContent:"center"}}
       onClick={onClose}>
-      <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:"12px 12px 0 0",padding:"22px 20px 36px",width:"100%",maxWidth:480,maxHeight:"85vh",overflowY:"auto"}}
+      <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:"12px 12px 0 0",padding:"22px 20px 36px",width:"100%",maxWidth:480,maxHeight:"85vh",overflowY:"auto"}}
         onClick={e=>e.stopPropagation()}>
-        <div style={{width:36,height:3,background:"#3a3010",borderRadius:2,margin:"0 auto 18px"}}/>
-        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>
+        <div style={{width:36,height:3,background:"var(--m5)",borderRadius:2,margin:"0 auto 18px"}}/>
+        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m2)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>
           {dayNames[date.getDay()]}
         </p>
-        <p style={{fontFamily:"'Crimson Text',serif",fontSize:22,color:"#c9a84c",marginBottom:16}}>
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:22,color:"var(--accent)",marginBottom:16}}>
           {months[date.getMonth()]} {date.getDate()}, {date.getFullYear()}
         </p>
 
@@ -888,25 +922,25 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
           const vKey = date.toISOString().slice(0,10) + Math.floor(Date.now()/500).toString();
           const verse = isPast ? pickVerse(VERSES_PAST, vKey) : isToday ? pickVerse(VERSES_TODAY, vKey) : pickVerse(VERSES_FUTURE, vKey);
           return session ? (
-            <div style={{background:"#281a12",border:"1px solid #2e2408",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
+            <div style={{background:"#281a12",border:"1px solid var(--border2)",borderRadius:7,padding:"14px 16px",cursor:"pointer",marginBottom:14}}
               onClick={()=>{ onSessionClick(session.id); onClose(); }}>
-              <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#c9a84c",marginBottom:6}}>{session.passage}</p>
-              <div style={{display:"flex",gap:12,alignItems:"center",color:"#4a3e1a",fontSize:12}}>
+              <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--accent)",marginBottom:6}}>{session.passage}</p>
+              <div style={{display:"flex",gap:12,alignItems:"center",color:"var(--m4)",fontSize:12}}>
                 <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatTime(session.startTime)}</span>
                 <span>{elapsed(session.startTime,session.endTime)}</span>
                 {session.locationType && <span>{session.locationType}</span>}
               </div>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Tap to open session</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m5)",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Tap to open session</p>
             </div>
           ) : (
-            <div style={{padding:"4px 0 20px",borderBottom:"1px solid #36241c",marginBottom:16}}>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
-              {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
+            <div style={{padding:"4px 0 20px",borderBottom:"1px solid var(--border)",marginBottom:16}}>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--border2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
+              {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
               {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3a18",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
-              {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word will be here. So will He.</p>}
-              <div style={{borderLeft:"2px solid #2e2408",paddingLeft:14}}>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#6a5a30",lineHeight:1.65,fontStyle:"italic",marginBottom:6}}>"{verse.text}"</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em"}}>{verse.ref}</p>
+              {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word will be here. So will He.</p>}
+              <div style={{borderLeft:"2px solid var(--border2)",paddingLeft:14}}>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"var(--m2)",lineHeight:1.65,fontStyle:"italic",marginBottom:6}}>"{verse.text}"</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.1em"}}>{verse.ref}</p>
               </div>
             </div>
           );
@@ -916,45 +950,45 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
         {(isFuture || isToday) && (
           <div>
             {existingAlarm && !showAlarm ? (
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:6,padding:"10px 14px",marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(var(--accent-rgb),0.06)",border:"1px solid rgba(var(--accent-rgb),0.15)",borderRadius:6,padding:"10px 14px",marginBottom:10}}>
                 <div>
-                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:2}}>Alarm Set</p>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"#8a7a4a"}}>{existingAlarm.time} — {existingAlarm.repeat}</p>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:2}}>Alarm Set</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"var(--m1)"}}>{existingAlarm.time} — {existingAlarm.repeat}</p>
                 </div>
-                <button onClick={()=>setShowAlarm(true)} style={{background:"transparent",border:"1px solid #2e2408",borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#6a5a30",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Edit</button>
+                <button onClick={()=>setShowAlarm(true)} style={{background:"transparent",border:"1px solid var(--border2)",borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m2)",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Edit</button>
               </div>
             ) : !showAlarm ? (
-              <button onClick={()=>setShowAlarm(true)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"transparent",border:"1px solid #2e2408",borderRadius:6,padding:"12px",marginBottom:10,fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}
-                onMouseOver={e=>{e.currentTarget.style.borderColor="#c9a84c";e.currentTarget.style.color="#c9a84c";}}
-                onMouseOut={e=>{e.currentTarget.style.borderColor="#2e2408";e.currentTarget.style.color="#6a5a30";}}>
+              <button onClick={()=>setShowAlarm(true)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"transparent",border:"1px solid var(--border2)",borderRadius:6,padding:"12px",marginBottom:10,fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m2)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}
+                onMouseOver={e=>{e.currentTarget.style.borderColor="var(--accent)";e.currentTarget.style.color="var(--accent)";}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor="var(--border2)";e.currentTarget.style.color="var(--m2)";}}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Set a Reminder
               </button>
             ) : null}
 
             {showAlarm && (
-              <div style={{background:"#281a12",border:"1px solid #2e2408",borderRadius:7,padding:"16px",marginBottom:10}}>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3e1a",marginBottom:14,lineHeight:1.5}}>
+              <div style={{background:"#281a12",border:"1px solid var(--border2)",borderRadius:7,padding:"16px",marginBottom:10}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginBottom:14,lineHeight:1.5}}>
                   Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.
                 </p>
-                <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:6}}>Time</label>
+                <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:6}}>Time</label>
                 <input type="time" value={alarmTime} onChange={e=>setAlarmTime(e.target.value)}
                   style={{marginBottom:14,fontFamily:"'Crimson Text',serif",fontSize:16}}/>
-                <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:8}}>Repeat</label>
+                <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:8}}>Repeat</label>
                 <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
                   {REPEAT_OPTS.map(([val,label])=>(
                     <button key={val} onClick={()=>setRepeatMode(val)}
-                      style={{background:repeatMode===val?"rgba(201,168,76,0.12)":"transparent",border:`1px solid ${repeatMode===val?"#c9a84c":"#2e2408"}`,borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:repeatMode===val?"#c9a84c":"#4a3e1a",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>
+                      style={{background:repeatMode===val?"rgba(var(--accent-rgb),0.12)":"transparent",border:`1px solid ${repeatMode===val?"var(--accent)":"var(--border2)"}`,borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:repeatMode===val?"var(--accent)":"var(--m4)",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>
                       {label}
                     </button>
                   ))}
                 </div>
                 <div style={{display:"flex",gap:8}}>
-                  <button onClick={saveAlarm} style={{flex:1,background:"linear-gradient(135deg,#c9a84c,#a8832a)",color:"#0e0c06",border:"none",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Save</button>
-                  <button onClick={()=>setShowAlarm(false)} style={{flex:1,background:"transparent",border:"1px solid #2e2408",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
+                  <button onClick={saveAlarm} style={{flex:1,background:"linear-gradient(135deg,var(--accent),var(--accent2))",color:"var(--ink)",border:"none",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Save</button>
+                  <button onClick={()=>setShowAlarm(false)} style={{flex:1,background:"transparent",border:"1px solid var(--border2)",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
                 </div>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#2e2408",letterSpacing:"0.08em",textAlign:"center",marginTop:10,lineHeight:1.6,textTransform:"uppercase"}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--border2)",letterSpacing:"0.08em",textAlign:"center",marginTop:10,lineHeight:1.6,textTransform:"uppercase"}}>
                   Native app delivers true background alarms. Web version fires when the app is open.
                 </p>
               </div>
@@ -962,7 +996,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
           </div>
         )}
 
-        <button onClick={onClose} style={{width:"100%",marginTop:6,padding:"11px",background:"transparent",border:"1px solid #2e2408",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
+        <button onClick={onClose} style={{width:"100%",marginTop:6,padding:"11px",background:"transparent",border:"1px solid var(--border2)",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
       </div>
     </div>
   );
@@ -1002,56 +1036,56 @@ function EmptyDayPanel({ date, alarms, onSaveAlarm, suppressPast }) {
   if (isPast && suppressPast) {
     return (
       <div style={{padding:"18px 16px"}}>
-        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase"}}>No Session On This Day</p>
+        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--border2)",letterSpacing:"0.12em",textTransform:"uppercase"}}>No Session On This Day</p>
       </div>
     );
   }
 
   return (
     <div style={{padding:"18px 16px"}}>
-      <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
-      {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
+      <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--border2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>No Session Logged</p>
+      {isToday && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word is still here. Today can still be the day.</p>}
       {isPast && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3a18",lineHeight:1.6,marginBottom:14}}>His Word was here. He was not absent.</p>}
-      {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>His Word will be here. So will He.</p>}
-      <div style={{borderLeft:"2px solid #2e2408",paddingLeft:14,marginBottom:(isFuture||isToday)?16:0}}>
-        <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#6a5a30",lineHeight:1.65,fontStyle:"italic",marginBottom:6}}>"{verse.text}"</p>
-        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em"}}>{verse.ref}</p>
+      {isFuture && <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>His Word will be here. So will He.</p>}
+      <div style={{borderLeft:"2px solid var(--border2)",paddingLeft:14,marginBottom:(isFuture||isToday)?16:0}}>
+        <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"var(--m2)",lineHeight:1.65,fontStyle:"italic",marginBottom:6}}>"{verse.text}"</p>
+        <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.1em"}}>{verse.ref}</p>
       </div>
 
       {(isFuture || isToday) && (
         <div>
           {existingAlarm && !showAlarm ? (
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:6,padding:"10px 14px"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(var(--accent-rgb),0.06)",border:"1px solid rgba(var(--accent-rgb),0.15)",borderRadius:6,padding:"10px 14px"}}>
               <div>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:2}}>Reminder Set</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"#8a7a4a"}}>{existingAlarm.time} — {existingAlarm.repeat}</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:2}}>Reminder Set</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"var(--m1)"}}>{existingAlarm.time} — {existingAlarm.repeat}</p>
               </div>
-              <button onClick={()=>setShowAlarm(true)} style={{background:"transparent",border:"1px solid #2e2408",borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:"#6a5a30",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Edit</button>
+              <button onClick={()=>setShowAlarm(true)} style={{background:"transparent",border:"1px solid var(--border2)",borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m2)",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Edit</button>
             </div>
           ) : !showAlarm ? (
-            <button onClick={()=>setShowAlarm(true)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"transparent",border:"1px solid #2e2408",borderRadius:6,padding:"12px",fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>
+            <button onClick={()=>setShowAlarm(true)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"transparent",border:"1px solid var(--border2)",borderRadius:6,padding:"12px",fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m2)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               Set a Reminder
             </button>
           ) : null}
 
           {showAlarm && (
-            <div style={{background:"#281a12",border:"1px solid #2e2408",borderRadius:7,padding:"16px"}}>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
-              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3e1a",marginBottom:14,lineHeight:1.5}}>Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.</p>
-              <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:6}}>Time</label>
+            <div style={{background:"#281a12",border:"1px solid var(--border2)",borderRadius:7,padding:"16px"}}>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:12}}>Set Reminder</p>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginBottom:14,lineHeight:1.5}}>Life does not stop for reading time. A reminder holds the slot when a game, a meeting, or a mission tries to take it.</p>
+              <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:6}}>Time</label>
               <input type="time" value={alarmTime} onChange={e=>setAlarmTime(e.target.value)} style={{marginBottom:14,fontFamily:"'Crimson Text',serif",fontSize:16}}/>
-              <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:8}}>Repeat</label>
+              <label style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",display:"block",marginBottom:8}}>Repeat</label>
               <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:14}}>
                 {REPEAT_OPTS.map(([val,label])=>(
-                  <button key={val} onClick={()=>setRepeatMode(val)} style={{background:repeatMode===val?"rgba(201,168,76,0.12)":"transparent",border:`1px solid ${repeatMode===val?"#c9a84c":"#2e2408"}`,borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:repeatMode===val?"#c9a84c":"#4a3e1a",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>{label}</button>
+                  <button key={val} onClick={()=>setRepeatMode(val)} style={{background:repeatMode===val?"rgba(var(--accent-rgb),0.12)":"transparent",border:`1px solid ${repeatMode===val?"var(--accent)":"var(--border2)"}`,borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:repeatMode===val?"var(--accent)":"var(--m4)",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>{label}</button>
                 ))}
               </div>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={saveAlarm} style={{flex:1,background:"linear-gradient(135deg,#c9a84c,#a8832a)",color:"#0e0c06",border:"none",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Save</button>
-                <button onClick={()=>setShowAlarm(false)} style={{flex:1,background:"transparent",border:"1px solid #2e2408",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
+                <button onClick={saveAlarm} style={{flex:1,background:"linear-gradient(135deg,var(--accent),var(--accent2))",color:"var(--ink)",border:"none",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Save</button>
+                <button onClick={()=>setShowAlarm(false)} style={{flex:1,background:"transparent",border:"1px solid var(--border2)",borderRadius:5,padding:"11px",fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Cancel</button>
               </div>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#2e2408",letterSpacing:"0.08em",textAlign:"center",marginTop:10,lineHeight:1.6,textTransform:"uppercase"}}>Native app delivers true background alarms. Web version fires when the app is open.</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--border2)",letterSpacing:"0.08em",textAlign:"center",marginTop:10,lineHeight:1.6,textTransform:"uppercase"}}>Native app delivers true background alarms. Web version fires when the app is open.</p>
             </div>
           )}
         </div>
@@ -1102,29 +1136,29 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
     const isToday = date.getDate()===now.getDate() && date.getMonth()===now.getMonth() && date.getFullYear()===now.getFullYear();
     const isSelected = selectedDate && date.getFullYear()===selectedDate.getFullYear() && date.getMonth()===selectedDate.getMonth() && date.getDate()===selectedDate.getDate();
     const todayDimmed = selectedDate && !isSelected && isToday;
-    const bg = isSelected ? "rgba(201,168,76,0.05)" : isToday && !todayDimmed ? "rgba(201,168,76,0.08)" : "transparent";
-    const border = isSelected ? "1px solid rgba(201,168,76,0.85)" : isToday && todayDimmed ? "1px solid rgba(201,168,76,0.12)" : isToday ? "1px solid rgba(201,168,76,0.2)" : "1px solid transparent";
-    const numColor = isSelected ? "#c9a84c" : hasSession ? "#c9a84c" : isToday ? "#6a5a30" : "#3a3010";
+    const bg = isSelected ? "rgba(var(--accent-rgb),0.05)" : isToday && !todayDimmed ? "rgba(var(--accent-rgb),0.08)" : "transparent";
+    const border = isSelected ? "1px solid rgba(var(--accent-rgb),0.85)" : isToday && todayDimmed ? "1px solid rgba(var(--accent-rgb),0.12)" : isToday ? "1px solid rgba(var(--accent-rgb),0.2)" : "1px solid transparent";
+    const numColor = isSelected ? "var(--accent)" : hasSession ? "var(--accent)" : isToday ? "var(--m2)" : "var(--m5)";
     return (
       <div onClick={()=>handleDayClick(date)}
         style={{textAlign:"center",padding:"6px 2px",borderRadius:4,position:"relative",cursor:"pointer",
           background:bg, border:border, transition:"all 0.2s"}}
-        onMouseOver={e=>{ if(!isSelected&&!isToday) e.currentTarget.style.background="rgba(201,168,76,0.05)"; }}
+        onMouseOver={e=>{ if(!isSelected&&!isToday) e.currentTarget.style.background="rgba(var(--accent-rgb),0.05)"; }}
         onMouseOut={e=>{ if(!isSelected&&!isToday) e.currentTarget.style.background="transparent"; }}>
-        {label && <div style={{fontFamily:"'Cinzel',serif",fontSize:7,color:"#3a3010",letterSpacing:"0.06em",marginBottom:1}}>{label}</div>}
+        {label && <div style={{fontFamily:"'Cinzel',serif",fontSize:7,color:"var(--m5)",letterSpacing:"0.06em",marginBottom:1}}>{label}</div>}
         <span style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:numColor}}>{date.getDate()}</span>
-        {hasSession && <div style={{width:4,height:4,borderRadius:2,background:"#c9a84c",margin:"2px auto 0",opacity:isSelected?1:0.9}}/>}
+        {hasSession && <div style={{width:4,height:4,borderRadius:2,background:"var(--accent)",margin:"2px auto 0",opacity:isSelected?1:0.9}}/>}
       </div>
     );
   }
 
   const NavBtn = ({onClick,children}) => (
-    <button onClick={onClick} style={{background:"transparent",border:"none",color:"#6a5a30",cursor:"pointer",fontFamily:"'Cinzel',serif",fontSize:18,padding:"0 10px",lineHeight:1,transition:"color 0.2s"}}
-      onMouseOver={e=>e.currentTarget.style.color="#c9a84c"}
-      onMouseOut={e=>e.currentTarget.style.color="#6a5a30"}>{children}</button>
+    <button onClick={onClick} style={{background:"transparent",border:"none",color:"var(--m2)",cursor:"pointer",fontFamily:"'Cinzel',serif",fontSize:18,padding:"0 10px",lineHeight:1,transition:"color 0.2s"}}
+      onMouseOver={e=>e.currentTarget.style.color="var(--accent)"}
+      onMouseOut={e=>e.currentTarget.style.color="var(--m2)"}>{children}</button>
   );
   const ToggleBtn = ({active,onClick,children}) => (
-    <button onClick={onClick} style={{background:active?"rgba(201,168,76,0.12)":"transparent",border:`1px solid ${active?"#c9a84c":"#2e2408"}`,borderRadius:4,padding:"4px 12px",fontFamily:"'Cinzel',serif",fontSize:9,color:active?"#c9a84c":"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>{children}</button>
+    <button onClick={onClick} style={{background:active?"rgba(var(--accent-rgb),0.12)":"transparent",border:`1px solid ${active?"var(--accent)":"var(--border2)"}`,borderRadius:4,padding:"4px 12px",fontFamily:"'Cinzel',serif",fontSize:9,color:active?"var(--accent)":"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s"}}>{children}</button>
   );
 
   const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -1132,7 +1166,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
 
   return (
     <>
-      <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,padding:"14px 12px",marginBottom:selectedDate?8:18}}>
+      <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 12px",marginBottom:selectedDate?8:18}}>
         <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:12}}>
           <ToggleBtn active={calView==="month"} onClick={()=>setCalView("month")}>Month</ToggleBtn>
           <ToggleBtn active={calView==="week"} onClick={()=>setCalView("week")}>Week</ToggleBtn>
@@ -1149,12 +1183,12 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
             <>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                 <NavBtn onClick={()=>{ if(calMonth===0){setCalYear(y=>y-1);setCalMonth(11);}else setCalMonth(m=>m-1); }}>‹</NavBtn>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase"}}>{monthName} {calYear}</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase"}}>{monthName} {calYear}</p>
                 <NavBtn onClick={()=>{ if(calMonth===11){setCalYear(y=>y+1);setCalMonth(0);}else setCalMonth(m=>m+1); }}>›</NavBtn>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:4}}>
                 {["S","M","T","W","T","F","S"].map((d,i)=>(
-                  <div key={i} style={{textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.06em",paddingBottom:3}}>{d}</div>
+                  <div key={i} style={{textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m5)",letterSpacing:"0.06em",paddingBottom:3}}>{d}</div>
                 ))}
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
@@ -1175,7 +1209,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
             <>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                 <NavBtn onClick={prevWeek}>‹</NavBtn>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase"}}>{wkLabel}</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{wkLabel}</p>
                 <NavBtn onClick={nextWeek}>›</NavBtn>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
@@ -1194,7 +1228,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
 function AboutScreen({ onBack }) {
   const [tab, setTab] = useState("ministry");
   const P = ({children, mb=14}) => (
-    <p style={{fontSize:17,lineHeight:1.78,color:"#8a7a5a",marginBottom:mb}}>{children}</p>
+    <p style={{fontSize:17,lineHeight:1.78,color:"var(--m1b)",marginBottom:mb}}>{children}</p>
   );
   const Section = ({label, children}) => (
     <div className="card">
@@ -1205,10 +1239,10 @@ function AboutScreen({ onBack }) {
 
   return (
     <div className="fade-in">
-      <button onClick={onBack} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:20,display:"flex",alignItems:"center",gap:6,padding:0}}>
+      <button onClick={onBack} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:20,display:"flex",alignItems:"center",gap:6,padding:0}}>
         ← Back
       </button>
-      <div style={{display:"flex",borderBottom:"1px solid #36241c",marginBottom:20}}>
+      <div style={{display:"flex",borderBottom:"1px solid var(--border)",marginBottom:20}}>
         <button className={`nav-tab ${tab==="ministry"?"active":""}`} onClick={()=>setTab("ministry")} style={{fontSize:"9px"}}>Midnight Ministries</button>
         <button className={`nav-tab ${tab==="howto"?"active":""}`} onClick={()=>setTab("howto")} style={{fontSize:"9px"}}>How to Use</button>
       </div>
@@ -1217,8 +1251,8 @@ function AboutScreen({ onBack }) {
         <div>
           <div className="card" style={{textAlign:"center",paddingTop:24,paddingBottom:24}}>
             <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={36}/></div>
-            <h2 style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,letterSpacing:"0.1em",color:"#e4dcc8",marginBottom:6}}>MIDNIGHT MINISTRIES</h2>
-            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#5a4a20"}}>For all who read in the dark</p>
+            <h2 style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,letterSpacing:"0.1em",color:"var(--text)",marginBottom:6}}>MIDNIGHT MINISTRIES</h2>
+            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m3)"}}>For all who read in the dark</p>
           </div>
 
           <Section label="Why This Exists">
@@ -1263,7 +1297,7 @@ function AboutScreen({ onBack }) {
           </Section>
 
           <div style={{textAlign:"center",paddingTop:8,paddingBottom:16}}>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.1em",textTransform:"uppercase"}}>Matthew 3:11</p>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--border2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Matthew 3:11</p>
           </div>
         </div>
       )}
@@ -1272,15 +1306,15 @@ function AboutScreen({ onBack }) {
         <div>
           <Section label="The Practice">
             <P>SELAH tracks one thing: time you actually spent in His Word. Not what you intended to read. Not what you bookmarked. What you opened and sat with. Every session is a record of that.</P>
-            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#4a3e1a",borderLeft:"2px solid #2e2408",paddingLeft:12,lineHeight:1.6}}>
+            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m4)",borderLeft:"2px solid var(--border2)",paddingLeft:12,lineHeight:1.6}}>
               "For the word of God is living and active, sharper than any two-edged sword." — Hebrews 4:12
             </P>
           </Section>
 
           <div className="card">
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>01. Settings — Set Once</p>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>01. Settings — Set Once</p>
             <P>Go to Settings first. Choose your translation, your gender, your age, and your time zone. The model uses these to calibrate what it gives back. Set them once. Come back when something changes.</P>
-            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3e1a",borderLeft:"2px solid #2e2408",paddingLeft:12,lineHeight:1.6}}>
+            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",borderLeft:"2px solid var(--border2)",paddingLeft:12,lineHeight:1.6}}>
               "All Scripture is God-breathed and useful for teaching, for reproof, for correction, and for training in righteousness." — 2 Timothy 3:16
             </P>
           </div>
@@ -1290,15 +1324,15 @@ function AboutScreen({ onBack }) {
             ["03. Log Your Start", "Choose the book, chapter, and verse where you are opening. Tap Open His Word. The session clock starts. Put the phone down."],
           ].map(([title,body]) => (
             <div key={title} className="card">
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>{title}</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>{title}</p>
               <P mb={0}>{body}</P>
             </div>
           ))}
 
           <div className="card">
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>04. Read</p>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>04. Read</p>
             <P>Read. Come back when you are done.</P>
-            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3e1a",borderLeft:"2px solid #2e2408",paddingLeft:12,lineHeight:1.6}}>
+            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",borderLeft:"2px solid var(--border2)",paddingLeft:12,lineHeight:1.6}}>
               "His delight is in the law of the Lord, and on His law he meditates day and night." — Psalm 1:2
             </P>
           </div>
@@ -1308,7 +1342,7 @@ function AboutScreen({ onBack }) {
             ["06. Close the Session", "Log where you landed. Book, chapter, verse. Add your own notes if anything made you stop. If something made you question what you knew. If something made you realize what you had never seen before. Then tap Close Session."],
           ].map(([title,body]) => (
             <div key={title} className="card">
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>{title}</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>{title}</p>
               <P mb={0}>{body}</P>
             </div>
           ))}
@@ -1318,15 +1352,15 @@ function AboutScreen({ onBack }) {
             <P>Then 3 to 5 questions the passage itself demands. Observation, interpretation, one application. If you can answer them without going back, they were not hard enough.</P>
             <P>Then field notes. What is actually happening. Historical grounding, original meaning, no padding.</P>
             <P>Then 2 to 4 verses to return to. Chosen because they require something.</P>
-            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3e1a",borderLeft:"2px solid #2e2408",paddingLeft:12,lineHeight:1.6}}>
+            <P mb={0} style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",borderLeft:"2px solid var(--border2)",paddingLeft:12,lineHeight:1.6}}>
               "Be doers of the word, and not hearers only, deceiving yourselves." — James 1:22
             </P>
           </Section>
 
           <div className="card">
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>08. Set Reminders</p>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:10}}>08. Set Reminders</p>
             <P>Life does not stop for reading time. A meeting will move it. A game will take it. A deployment will bury it. Set a daily reminder from any future day in the Log calendar. Choose the time and which days repeat. The reminder holds the slot so you do not have to fight for it every morning.</P>
-            <P mb={0} style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#3a3010",letterSpacing:"0.08em",textTransform:"uppercase"}}>
+            <P mb={0} style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m5)",letterSpacing:"0.08em",textTransform:"uppercase"}}>
               Native app delivers true background alarms. Web version fires when the app is open.
             </P>
           </div>
@@ -1340,7 +1374,7 @@ function AboutScreen({ onBack }) {
           </Section>
 
           <div style={{textAlign:"center",paddingTop:8,paddingBottom:16}}>
-            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--border2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
           </div>
         </div>
       )}
@@ -1369,30 +1403,30 @@ function TimezoneDropdown({ timezone, setTimezone }) {
     <div style={{position:"relative"}}>
       <button onClick={()=>setOpen(o=>!o)} style={{
         width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
-        background:"#221610", border:`1px solid ${open?"#c9a84c":"#2e2408"}`,
+        background:"var(--input)", border:`1px solid ${open?"var(--accent)":"var(--border2)"}`,
         borderRadius:5, padding:"10px 13px", cursor:"pointer", transition:"border-color 0.2s"
       }}>
-        <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"#e4dcc8"}}>{current[1]}</span>
-        <span style={{color:"#6a5a30",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+        <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:"var(--text)"}}>{current[1]}</span>
+        <span style={{color:"var(--m2)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
       </button>
       {open && (
         <div style={{
           position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:50,
-          background:"#221610", border:"1px solid #3a3010", borderRadius:5,
+          background:"var(--input)", border:"1px solid var(--m5)", borderRadius:5,
           maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.6)"
         }}>
           {TZ_OPTIONS.map(([val,label])=>(
             <div key={val} onClick={()=>{ setTimezone(val); setOpen(false); }}
               style={{
                 padding:"10px 14px", cursor:"pointer",
-                background:timezone===val?"rgba(201,168,76,0.1)":"transparent",
-                borderBottom:"1px solid #36241c",
+                background:timezone===val?"rgba(var(--accent-rgb),0.1)":"transparent",
+                borderBottom:"1px solid var(--border)",
                 transition:"background 0.15s"
               }}
-              onMouseOver={e=>e.currentTarget.style.background="rgba(201,168,76,0.07)"}
-              onMouseOut={e=>e.currentTarget.style.background=timezone===val?"rgba(201,168,76,0.1)":"transparent"}>
-              <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:timezone===val?"#c9a84c":"#e4dcc8"}}>{label}</span>
-              {timezone===val && <span style={{float:"right",color:"#c9a84c",fontSize:12}}>✓</span>}
+              onMouseOver={e=>e.currentTarget.style.background="rgba(var(--accent-rgb),0.07)"}
+              onMouseOut={e=>e.currentTarget.style.background=timezone===val?"rgba(var(--accent-rgb),0.1)":"transparent"}>
+              <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:timezone===val?"var(--accent)":"var(--text)"}}>{label}</span>
+              {timezone===val && <span style={{float:"right",color:"var(--accent)",fontSize:12}}>✓</span>}
             </div>
           ))}
         </div>
@@ -1417,17 +1451,17 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
   // just glide the thumb; apply the resize once, on release.
   function changeT(v) { setT(v); }
   function commit() { if (debT.current) clearTimeout(debT.current); applyFilter(b); applyZoom(t); onCommit(b, t); }
-  const pill = { background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
-  const cap = { fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em" };
-  const head = { fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase" };
+  const pill = { background:"transparent",border:"1px solid var(--border)",borderRadius:4,padding:"3px 9px",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
+  const cap = { fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.08em" };
+  const head = { fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"#20130f",border:"1px solid #36241c",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
         <input type="range" min="0.85" max="1.45" step="0.01" value={b}
           onChange={e=>changeB(parseFloat(e.target.value))}
           onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
-          style={{width:"100%",accentColor:"#c9a84c"}}/>
+          style={{width:"100%",accentColor:"var(--accent)"}}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
           <span style={cap}>DARKER</span>
           <button onClick={()=>{ setB(1.22); applyFilter(1.22); onCommit(1.22,t); }} style={pill}>Reset</button>
@@ -1437,11 +1471,11 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
         <input type="range" min="0.9" max="1.3" step="0.02" value={t}
           onChange={e=>changeT(parseFloat(e.target.value))}
           onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
-          style={{width:"100%",accentColor:"#c9a84c"}}/>
+          style={{width:"100%",accentColor:"var(--accent)"}}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
-          <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a"}}>A</span>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)"}}>A</span>
           <button onClick={()=>{ setT(1); applyZoom(1); onCommit(b,1); }} style={pill}>Reset</button>
-          <span style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"#4a3e1a"}}>A</span>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"var(--m4)"}}>A</span>
         </div>
       </div>
     </div>
@@ -1458,6 +1492,7 @@ export default function App() {
   const [age, setAge] = useState(() => localStorage.getItem("selah_age") || "Prefer not to say");
   const [birthday, setBirthday] = useState(() => localStorage.getItem("selah_birthday") || "");
   const [appIcon, setAppIcon] = useState(() => localStorage.getItem("selah_app_icon") || "default");
+  const [palette, setPalette] = useState(() => localStorage.getItem("selah_palette") || "midnight");
   const [clockFmt, setClockFmt] = useState(() => localStorage.getItem("selah_clock_fmt") || "12");
   const [timezone, setTimezone] = useState(() => localStorage.getItem("selah_timezone") || "device");
   const [form, setForm] = useState(() => {
@@ -1481,6 +1516,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem("selah_textscale", String(textScale)); }, [textScale]);
   useEffect(() => { localStorage.setItem("selah_birthday", birthday); }, [birthday]);
   useEffect(() => { localStorage.setItem("selah_app_icon", appIcon); applyAppIcon(appIcon); }, [appIcon]);
+  useEffect(() => { localStorage.setItem("selah_palette", palette); applyPalette(palette); }, [palette]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -1526,7 +1562,7 @@ export default function App() {
     let lastPosition = null;
     try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
     const setupDone = localStorage.getItem("selah_setup_done") === "1";
-    return { v: 1, sessions: lean, bibleVersion, gender, age, birthday, appIcon, clockFmt, timezone, alarms, lastPosition, setupDone };
+    return { v: 1, sessions: lean, bibleVersion, gender, age, birthday, appIcon, palette, clockFmt, timezone, alarms, lastPosition, setupDone };
   }
   function applySync(data) {
     if (!data || typeof data !== "object") return;
@@ -1542,6 +1578,7 @@ export default function App() {
     if (data.age) setAge(data.age);
     if (typeof data.birthday === "string") setBirthday(data.birthday);
     if (data.appIcon && ICON_THEMES[data.appIcon]) setAppIcon(data.appIcon);
+    if (data.palette && PALETTES[data.palette]) setPalette(data.palette);
     if (data.clockFmt) setClockFmt(data.clockFmt);
     if (data.timezone) setTimezone(data.timezone);
     if (data.alarms && typeof data.alarms === "object") setAlarms(data.alarms);
@@ -1625,7 +1662,7 @@ export default function App() {
     }, 1500);
     return () => { if (syncTimer.current) clearTimeout(syncTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, clockFmt, timezone, alarms]);
+  }, [account, sessions, bibleVersion, gender, age, birthday, appIcon, palette, clockFmt, timezone, alarms]);
 
   // Track viewport width so the edge-glow can scale with screen size.
   const [vw, setVw] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 0));
@@ -1797,55 +1834,62 @@ export default function App() {
   const glowRed = Math.max(30, Math.min(Math.round((vw || 1200) * 0.11), 150));
 
   return (
-    <div style={{minHeight:"100vh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"var(--bg)",color:"var(--text)",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#190f0b;-webkit-overflow-scrolling:touch;overscroll-behavior:none;}*{box-sizing:border-box;margin:0;padding:0;}
+        :root{
+          --bg:#190f0b;--surface:#20130f;--input:#221610;--input2:#160d0a;
+          --border:#36241c;--border2:#2e2408;--accent:#c9a84c;--accent2:#a8832a;
+          --ink:#0e0c06;--text:#e4dcc8;--text2:#c8bfa0;--text3:#c0b898;--text4:#d4ccb8;
+          --m1:#8a7a4a;--m1b:#8a7a5a;--m2:#6a5a30;--m3:#5a4a20;--m3b:#5a4a2a;--m4:#4a3e1a;--m5:#3a3010;
+          --accent-rgb:201,168,76;--blood-rgb:110,28,28;
+        }
+        html,body{background:var(--bg);-webkit-overflow-scrolling:touch;overscroll-behavior:none;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
-        input,select,textarea{background:#221610;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
-        input:focus,select:focus,textarea:focus{border-color:#c9a84c;box-shadow:0 0 0 2px rgba(201,168,76,0.08);}
-        select option{background:#221610;}
+        input,select,textarea{background:var(--input);border:1px solid var(--border2);color:var(--text);border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
+        input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--accent-rgb),0.08);}
+        select option{background:var(--input);}
         input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
         input[type=number]{-moz-appearance:textfield;appearance:textfield;}
-        .btn-primary{background:linear-gradient(135deg,#c9a84c 0%,#a8832a 100%);color:#0e0c06;border:none;border-radius:5px;padding:14px 24px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:0.12em;cursor:pointer;transition:opacity 0.2s,transform 0.1s;text-transform:uppercase;width:100%;}
+        .btn-primary{background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:var(--ink);border:none;border-radius:5px;padding:14px 24px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:0.12em;cursor:pointer;transition:opacity 0.2s,transform 0.1s;text-transform:uppercase;width:100%;}
         .btn-primary:hover{opacity:0.88;transform:translateY(-1px);}
         .btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-        .btn-ghost{background:transparent;color:#6a5a30;border:1px solid #2e2408;border-radius:5px;padding:11px 20px;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;width:100%;}
-        .btn-ghost:hover{border-color:#c9a84c;color:#c9a84c;}
-        .btn-export{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:#c9a84c;border:1px solid rgba(201,168,76,0.4);border-radius:5px;padding:12px 20px;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;width:100%;}
-        .btn-export:hover{background:rgba(201,168,76,0.07);border-color:#c9a84c;}
+        .btn-ghost{background:transparent;color:var(--m2);border:1px solid var(--border2);border-radius:5px;padding:11px 20px;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;width:100%;}
+        .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+        .btn-export{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--accent);border:1px solid rgba(var(--accent-rgb),0.4);border-radius:5px;padding:12px 20px;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;width:100%;}
+        .btn-export:hover{background:rgba(var(--accent-rgb),0.07);border-color:var(--accent);}
         .btn-export:disabled{opacity:0.4;cursor:not-allowed;}
         .btn-danger{background:transparent;color:#8a3020;border:1px solid #3a1810;border-radius:4px;padding:6px 12px;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .btn-danger:hover{border-color:#c04030;color:#c04030;}
-        .card{background:#20130f;border:1px solid #36241c;border-radius:8px;padding:18px;margin-bottom:14px;}
-        .label{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:#6a5a30;text-transform:uppercase;display:block;margin-bottom:8px;}
-        .divider{border:none;border-top:1px solid #36241c;margin:14px 0;}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px;}
+        .label{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.14em;color:var(--m2);text-transform:uppercase;display:block;margin-bottom:8px;}
+        .divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
         .fade-in{animation:fadeIn 0.35s ease forwards;}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         .pulse{animation:pulse 1.8s ease-in-out infinite;}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes edgeGlow{0%,100%{opacity:0.4}50%{opacity:0.95}}
-        .nav-tab{background:transparent;border:none;color:#3a3010;font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;padding:10px 10px;border-bottom:2px solid transparent;transition:all 0.2s;flex:1;}
-        .nav-tab.active{color:#c9a84c;border-bottom-color:#c9a84c;}
-        .nav-tab:hover:not(.active){color:#8a7a4a;}
+        .nav-tab{background:transparent;border:none;color:var(--m5);font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;padding:10px 10px;border-bottom:2px solid transparent;transition:all 0.2s;flex:1;}
+        .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+        .nav-tab:hover:not(.active){color:var(--m1);}
         .section-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 0;user-select:none;}
-        .hist-card{background:#20130f;border:1px solid #36241c;border-radius:7px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s;}
-        .hist-card:hover{border-color:#2e2408;}
+        .hist-card{background:var(--surface);border:1px solid var(--border);border-radius:7px;margin-bottom:10px;overflow:hidden;transition:border-color 0.2s;}
+        .hist-card:hover{border-color:var(--border2);}
         .hist-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;}
-        .rv-item{border-left:2px solid #2e2408;padding-left:14px;margin-bottom:13px;}
+        .rv-item{border-left:2px solid var(--border2);padding-left:14px;margin-bottom:13px;}
         .q-item{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
         .n-item{display:flex;gap:10px;margin-bottom:13px;align-items:flex-start;}
-        .geo-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:20px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;color:#8a7a4a;letter-spacing:0.08em;text-transform:uppercase;}
-        .photo-drop{border:1px dashed #3a3010;border-radius:6px;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.2s,background 0.2s;text-align:center;}
-        .photo-drop:hover{border-color:#c9a84c;background:rgba(201,168,76,0.03);}
+        .geo-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(var(--accent-rgb),0.06);border:1px solid rgba(var(--accent-rgb),0.15);border-radius:20px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;color:var(--m1);letter-spacing:0.08em;text-transform:uppercase;}
+        .photo-drop{border:1px dashed var(--m5);border-radius:6px;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.2s,background 0.2s;text-align:center;}
+        .photo-drop:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.03);}
         .photo-preview{width:100%;border-radius:6px;overflow:hidden;position:relative;}
         .photo-preview img{width:100%;display:block;max-height:260px;object-fit:cover;}
         .photo-remove{position:absolute;top:8px;right:8px;background:rgba(10,8,4,0.8);border:1px solid #3a1810;color:#a04030;border-radius:4px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;}
-        .version-pill{background:transparent;border:1px solid #2e2408;border-radius:4px;padding:7px 12px;font-family:'Cinzel',serif;font-size:10px;color:#5a4a20;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
-        .version-pill.active{background:rgba(201,168,76,0.12);border-color:#c9a84c;color:#c9a84c;}
-        .version-pill:hover:not(.active){border-color:#5a4a20;color:#8a7a4a;}
+        .version-pill{background:transparent;border:1px solid var(--border2);border-radius:4px;padding:7px 12px;font-family:'Cinzel',serif;font-size:10px;color:var(--m3);letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+        .version-pill.active{background:rgba(var(--accent-rgb),0.12);border-color:var(--accent);color:var(--accent);}
+        .version-pill:hover:not(.active){border-color:var(--m3);color:var(--m1);}
         @media (min-width:600px){.app-container{padding:0 24px 80px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
         @media (min-width:768px){.app-container{padding:0 32px 80px !important;max-width:600px !important;}h1{font-size:30px !important;}}
         @media (min-width:1024px){.app-container{max-width:640px !important;}}
@@ -1854,29 +1898,29 @@ export default function App() {
       <div style={{position:"fixed",inset:0,pointerEvents:"none",opacity:0.5,zIndex:0,backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}}/>
 
       {/* Pulsing gold edge-glow vignette */}
-      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(201,168,76,0.17), inset 0 0 ${glowRed}px rgba(110,28,28,0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
+      <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(var(--accent-rgb),0.17), inset 0 0 ${glowRed}px rgba(var(--blood-rgb),0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
       <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"28px 0 18px",position:"relative"}}>
           {view !== "session" && view !== "auth" && (
-            <button onClick={()=>setView("settings")} style={{position:"absolute",right:0,top:28,background:"transparent",border:"none",color:"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}
-              onMouseOver={e=>e.currentTarget.style.color="#c9a84c"}
-              onMouseOut={e=>e.currentTarget.style.color="#3a3010"}>
+            <button onClick={()=>setView("settings")} style={{position:"absolute",right:0,top:28,background:"transparent",border:"none",color:"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}
+              onMouseOver={e=>e.currentTarget.style.color="var(--accent)"}
+              onMouseOut={e=>e.currentTarget.style.color="var(--m5)"}>
               <SettingsIcon/>
             </button>
           )}
           {view !== "session" && view !== "auth" && (
-            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:31,top:28,background:"transparent",border:"none",color:showBright?"#c9a84c":"#3a3010",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
+            <button onClick={()=>setShowBright(s=>!s)} aria-label="Quick actions" style={{position:"absolute",right:31,top:28,background:"transparent",border:"none",color:showBright?"var(--accent)":"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
           <div style={{position:"absolute",left:6,top:39,cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
             <CrossIcon size={30} glow={false}/>
           </div>
-          <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:"#c8bfa0",textShadow:"0 0 22px rgba(201,168,76,0.32), 0 0 55px rgba(201,168,76,0.14)",cursor:"pointer"}}>SELAH</h1>
-          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"#4a3e1a",marginTop:3}}>Read. Mark. Return.</p>
+          <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:"var(--text2)",textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",cursor:"pointer"}}>SELAH</h1>
+          <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m4)",marginTop:3}}>Read. Mark. Return.</p>
         </div>
 
         {/* DISPLAY LAYER — brightness + text-size apply here, not the header (keeps gold/cross true color) */}
@@ -1884,7 +1928,7 @@ export default function App() {
 
         {/* NAV */}
         {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && (
-          <div style={{display:"flex",borderBottom:"1px solid #36241c",marginBottom:20}}>
+          <div style={{display:"flex",borderBottom:"1px solid var(--border)",marginBottom:20}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
               Log {sessions.length>0&&`(${sessions.length})`}
@@ -1915,16 +1959,16 @@ export default function App() {
               {form.locationType==="Other" && (
                 <input style={{marginTop:8}} placeholder="Describe the place..." value={form.otherLocation} onChange={e=>setForm(f=>({...f,otherLocation:e.target.value}))}/>
               )}
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12,paddingTop:12,borderTop:"1px solid #36241c"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:12,paddingTop:12,borderTop:"1px solid var(--border)"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <div style={{color:useGps?"#c9a84c":"#3a3010"}}><ShieldIcon/></div>
+                  <div style={{color:useGps?"var(--accent)":"var(--m5)"}}><ShieldIcon/></div>
                   <div>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",color:useGps?"#6a5a30":"#3a3010"}}>Tag GPS Location</p>
-                    <p style={{fontSize:13,color:"#3a3010",marginTop:2}}>{useGps?"Stored on device only. Never shared.":"Location will not be recorded"}</p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",color:useGps?"var(--m2)":"var(--m5)"}}>Tag GPS Location</p>
+                    <p style={{fontSize:13,color:"var(--m5)",marginTop:2}}>{useGps?"Stored on device only. Never shared.":"Location will not be recorded"}</p>
                   </div>
                 </div>
-                <div onClick={()=>setUseGps(v=>!v)} style={{width:40,height:22,borderRadius:11,cursor:"pointer",flexShrink:0,background:useGps?"#c9a84c":"#36241c",border:`1px solid ${useGps?"#c9a84c":"#3a3010"}`,position:"relative",transition:"background 0.2s,border-color 0.2s"}}>
-                  <div style={{position:"absolute",top:2,left:useGps?18:2,width:16,height:16,borderRadius:8,background:useGps?"#0e0c06":"#4a3e1a",transition:"left 0.2s"}}/>
+                <div onClick={()=>setUseGps(v=>!v)} style={{width:40,height:22,borderRadius:11,cursor:"pointer",flexShrink:0,background:useGps?"var(--accent)":"var(--border)",border:`1px solid ${useGps?"var(--accent)":"var(--m5)"}`,position:"relative",transition:"background 0.2s,border-color 0.2s"}}>
+                  <div style={{position:"absolute",top:2,left:useGps?18:2,width:16,height:16,borderRadius:8,background:useGps?"var(--ink)":"var(--m4)",transition:"left 0.2s"}}/>
                 </div>
               </div>
             </div>
@@ -1942,8 +1986,8 @@ export default function App() {
 
             {/* Bible version quick display */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,paddingLeft:2}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase"}}>Reading in</span>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.1em"}}>{bibleVersion}</span>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m5)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Reading in</span>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.1em"}}>{bibleVersion}</span>
             </div>
 
             {error && <p style={{color:"#a04030",fontSize:15,marginBottom:12,fontStyle:"italic"}}>{error}</p>}
@@ -1956,21 +2000,21 @@ export default function App() {
         {/* ══ SESSION ══ */}
         {view === "session" && activeSession && (
           <div className="fade-in">
-            <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:8,padding:"14px 16px",marginBottom:16}}>
+            <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:8,padding:"14px 16px",marginBottom:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:activeSession.geoLabel?10:0}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,color:"#6a5a30",fontSize:13}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,color:"var(--m2)",fontSize:13}}>
                   <ClockIcon/><span>{formatTime(activeSession.startTime)}</span>
-                  <span className="pulse" style={{color:"#c9a84c",fontSize:10}}>●</span>
-                  <span style={{color:"#8a7a4a"}}>{activeMins}m in His Word</span>
+                  <span className="pulse" style={{color:"var(--accent)",fontSize:10}}>●</span>
+                  <span style={{color:"var(--m1)"}}>{activeMins}m in His Word</span>
                 </div>
-                <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase"}}>{activeSession.locationType}</span>
+                <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{activeSession.locationType}</span>
               </div>
               {activeSession.geoLabel && <div className="geo-badge"><PinIcon/>{activeSession.geoLabel}</div>}
             </div>
 
             <div style={{textAlign:"center",padding:"16px 0 20px"}}>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>In the Word — {bibleVersion}</p>
-              <p style={{fontFamily:"'Crimson Text',serif",fontSize:24,color:"#c9a84c"}}>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>In the Word — {bibleVersion}</p>
+              <p style={{fontFamily:"'Crimson Text',serif",fontSize:24,color:"var(--accent)"}}>
                 {activeSession.startBook} {activeSession.startChapter}{activeSession.startVerse?`:${activeSession.startVerse}`:""}
               </p>
             </div>
@@ -1984,9 +2028,9 @@ export default function App() {
                 </div>
               ) : (
                 <div className="photo-drop" onClick={()=>photoInputRef.current?.click()}>
-                  <div style={{color:"#4a3e1a"}}><CameraIcon/></div>
-                  <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase"}}>Add a photo</p>
-                  <p style={{fontSize:14,color:"#2e2408"}}>Where you are. Who you're with. What surrounds this time.</p>
+                  <div style={{color:"var(--m4)"}}><CameraIcon/></div>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m5)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Add a photo</p>
+                  <p style={{fontSize:14,color:"var(--border2)"}}>Where you are. Who you're with. What surrounds this time.</p>
                 </div>
               )}
               <input ref={photoInputRef} type="file" accept="image/*" style={{display:"none"}} onChange={handlePhotoUpload}/>
@@ -2012,7 +2056,7 @@ export default function App() {
             {error && <p style={{color:"#a04030",fontSize:15,marginBottom:12,fontStyle:"italic"}}>{error}</p>}
             {loading ? (
               <div style={{textAlign:"center",padding:"28px 0"}}>
-                <p className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.18em"}}>READING HIS WORD...</p>
+                <p className="pulse" style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.18em"}}>READING HIS WORD...</p>
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -2031,23 +2075,23 @@ export default function App() {
                 <img src={activeSession.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",display:"block"}}/>
                 <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 45%,rgba(14,12,6,0.9) 100%)"}}/>
                 <div style={{position:"absolute",bottom:14,left:16,right:16}}>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:19,color:"#c9a84c",marginBottom:6}}>{activeSession.passage}</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:19,color:"var(--accent)",marginBottom:6}}>{activeSession.passage}</p>
                   <div style={{display:"flex",flexWrap:"wrap",gap:"6px 12px",alignItems:"center"}}>
                     {activeSession.geoLabel && <div className="geo-badge"><PinIcon/>{activeSession.geoLabel}</div>}
-                    <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#5a4a2a",letterSpacing:"0.08em"}}>
+                    <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m3b)",letterSpacing:"0.08em"}}>
                       {elapsed(activeSession.startTime,activeSession.endTime)} · {activeSession.locationType}
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div style={{background:"linear-gradient(160deg,#181208,#0e0c06)",border:"1px solid #2e2408",borderRadius:8,padding:"18px",marginBottom:14}}>
+              <div style={{background:"linear-gradient(160deg,#181208,var(--ink))",border:"1px solid var(--border2)",borderRadius:8,padding:"18px",marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",gap:12}}>
                   <div style={{flex:1}}>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Session Complete</p>
-                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",lineHeight:1.3}}>{activeSession.passage}</p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Session Complete</p>
+                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"var(--accent)",lineHeight:1.3}}>{activeSession.passage}</p>
                   </div>
-                  <div style={{textAlign:"right",fontSize:12,color:"#4a3e1a",flexShrink:0}}>
+                  <div style={{textAlign:"right",fontSize:12,color:"var(--m4)",flexShrink:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",marginBottom:5}}><ClockIcon/>{elapsed(activeSession.startTime,activeSession.readingEndTime||activeSession.endTime)} reading</div>
                     <div style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase"}}>{activeSession.locationType}</div>
                   </div>
@@ -2058,16 +2102,16 @@ export default function App() {
 
             {/* GROUND — context, deeper */}
             {result.context && (
-              <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8}}>Ground</p>
+              <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid var(--m5)",borderRadius:6,padding:"16px 18px",marginBottom:14}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8}}>Ground</p>
                 <p style={{fontSize:16,lineHeight:1.78,color:"#5a5030"}}>{result.context}</p>
               </div>
             )}
 
             {/* SUMMARY — not italic, not scripture */}
             {result.summary && (
-              <div style={{borderLeft:"2px solid rgba(201,168,76,0.5)",paddingLeft:16,marginBottom:20}}>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:7}}>In One Sentence</p>
+              <div style={{borderLeft:"2px solid rgba(var(--accent-rgb),0.5)",paddingLeft:16,marginBottom:20}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:7}}>In One Sentence</p>
                 <p style={{color:"#a09060",fontSize:18,lineHeight:1.6}}>{result.summary}</p>
               </div>
             )}
@@ -2077,17 +2121,17 @@ export default function App() {
               <button className="btn-export" style={{marginBottom:8}} onClick={()=>setExportSession(activeSession)}>
                 <ShareIcon/> Save or Share This Session
               </button>
-              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#3a3010",textAlign:"center",lineHeight:1.5}}>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m5)",textAlign:"center",lineHeight:1.5}}>
                 "Let the redeemed of the Lord tell their story." — Psalm 107:2
               </p>
             </div>
 
             {/* QUESTIONS — fillable with answer feedback */}
-            <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,q:!s.q}))}>
                 <div>
-                  <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Questions from the Text</span>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"#3a3010",marginTop:3}}>Tap a question to write your answer. Then submit.</p>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"var(--accent)",textTransform:"uppercase"}}>Questions from the Text</span>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m5)",marginTop:3}}>Tap a question to write your answer. Then submit.</p>
                 </div>
                 <ChevronIcon open={openSection.q}/>
               </div>
@@ -2096,10 +2140,10 @@ export default function App() {
                   {result.questions?.map((q,i)=>(
                     <div key={i} style={{marginBottom:20,paddingBottom:20,borderBottom:i<result.questions.length-1?"1px solid #1a1608":"none"}}>
                       <div style={{display:"flex",gap:14,marginBottom:10,alignItems:"flex-start"}}>
-                        <div style={{flexShrink:0,width:28,height:28,borderRadius:14,background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.15)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                          <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",fontWeight:600}}>{i+1}</span>
+                        <div style={{flexShrink:0,width:28,height:28,borderRadius:14,background:"rgba(var(--accent-rgb),0.08)",border:"1px solid rgba(var(--accent-rgb),0.15)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          <span style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m2)",fontWeight:600}}>{i+1}</span>
                         </div>
-                        <p style={{fontSize:17,lineHeight:1.7,color:"#d4ccb8",paddingTop:4}}>{q}</p>
+                        <p style={{fontSize:17,lineHeight:1.7,color:"var(--text4)",paddingTop:4}}>{q}</p>
                       </div>
                       <AnswerInput
                         value={questionAnswers[i]||""}
@@ -2111,28 +2155,28 @@ export default function App() {
                   {!feedbackSubmitted ? (
                     <button onClick={submitAnswers}
                       disabled={feedbackLoading||!Object.values(questionAnswers).some(a=>a&&a.trim().length>0)}
-                      style={{width:"100%",padding:"12px",background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.3)",borderRadius:5,fontFamily:"'Cinzel',serif",fontSize:11,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s",opacity:feedbackLoading||!Object.values(questionAnswers).some(a=>a&&a.trim().length>0)?0.4:1}}>
+                      style={{width:"100%",padding:"12px",background:"rgba(var(--accent-rgb),0.08)",border:"1px solid rgba(var(--accent-rgb),0.3)",borderRadius:5,fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",transition:"all 0.2s",opacity:feedbackLoading||!Object.values(questionAnswers).some(a=>a&&a.trim().length>0)?0.4:1}}>
                       {feedbackLoading ? "Reading your answers..." : "Submit Answers"}
                     </button>
                   ) : (
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#3a3010",letterSpacing:"0.1em",textAlign:"center",textTransform:"uppercase"}}>Answers submitted</p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m5)",letterSpacing:"0.1em",textAlign:"center",textTransform:"uppercase"}}>Answers submitted</p>
                   )}
                 </div>
               )}
             </div>
 
             {/* FIELD NOTES — informational, grounded */}
-            <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,n:!s.n}))}>
-                <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Field Notes</span>
+                <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"var(--accent)",textTransform:"uppercase"}}>Field Notes</span>
                 <ChevronIcon open={openSection.n}/>
               </div>
               {openSection.n && (
                 <div style={{borderTop:"1px solid #1e1a08",padding:"14px 18px 18px"}}>
                   {result.notes?.map((n,i)=>(
                     <div key={i} style={{display:"flex",gap:12,marginBottom:14,alignItems:"flex-start"}}>
-                      <span style={{color:"rgba(201,168,76,0.4)",fontSize:18,minWidth:10,paddingTop:1,lineHeight:1}}>—</span>
-                      <p style={{fontSize:17,lineHeight:1.7,color:"#c0b898"}}>{n}</p>
+                      <span style={{color:"rgba(var(--accent-rgb),0.4)",fontSize:18,minWidth:10,paddingTop:1,lineHeight:1}}>—</span>
+                      <p style={{fontSize:17,lineHeight:1.7,color:"var(--text3)"}}>{n}</p>
                     </div>
                   ))}
                 </div>
@@ -2140,11 +2184,11 @@ export default function App() {
             </div>
 
             {/* RETURN VERSES — sent back, directive */}
-            <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
+            <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,marginBottom:14,overflow:"hidden"}}>
               <div className="section-head" style={{padding:"14px 18px"}} onClick={()=>setOpenSection(s=>({...s,v:!s.v}))}>
                 <div>
-                  <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"#c9a84c",textTransform:"uppercase"}}>Come Back To</span>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"#3a3010",marginTop:3}}>Not comfort. A command to return.</p>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.14em",color:"var(--accent)",textTransform:"uppercase"}}>Come Back To</span>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m5)",marginTop:3}}>Not comfort. A command to return.</p>
                 </div>
                 <ChevronIcon open={openSection.v}/>
               </div>
@@ -2152,8 +2196,8 @@ export default function App() {
                 <div style={{borderTop:"1px solid #1e1a08"}}>
                   {result.returnVerses?.map((v,i)=>(
                     <div key={i} style={{padding:"16px 18px",borderBottom:i<result.returnVerses.length-1?"1px solid #1a1608":"none"}}>
-                      <p style={{fontFamily:"'Cinzel',serif",fontSize:14,color:"#c9a84c",letterSpacing:"0.04em",marginBottom:8}}>{v.ref}</p>
-                      <p style={{fontSize:16,color:"#6a5a30",lineHeight:1.6,fontStyle:"italic"}}>{v.reason}</p>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:14,color:"var(--accent)",letterSpacing:"0.04em",marginBottom:8}}>{v.ref}</p>
+                      <p style={{fontSize:16,color:"var(--m2)",lineHeight:1.6,fontStyle:"italic"}}>{v.reason}</p>
                     </div>
                   ))}
                 </div>
@@ -2161,9 +2205,9 @@ export default function App() {
             </div>
 
             {activeSession.personalNotes && (
-              <div className="card" style={{borderColor:"#2e2408",marginBottom:14}}>
+              <div className="card" style={{borderColor:"var(--border2)",marginBottom:14}}>
                 <p className="label">Your Notes</p>
-                <p style={{fontSize:17,lineHeight:1.65,color:"#6a5a30",fontStyle:"italic"}}>{activeSession.personalNotes}</p>
+                <p style={{fontSize:17,lineHeight:1.65,color:"var(--m2)",fontStyle:"italic"}}>{activeSession.personalNotes}</p>
               </div>
             )}
 
@@ -2178,11 +2222,11 @@ export default function App() {
             {sessions.length === 0 ? (
               <>
                 <div style={{textAlign:"center",padding:"12px 0 18px"}}>
-                  <div style={{color:"#2e2408",marginBottom:10,display:"flex",justifyContent:"center"}}><BookIcon/></div>
-                  <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#2e2408",letterSpacing:"0.14em"}}>NO SESSIONS LOGGED YET</p>
+                  <div style={{color:"var(--border2)",marginBottom:10,display:"flex",justifyContent:"center"}}><BookIcon/></div>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--border2)",letterSpacing:"0.14em"}}>NO SESSIONS LOGGED YET</p>
                   <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#4a3a18",marginTop:8}}>Tap today or a day ahead to set a reminder.</p>
                 </div>
-                <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+                <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:10}}>
                   <EmptyDayPanel date={filterDate || (()=>{const d=new Date();d.setHours(0,0,0,0);return d;})()} alarms={alarms} onSaveAlarm={handleSaveAlarm} suppressPast/>
                 </div>
               </>
@@ -2205,31 +2249,31 @@ export default function App() {
                   const prevTime = sessionDates.filter(t=>t<curTime).slice(-1)[0];
                   const nextTime = sessionDates.filter(t=>t>curTime)[0];
                   const NavBtn = ({onClick,disabled,children}) => (
-                    <button onClick={onClick} disabled={disabled} style={{background:"transparent",border:"none",color:disabled?"#36241c":"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:16,cursor:disabled?"default":"pointer",padding:"0 6px",lineHeight:1,transition:"color 0.2s"}}
-                      onMouseOver={e=>{ if(!disabled) e.currentTarget.style.color="#c9a84c"; }}
-                      onMouseOut={e=>{ if(!disabled) e.currentTarget.style.color="#6a5a30"; }}>
+                    <button onClick={onClick} disabled={disabled} style={{background:"transparent",border:"none",color:disabled?"var(--border)":"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:16,cursor:disabled?"default":"pointer",padding:"0 6px",lineHeight:1,transition:"color 0.2s"}}
+                      onMouseOver={e=>{ if(!disabled) e.currentTarget.style.color="var(--accent)"; }}
+                      onMouseOut={e=>{ if(!disabled) e.currentTarget.style.color="var(--m2)"; }}>
                       {children}
                     </button>
                   );
                   return (
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,padding:"7px 10px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:5}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,padding:"7px 10px",background:"rgba(var(--accent-rgb),0.06)",border:"1px solid rgba(var(--accent-rgb),0.15)",borderRadius:5}}>
                       <NavBtn onClick={()=>{ const d=new Date(prevTime); d.setHours(0,0,0,0); setFilterDate(d); }} disabled={!prevTime}>‹</NavBtn>
                       <div style={{textAlign:"center",flex:1}}>
-                        <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.12em",textTransform:"uppercase"}}>
+                        <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase"}}>
                           {dayNames[fd.getDay()]}, {months[fd.getMonth()]} {fd.getDate()}
                         </p>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:4}}>
                         <NavBtn onClick={()=>{ const d=new Date(nextTime); d.setHours(0,0,0,0); setFilterDate(d); }} disabled={!nextTime}>›</NavBtn>
                         {!isToday && (
-                          <button onClick={()=>{ const d=new Date(); d.setHours(0,0,0,0); setFilterDate(d); }} style={{background:"transparent",border:"1px solid rgba(201,168,76,0.25)",borderRadius:3,padding:"2px 8px",fontFamily:"'Cinzel',serif",fontSize:8,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginLeft:4}}>Today</button>
+                          <button onClick={()=>{ const d=new Date(); d.setHours(0,0,0,0); setFilterDate(d); }} style={{background:"transparent",border:"1px solid rgba(var(--accent-rgb),0.25)",borderRadius:3,padding:"2px 8px",fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginLeft:4}}>Today</button>
                         )}
                       </div>
                     </div>
                   );
                 })()}
                 {/* Day box or full list */}
-                <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+                <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:10}}>
                     {filteredSessions.length === 0 ? (
                       <EmptyDayPanel date={activeFd} alarms={alarms} onSaveAlarm={handleSaveAlarm}/>
                     ) : (
@@ -2239,7 +2283,7 @@ export default function App() {
                       <div onClick={(e)=>{e.stopPropagation();setLightItem(pickReadingItem(s));setPhotoView(s);}} style={{height:90,overflow:"hidden",position:"relative",cursor:"pointer"}}>
                         <img src={s.photoData} alt="" style={{width:"100%",height:"100%",objectFit:"cover",opacity:0.65}}/>
                         <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent,rgba(14,12,6,0.85))"}}/>
-                        <div style={{position:"absolute",bottom:8,right:10,display:"flex",alignItems:"center",gap:5,fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase",color:"#c9a84c"}}>
+                        <div style={{position:"absolute",bottom:8,right:10,display:"flex",alignItems:"center",gap:5,fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.1em",textTransform:"uppercase",color:"var(--accent)"}}>
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
                           View
                         </div>
@@ -2247,12 +2291,12 @@ export default function App() {
                     )}
                     <div className="hist-head" onClick={()=>toggleSession(s.id)}>
                       <div style={{flex:1,minWidth:0}}>
-                        <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"#c9a84c",marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.passage}</p>
-                        <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",color:"#4a3e1a",fontSize:12,alignItems:"center"}}>
+                        <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"var(--accent)",marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.passage}</p>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",color:"var(--m4)",fontSize:12,alignItems:"center"}}>
                           <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatDate(s.startTime)}</span>
                           <span>{elapsed(s.startTime,s.readingEndTime||s.endTime)} reading</span>
                           {s.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3}}><PinIcon/>{s.geoLabel}</span>}
-                          {s.bibleVersion && <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.08em"}}>{s.bibleVersion}</span>}
+                          {s.bibleVersion && <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m5)",letterSpacing:"0.08em"}}>{s.bibleVersion}</span>}
                         </div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8,flexShrink:0}}>
@@ -2261,34 +2305,34 @@ export default function App() {
                       </div>
                     </div>
                     {expandedSession===s.id && s.aiResult && (
-                      <div style={{padding:"0 16px 16px",borderTop:"1px solid #36241c"}}>
+                      <div style={{padding:"0 16px 16px",borderTop:"1px solid var(--border)"}}>
                         {s.aiResult.context && (
-                          <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid #3a3010",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
-                            <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Ground</p>
+                          <div style={{background:"#1c100b",border:"1px solid #1e1a08",borderLeft:"3px solid var(--m5)",borderRadius:6,padding:"12px 14px",margin:"12px 0 10px"}}>
+                            <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Ground</p>
                             <p style={{fontSize:14,lineHeight:1.7,color:"#5a5030"}}>{s.aiResult.context}</p>
                           </div>
                         )}
                         {s.aiResult.summary && (
-                          <div style={{borderLeft:"2px solid rgba(201,168,76,0.4)",paddingLeft:12,margin:"10px 0"}}>
-                            <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:5}}>In One Sentence</p>
-                            <p style={{fontStyle:"italic",color:"#8a7a4a",fontSize:15,lineHeight:1.55}}>{s.aiResult.summary}</p>
+                          <div style={{borderLeft:"2px solid rgba(var(--accent-rgb),0.4)",paddingLeft:12,margin:"10px 0"}}>
+                            <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:5}}>In One Sentence</p>
+                            <p style={{fontStyle:"italic",color:"var(--m1)",fontSize:15,lineHeight:1.55}}>{s.aiResult.summary}</p>
                           </div>
                         )}
                         <hr className="divider"/>
                         <p className="label">Questions from the Text</p>
                         {s.aiResult.questions?.map((q,i)=>(
                           <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:i<s.aiResult.questions.length-1?"1px solid #1a1608":"none"}}>
-                            <p style={{fontSize:15,color:"#d4ccb8",lineHeight:1.6,marginBottom:6}}>{q}</p>
+                            <p style={{fontSize:15,color:"var(--text4)",lineHeight:1.6,marginBottom:6}}>{q}</p>
                             {s.questionAnswers?.[i] && (
-                              <div style={{background:"#20130f",border:"1px solid #2e2408",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
-                                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Your Answer</p>
-                                <p style={{fontSize:14,color:"#8a7a5a",lineHeight:1.6,fontStyle:"italic"}}>{s.questionAnswers[i]}</p>
+                              <div style={{background:"var(--surface)",border:"1px solid var(--border2)",borderRadius:5,padding:"8px 12px",marginBottom:s.answerFeedback?.[i]?6:0}}>
+                                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m5)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Your Answer</p>
+                                <p style={{fontSize:14,color:"var(--m1b)",lineHeight:1.6,fontStyle:"italic"}}>{s.questionAnswers[i]}</p>
                               </div>
                             )}
                             {s.answerFeedback?.[i] && (
-                              <div style={{background:"rgba(201,168,76,0.04)",border:"1px solid rgba(201,168,76,0.12)",borderRadius:5,padding:"8px 12px"}}>
-                                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Response</p>
-                                <p style={{fontSize:14,color:"#8a7a5a",lineHeight:1.6}}>{s.answerFeedback[i]}</p>
+                              <div style={{background:"rgba(var(--accent-rgb),0.04)",border:"1px solid rgba(var(--accent-rgb),0.12)",borderRadius:5,padding:"8px 12px"}}>
+                                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Response</p>
+                                <p style={{fontSize:14,color:"var(--m1b)",lineHeight:1.6}}>{s.answerFeedback[i]}</p>
                               </div>
                             )}
                           </div>
@@ -2299,8 +2343,8 @@ export default function App() {
                             <p className="label">Field Notes</p>
                             {s.aiResult.notes.map((n,i)=>(
                               <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start"}}>
-                                <span style={{color:"rgba(201,168,76,0.4)",fontSize:16,lineHeight:1}}>*</span>
-                                <p style={{fontSize:14,lineHeight:1.65,color:"#c0b898"}}>{n}</p>
+                                <span style={{color:"rgba(var(--accent-rgb),0.4)",fontSize:16,lineHeight:1}}>*</span>
+                                <p style={{fontSize:14,lineHeight:1.65,color:"var(--text3)"}}>{n}</p>
                               </div>
                             ))}
                           </>
@@ -2308,12 +2352,12 @@ export default function App() {
                         <hr className="divider"/>
                         <p className="label">Come Back To</p>
                         {s.aiResult.returnVerses?.map((v,i)=>(
-                          <div key={i} style={{marginBottom:10,paddingLeft:10,borderLeft:"2px solid #2e2408"}}>
-                            <p style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"#c9a84c",marginBottom:4}}>{v.ref}</p>
-                            <p style={{color:"#6a5a30",fontSize:13,fontStyle:"italic",lineHeight:1.55}}>{v.reason}</p>
+                          <div key={i} style={{marginBottom:10,paddingLeft:10,borderLeft:"2px solid var(--border2)"}}>
+                            <p style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--accent)",marginBottom:4}}>{v.ref}</p>
+                            <p style={{color:"var(--m2)",fontSize:13,fontStyle:"italic",lineHeight:1.55}}>{v.reason}</p>
                           </div>
                         ))}
-                        {s.personalNotes && (<><hr className="divider"/><p className="label">Your Notes</p><p style={{fontStyle:"italic",color:"#5a4a20",fontSize:14,lineHeight:1.55}}>{s.personalNotes}</p></>)}
+                        {s.personalNotes && (<><hr className="divider"/><p className="label">Your Notes</p><p style={{fontStyle:"italic",color:"var(--m3)",fontSize:14,lineHeight:1.55}}>{s.personalNotes}</p></>)}
                         <hr className="divider"/>
                         <button className="btn-export" style={{fontSize:10,padding:"9px 16px"}} onClick={()=>setExportSession(s)}>
                           <ShareIcon/> Save or Share
@@ -2336,19 +2380,19 @@ export default function App() {
         {/* ══ SETTINGS ══ */}
         {view === "settings" && (
           <div className="fade-in">
-            <button onClick={()=>setView("home")} style={{background:"transparent",border:"none",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>
+            <button onClick={()=>setView("home")} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>
               ← Back
             </button>
-            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#3a3010",textAlign:"center",marginBottom:16,lineHeight:1.5}}>
+            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m5)",textAlign:"center",marginBottom:16,lineHeight:1.5}}>
               Set these once. Come back when something changes.
             </p>
             <div className="card" style={{textAlign:"center",paddingTop:28,paddingBottom:28}}>
               <div style={{display:"flex",justifyContent:"center",marginBottom:14}}>
                 <CrossIcon size={32} glow={false}/>
               </div>
-              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:"#e4dcc8",marginBottom:6}}>SELAH</h2>
-              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",color:"#4a3e1a",fontSize:14,marginBottom:14}}>Read. Mark. Return.</p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(201,168,76,0.5)",letterSpacing:"0.2em",textTransform:"uppercase"}}>MIDNIGHT MINISTRIES</p>
+              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:"var(--text)",marginBottom:6}}>SELAH</h2>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",color:"var(--m4)",fontSize:14,marginBottom:14}}>Read. Mark. Return.</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(var(--accent-rgb),0.5)",letterSpacing:"0.2em",textTransform:"uppercase"}}>MIDNIGHT MINISTRIES</p>
             </div>
 
             {/* Account */}
@@ -2356,28 +2400,28 @@ export default function App() {
               <p className="label">Account</p>
               {account ? (
                 <>
-                  <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:6}}>Signed in as</p>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"#c9a84c",marginBottom:12,wordBreak:"break-all"}}>{account.email}</p>
-                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:14,color:syncState==="error"?"#d98a8a":"#4a3e1a"}}>
+                  <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:6}}>Signed in as</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"var(--accent)",marginBottom:12,wordBreak:"break-all"}}>{account.email}</p>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:14,color:syncState==="error"?"#d98a8a":"var(--m4)"}}>
                     {syncState==="saving" ? "Syncing…" : syncState==="error" ? "Sync failed — will retry" : "Log and settings synced"}
                   </p>
                   <button className="btn-ghost" style={{width:"100%",padding:"12px"}} onClick={handleSignOut}>Sign Out</button>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"#4a3e1a",textAlign:"center",marginTop:10,lineHeight:1.5}}>Signing out leaves your log on this device. It stays safe in your account.</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",textAlign:"center",marginTop:10,lineHeight:1.5}}>Signing out leaves your log on this device. It stays safe in your account.</p>
                 </>
               ) : (
                 <>
-                  <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>
+                  <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
                     Create an account to carry your log and content settings across every device. Brightness and text size stay set per device.
                   </p>
                   <button className="btn-primary" style={{width:"100%",padding:"13px",marginBottom:10}} onClick={()=>{ setAuthIntro(false); setView("auth"); }}>Create Account or Sign In</button>
                 </>
               )}
               <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid #2a1c14"}}>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>What syncs, what stays</p>
-                <p style={{fontSize:15,color:"#6a5a30",lineHeight:1.65,marginBottom:8}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>What syncs, what stays</p>
+                <p style={{fontSize:15,color:"var(--m2)",lineHeight:1.65,marginBottom:8}}>
                   An account exists for one reason: so your reading carries across your devices. It stores your reading log (passages, notes, questions, answers, return verses, times), your reading position, and your content settings — translation, age group, birthday, gender, reminders, clock and time zone.
                 </p>
-                <p style={{fontSize:15,color:"#6a5a30",lineHeight:1.65}}>
+                <p style={{fontSize:15,color:"var(--m2)",lineHeight:1.65}}>
                   Your photos and GPS location never leave this device. Brightness and text size are set per device, so each screen reads right in its own light. Nothing is sold, shared, or used for anything but syncing your account.
                 </p>
               </div>
@@ -2386,7 +2430,7 @@ export default function App() {
             {/* Bible Version */}
             <div className="card">
               <p className="label">Bible Translation</p>
-              <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>
+              <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
                 {isKidAge
                   ? "These are easy-to-read translations made for young readers. Questions and field notes are calibrated to a child's reading level."
                   : "Select the translation you read in. Questions and field notes are calibrated to your version's language."}
@@ -2398,14 +2442,14 @@ export default function App() {
                 ))}
               </div>
               {isKidAge && (
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#3a3010",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:10,lineHeight:1.6}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m5)",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:10,lineHeight:1.6}}>
                   Kids set selected. Switch your age group above to see the full translation list.
                 </p>
               )}
               {!isKidAge && bibleVersion==="NIV" && (
-                <div style={{marginTop:12,background:"rgba(201,168,76,0.05)",border:"1px solid rgba(201,168,76,0.18)",borderLeft:"3px solid #c9a84c",borderRadius:6,padding:"11px 14px"}}>
-                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#c9a84c",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:5}}>A Note on the NIV</p>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#8a7a4a",lineHeight:1.6}}>SELAH follows the classic NIV wording. It is not calibrated to the 2011 revision and its gender-language changes.</p>
+                <div style={{marginTop:12,background:"rgba(var(--accent-rgb),0.05)",border:"1px solid rgba(var(--accent-rgb),0.18)",borderLeft:"3px solid var(--accent)",borderRadius:6,padding:"11px 14px"}}>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:5}}>A Note on the NIV</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m1)",lineHeight:1.6}}>SELAH follows the classic NIV wording. It is not calibrated to the 2011 revision and its gender-language changes.</p>
                 </div>
               )}
             </div>
@@ -2413,17 +2457,17 @@ export default function App() {
             {/* Gender + Age + Time */}
             <div className="card">
               <p className="label">I Am</p>
-              <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>
+              <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
                 The model adjusts language and examples to meet you where you are. His Word does not change.
               </p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gender</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gender</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
                 {["Male","Female","Prefer not to say"].map(g=>(
                   <button key={g} className={`version-pill ${gender===g?"active":""}`}
                     onClick={()=>setGender(g)}>{g}</button>
                 ))}
               </div>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Age</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Age</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                 {["Kids (5-12)","Teen (13-17)","Adult (18+)","Prefer not to say"].map(a=>(
                   <button key={a} className={`version-pill ${age===a?"active":""}`}
@@ -2433,23 +2477,23 @@ export default function App() {
                     }}>{a}</button>
                 ))}
               </div>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",margin:"16px 0 8px"}}>Birthday</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",margin:"16px 0 8px"}}>Birthday</p>
               <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
-                style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
+                style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input2)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
             </div>
 
             {/* Clock and Timezone */}
             <div className="card">
               <p className="label">Time Display</p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Clock Format</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Clock Format</p>
               <div style={{display:"flex",gap:8,marginBottom:16}}>
                 {[["12","12-Hour (2:30 PM)"],["24","24-Hour (14:30)"]].map(([val,label])=>(
                   <button key={val} className={`version-pill ${clockFmt===val?"active":""}`}
                     onClick={()=>setClockFmt(val)} style={{flex:1}}>{label}</button>
                 ))}
               </div>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Time Zone</p>
-              <p style={{fontSize:13,color:"#3a3010",marginBottom:10,lineHeight:1.5}}>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Time Zone</p>
+              <p style={{fontSize:13,color:"var(--m5)",marginBottom:10,lineHeight:1.5}}>
                 If your device drifts near state borders (Yuma area, AZ near CA), set manually.
               </p>
               <TimezoneDropdown timezone={timezone} setTimezone={setTimezone}/>
@@ -2458,42 +2502,56 @@ export default function App() {
             {/* Visuals */}
             <div className="card">
               <p className="label">Visuals</p>
-              <p style={{fontSize:15,color:"#5a4a20",lineHeight:1.6,marginBottom:14}}>
+              <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
                 Make it yours. The Word does not change; the look can.
               </p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>App Icon</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>App Icon</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:12,marginBottom:12}}>
                 {Object.entries(ICON_THEMES).map(([key,t])=>(
                   <button key={key} onClick={()=>setAppIcon(key)}
                     style={{background:"transparent",border:"none",padding:0,cursor:"pointer",textAlign:"center",width:64}}>
-                    <div style={{width:64,height:64,borderRadius:14,overflow:"hidden",border:appIcon===key?"2px solid #c9a84c":"2px solid #36241c",boxShadow:appIcon===key?"0 0 14px rgba(201,168,76,0.35)":"none",transition:"all 0.2s"}}>
+                    <div style={{width:64,height:64,borderRadius:14,overflow:"hidden",border:appIcon===key?"2px solid var(--accent)":"2px solid var(--border)",boxShadow:appIcon===key?"0 0 14px rgba(var(--accent-rgb),0.35)":"none",transition:"all 0.2s"}}>
                       <img src={t.thumb} alt={t.label} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
                     </div>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.06em",textTransform:"uppercase",marginTop:6,color:appIcon===key?"#c9a84c":"#5a4a20"}}>{t.label}</p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.06em",textTransform:"uppercase",marginTop:6,color:appIcon===key?"var(--accent)":"var(--m3)"}}>{t.label}</p>
                   </button>
                 ))}
               </div>
-              <div style={{background:"rgba(201,168,76,0.05)",border:"1px solid rgba(201,168,76,0.16)",borderRadius:6,padding:"11px 14px"}}>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#8a7a4a",lineHeight:1.6}}>
+              <div style={{background:"rgba(var(--accent-rgb),0.05)",border:"1px solid rgba(var(--accent-rgb),0.16)",borderRadius:6,padding:"11px 14px"}}>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m1)",lineHeight:1.6}}>
                   On a computer the browser tab updates right away. On iPhone or iPad, pick your icon first, then add SELAH to your home screen and it carries that icon. Samsung and other Android phones currently only show the default icon. We are building the piece that lets the installed app override that, and it is coming.
                 </p>
+              </div>
+
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",margin:"20px 0 10px"}}>Color Palette</p>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {Object.entries(PALETTES).map(([key,p])=>(
+                  <button key={key} onClick={()=>setPalette(key)}
+                    style={{display:"flex",alignItems:"center",gap:12,background:"transparent",border:palette===key?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:8,padding:"10px 12px",cursor:"pointer",transition:"border-color 0.2s"}}>
+                    <div style={{display:"flex",gap:0,borderRadius:6,overflow:"hidden",border:"1px solid var(--border2)",flexShrink:0}}>
+                      {p.swatch.map((c,i)=>(<div key={i} style={{width:20,height:28,background:c}}/>))}
+                    </div>
+                    <span style={{fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.06em",color:palette===key?"var(--accent)":"var(--m2)",flex:1,textAlign:"left"}}>{p.label}</span>
+                    {palette===key && <span style={{color:"var(--accent)",fontSize:14}}>✓</span>}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Support the Ministry */}
-            <div className="card" style={{borderColor:"rgba(201,168,76,0.2)"}}>
+            <div className="card" style={{borderColor:"rgba(var(--accent-rgb),0.2)"}}>
               <p className="label">Support the Ministry</p>
-              <p style={{fontSize:16,lineHeight:1.7,color:"#6a5a30",marginBottom:14}}>
+              <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:14}}>
                 SELAH is free. It will stay free. If it has been useful to you and you want to invest in what is being built, this is how.
               </p>
-              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#5a4a20",marginBottom:16,lineHeight:1.65,borderLeft:"2px solid #2e2408",paddingLeft:12}}>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m3)",marginBottom:16,lineHeight:1.65,borderLeft:"2px solid var(--border2)",paddingLeft:12}}>
                 Sixty percent of every dollar given goes directly to the local church. Forty percent funds the tools this ministry was handed to build. When you give, you receive a receipt automatically. Every 30 days Midnight Ministries publishes what came in, what went out, and where it went. That is not a policy. That is a commitment.
               </p>
               <a href="https://donate.midnightministries.com" target="_blank" rel="noopener noreferrer"
                 style={{
                   display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                  background:"linear-gradient(135deg,#c9a84c,#a8832a)",
-                  color:"#0e0c06",borderRadius:5,padding:"13px 20px",
+                  background:"linear-gradient(135deg,var(--accent),var(--accent2))",
+                  color:"var(--ink)",borderRadius:5,padding:"13px 20px",
                   fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,
                   letterSpacing:"0.1em",textTransform:"uppercase",
                   textDecoration:"none",transition:"opacity 0.2s"
@@ -2505,7 +2563,7 @@ export default function App() {
                 </svg>
                 Give to Midnight Ministries
               </a>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#2e2408",textAlign:"center",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:10}}>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--border2)",textAlign:"center",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:10}}>
                 URL updates when donation link is live
               </p>
             </div>
@@ -2513,14 +2571,14 @@ export default function App() {
             <div className="card">
               <p className="label">Privacy</p>
               <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-                <div style={{color:"#c9a84c",marginTop:2,flexShrink:0}}><ShieldIcon/></div>
-                <p style={{fontSize:16,lineHeight:1.65,color:"#6a5a30"}}>Photos and GPS location stay on this device and are never uploaded. With an account, your reading log and content settings sync so you can pick up on any device; without one, nothing leaves this device. Share cards are generated locally and only leave when you choose to send them.</p>
+                <div style={{color:"var(--accent)",marginTop:2,flexShrink:0}}><ShieldIcon/></div>
+                <p style={{fontSize:16,lineHeight:1.65,color:"var(--m2)"}}>Photos and GPS location stay on this device and are never uploaded. With an account, your reading log and content settings sync so you can pick up on any device; without one, nothing leaves this device. Share cards are generated locally and only leave when you choose to send them.</p>
               </div>
             </div>
             <div className="card">
               <p className="label">Storage</p>
-              <p style={{fontSize:16,lineHeight:1.65,color:"#6a5a30",marginBottom:14}}>All sessions including photos are saved in your browser. Clearing browser data removes your log. Export to Notes or Files for permanent records.</p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#4a3e1a",letterSpacing:"0.08em"}}>
+              <p style={{fontSize:16,lineHeight:1.65,color:"var(--m2)",marginBottom:14}}>All sessions including photos are saved in your browser. Clearing browser data removes your log. Export to Notes or Files for permanent records.</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.08em"}}>
                 {sessions.length} session{sessions.length!==1?"s":""} — {sessions.filter(s=>s.photoData).length} with photos
               </p>
             </div>
@@ -2535,20 +2593,20 @@ export default function App() {
                   <p className="label">Depth Level</p>
                   <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
                     <div style={{textAlign:"center"}}>
-                      <p style={{fontFamily:"'Cinzel',serif",fontSize:28,color:"#c9a84c",fontWeight:700,lineHeight:1}}>{d.level}</p>
-                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3}}>of 5</p>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:28,color:"var(--accent)",fontWeight:700,lineHeight:1}}>{d.level}</p>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3}}>of 5</p>
                     </div>
                     <div>
-                      <p style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"#c9a84c",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:3}}>{d.name}</p>
-                      <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"#5a4a20"}}>{sessions.length} sessions · {totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h"} in His Word</p>
+                      <p style={{fontFamily:"'Cinzel',serif",fontSize:15,color:"var(--accent)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:3}}>{d.name}</p>
+                      <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)"}}>{sessions.length} sessions · {totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h"} in His Word</p>
                     </div>
                   </div>
                   <div style={{display:"flex",gap:4}}>
                     {levels.map((l,i)=>(
-                      <div key={l} style={{flex:1,height:4,borderRadius:2,background:i<d.level?"#c9a84c":"#36241c",transition:"background 0.3s"}}/>
+                      <div key={l} style={{flex:1,height:4,borderRadius:2,background:i<d.level?"var(--accent)":"var(--border)",transition:"background 0.3s"}}/>
                     ))}
                   </div>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"#3a3010",marginTop:10,lineHeight:1.5}}>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m5)",marginTop:10,lineHeight:1.5}}>
                     The questions and notes adjust as you grow. You are always gathering.
                   </p>
                 </div>
@@ -2556,18 +2614,18 @@ export default function App() {
             })()}
             <div className="card">
               <p className="label">Clear All Data</p>
-              <p style={{fontSize:15,color:"#5a4a20",marginBottom:14,lineHeight:1.5}}>Removes every session from this device. Cannot be undone.</p>
+              <p style={{fontSize:15,color:"var(--m3)",marginBottom:14,lineHeight:1.5}}>Removes every session from this device. Cannot be undone.</p>
               <button className="btn-danger" style={{width:"100%",padding:"12px"}}
                 onClick={()=>{ if(window.confirm("Delete all sessions? This cannot be undone.")) { setSessions([]); saveSessions([]); }}}>
                 Clear All Sessions
               </button>
             </div>
             <div className="card" style={{textAlign:"center",paddingTop:20,paddingBottom:20}}>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:10}}>Contact Midnight Ministries</p>
-              <a href="mailto:midnightministries.co@gmail.com" style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#c9a84c",textDecoration:"none",letterSpacing:"0.04em"}}>midnightministries.co@gmail.com</a>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:10}}>Contact Midnight Ministries</p>
+              <a href="mailto:midnightministries.co@gmail.com" style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--accent)",textDecoration:"none",letterSpacing:"0.04em"}}>midnightministries.co@gmail.com</a>
             </div>
             <div style={{textAlign:"center",paddingTop:8}}>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#2e2408",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--border2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#2a2208",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:8}}>Build {BUILD}</p>
             </div>
           </div>
@@ -2581,7 +2639,7 @@ export default function App() {
 
       {/* ══ PHOTO LIGHTBOX ══ */}
       {showTop && (
-        <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",right:14,zIndex:110,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
+        <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",right:14,zIndex:110,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
         </button>
       )}
@@ -2602,8 +2660,8 @@ export default function App() {
           <div style={{width:"100%",maxWidth:440}}>
             <div style={{textAlign:"center",marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"center",marginBottom:10}}><CrossIcon size={34} glow={true}/></div>
-              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:"#e4dcc8",marginBottom:6}}>Set the Basics</h2>
-              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#6a5a30",lineHeight:1.55,maxWidth:360,margin:"0 auto"}}>
+              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:"var(--text)",marginBottom:6}}>Set the Basics</h2>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m2)",lineHeight:1.55,maxWidth:360,margin:"0 auto"}}>
                 A few quick things so SELAH meets you where you are. The model calibrates its language and questions to these. His Word does not change. You can adjust all of it anytime in Settings.
               </p>
             </div>
@@ -2619,17 +2677,17 @@ export default function App() {
 
             <div className="card">
               <p className="label">I Am</p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Age Group</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Age Group</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
                 {["Kids (5-12)","Teen (13-17)","Adult (18+)","Prefer not to say"].map(a=>(
                   <button key={a} className={`version-pill ${age===a?"active":""}`}
                     onClick={()=>{ setAge(a); if (a.startsWith("Kids") && !["NIrV","ICB","NLT"].includes(bibleVersion)) setBibleVersion("NIrV"); }}>{a}</button>
                 ))}
               </div>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Birthday</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Birthday</p>
               <input type="date" value={birthday} onChange={e=>setBirthday(e.target.value)}
-                style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"#160d0a",border:"1px solid #36241c",borderRadius:6,padding:"11px 14px",color:"#e4dcc8",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:16,colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gender</p>
+                style={{width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input2)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:16,colorScheme:"dark",WebkitAppearance:"none",appearance:"none"}}/>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Gender</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                 {["Male","Female","Prefer not to say"].map(g=>(
                   <button key={g} className={`version-pill ${gender===g?"active":""}`} onClick={()=>setGender(g)}>{g}</button>
@@ -2638,7 +2696,7 @@ export default function App() {
             </div>
 
             <button className="btn-primary" style={{width:"100%",padding:"14px",marginTop:4}} onClick={completeSetup}>Begin</button>
-            <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"#4a3e1a",textAlign:"center",marginTop:10,lineHeight:1.5}}>You can change any of this later under Settings.</p>
+            <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",textAlign:"center",marginTop:10,lineHeight:1.5}}>You can change any of this later under Settings.</p>
           </div>
         </div>
       )}
@@ -2646,17 +2704,17 @@ export default function App() {
       {photoView && (
         <div onClick={()=>setPhotoView(null)} style={{position:"fixed",inset:0,zIndex:450,background:"rgba(6,5,2,0.95)",display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 18px",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",cursor:"pointer"}}>
           <div style={{width:"100%",maxWidth:440,display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
-            <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid #36241c",display:"block"}}/>
-            <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"#c9a84c",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
+            <button onClick={()=>setPhotoView(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
+            <img src={photoView.photoData} alt="" style={{width:"100%",aspectRatio:"1 / 1",objectFit:"cover",borderRadius:10,border:"1px solid var(--border)",display:"block"}}/>
+            <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"var(--accent)",textAlign:"center",marginTop:16,marginBottom:4}}>{photoView.passage}</p>
             <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",alignItems:"center",marginBottom:photoView.personalNotes?16:0}}>
-              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#5a4a2a",letterSpacing:"0.08em",textTransform:"uppercase"}}>{formatDate(photoView.startTime)}</span>
-              {photoView.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3,color:"#5a4a2a",fontSize:12}}><PinIcon/>{photoView.geoLabel}</span>}
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m3b)",letterSpacing:"0.08em",textTransform:"uppercase"}}>{formatDate(photoView.startTime)}</span>
+              {photoView.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3,color:"var(--m3b)",fontSize:12}}><PinIcon/>{photoView.geoLabel}</span>}
             </div>
             {lightItem && (
-              <div style={{width:"100%",background:"#20130f",border:"1px solid #36241c",borderLeft:"3px solid #c9a84c",borderRadius:6,padding:"14px 16px"}}>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"#4a3e1a",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>{lightItem.label}</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"#c0b898",lineHeight:1.65}}>{lightItem.text}</p>
+              <div style={{width:"100%",background:"var(--surface)",border:"1px solid var(--border)",borderLeft:"3px solid var(--accent)",borderRadius:6,padding:"14px 16px"}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>{lightItem.label}</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--text3)",lineHeight:1.65}}>{lightItem.text}</p>
               </div>
             )}
           </div>
@@ -2667,18 +2725,18 @@ export default function App() {
       {eggOpen && (
         <div ref={eggScrollRef} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
           onClick={()=>setEggOpen(null)}>
-          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
-          <button onClick={(e)=>{e.stopPropagation();eggScrollRef.current?.scrollTo({top:0,behavior:"smooth"});}} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 18px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid #c9a84c",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"#c9a84c",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.82,padding:0}}>
+          <button onClick={()=>setEggOpen(null)} aria-label="Close" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 16px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",fontSize:22,cursor:"pointer",lineHeight:1,boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0,opacity:0.62}}>×</button>
+          <button onClick={(e)=>{e.stopPropagation();eggScrollRef.current?.scrollTo({top:0,behavior:"smooth"});}} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 18px)",right:14,zIndex:500,background:"#2a120c",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.82,padding:0}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <div style={{background:"#20130f",border:"1px solid #36241c",borderRadius:12,padding:"26px 22px 32px",width:"100%",maxWidth:480,margin:"58px auto 58px"}}
+          <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:12,padding:"26px 22px 32px",width:"100%",maxWidth:480,margin:"58px auto 58px"}}
             onClick={e=>e.stopPropagation()}>
-            <div style={{width:36,height:3,background:"#36241c",borderRadius:2,margin:"0 auto 24px"}}/>
+            <div style={{width:36,height:3,background:"var(--border)",borderRadius:2,margin:"0 auto 24px"}}/>
 
             {eggOpen === "cross" && (
               <>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:8}}>John 19:30</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:19,color:"#c9a84c",lineHeight:1.6,marginBottom:24,borderLeft:"2px solid rgba(201,168,76,0.3)",paddingLeft:14}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m2)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:8}}>John 19:30</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:19,color:"var(--accent)",lineHeight:1.6,marginBottom:24,borderLeft:"2px solid rgba(var(--accent-rgb),0.3)",paddingLeft:14}}>
                   "When he had received the drink, Jesus said, 'It is finished.' With that, he bowed his head and gave up his spirit."
                 </p>
                 {[
@@ -2688,49 +2746,49 @@ export default function App() {
                   ["The cross is not a symbol.", "It is a receipt. You are not working toward something he left undone. You are standing on something he completed. That changes what prayer is. That changes what failure is. That changes what you owe."],
                 ].map(([head, body], i) => (
                   <div key={i} style={{marginBottom:20}}>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>{head}</p>
-                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.75}}>{body}</p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--text2)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>{head}</p>
+                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.75}}>{body}</p>
                   </div>
                 ))}
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"#c8bfa0",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:28,textAlign:"center"}}>Tetelestai. It is finished. Walk like it.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"var(--text2)",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:28,textAlign:"center"}}>Tetelestai. It is finished. Walk like it.</p>
               </>
             )}
 
             {eggOpen === "mm" && (
               <>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#6a5a30",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:8}}>Matthew 3:11</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:18,color:"#c9a84c",lineHeight:1.6,marginBottom:20,borderLeft:"2px solid rgba(201,168,76,0.3)",paddingLeft:14}}>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m2)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:8}}>Matthew 3:11</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:18,color:"var(--accent)",lineHeight:1.6,marginBottom:20,borderLeft:"2px solid rgba(var(--accent-rgb),0.3)",paddingLeft:14}}>
                   "I baptize you with water for repentance, but he who is coming after me is mightier than I, whose sandals I am not worthy to carry. He will baptize you with the Holy Spirit and with fire."
                 </p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c8bfa0",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:14}}>Three baptisms. Not one.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:20}}>Most people stop at the first. They get wet, they sign the card, they shake the pastor's hand and go home. They are not wrong. Water is real. Water is the gate. But John said it himself, plainly, with no apology: water is not the end.</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Water is the first. It is a declaration.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>Not just to the people watching from the bank. Not just to the pastor lowering you in. The Levitical tradition required living water, running water, water that moved. There is theology in that. What is still cannot cleanse what is dead. The water has to be going somewhere. And so does the man going under.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:20}}>When you go beneath the surface you are making a declaration to every room that exists. To the witnesses standing there in sandals. To the angels watching from above. To the principalities and powers Paul warned us about in Ephesians 6, the ones that have nothing to do with flesh and blood and everything to do with the war that is actually being fought. Your baptism of water is a line drawn in the spiritual realm before it is ever photographed. You are announcing: I am no longer what I was. You are telling the enemy the same thing you are telling your family. It is a burial. Public, declared, witnessed across dimensions.</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>The Holy Spirit is the second.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>And here is where precision matters, because this is where the pushback always comes. There are sincere people, pastors who have served for decades, who will tell you the Holy Spirit enters at the moment of salvation. I understand that position. But I believe the full picture is more layered than that, and I believe Scripture bears it out.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>We are not born indwelt. But we are not born alone either.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>The Spirit of God was hovering over the surface of the deep before anything existed. He postures. He orbits. He aligns things in advance of the moment He inhabits them. That is not a lesser work. That is the same God who kept your lungs inflating through seasons you did not deserve to survive, who turned you aside to see certain things and shielded you from others. He was near before He was in. He was assigned before He inhabited.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>But there is a difference between orbiting and indwelling. An enormous one.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>When He comes in, He does not come in quietly. He does not enter with caution or ask for a small corner of the room. The accounts in Acts are not subtle. When the Spirit falls on the Gentiles in Acts 11, nobody in that room needs to ask what just happened. That is not a feeling. That is not an emotional response to a worship song. That is the in-dwelling presence of God himself taking permanent residence in a human being. He becomes your counsel, your correction, your compass. He reorders how you hear, how you read, how you carry pain. Without this baptism you are religious. With it you are alive.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>There was a day, undisclosed, when the door opened.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:20}}>He did not walk in. He flooded. I have lived for some time consumed by that fire. I cannot unsee what I have seen. The Spirit does not come in and leave the furniture where it was. He redefines the room. He measures you differently. And even if a man turns from the flame, the flame does not turn from him. You do not forget what it felt like to be inhabited. You cannot go back to casual Sunday attendance after being branded with that kind of holy presence. You can run from it. You cannot unsee it.</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Fire is the third.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:20}}>This is the one most avoid. Fire does not comfort. Fire consumes. It burns what cannot survive the kingdom and refines what can. Every forge season, every loss, every stripping away of what you thought you were, that is fire doing its work. You do not come out of fire the way you went in. What was pretending to be you does not survive it. What He put in you does. The indwelt man is not the same man who walked in. He is the one who was always in there, buried under the old shell, waiting for the fire to finish what baptism started.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"#4a3e1a",lineHeight:1.7,marginBottom:4,borderLeft:"2px solid rgba(201,168,76,0.2)",paddingLeft:12}}>"His winnowing fork is in his hand, and he will clear his threshing floor and gather his wheat into the barn, but the chaff he will burn with unquenchable fire."</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.1em",marginBottom:20,paddingLeft:12}}>Matthew 3:12</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:20}}>He is not only coming. He is already equipped. The floor is already being prepared. The separation is already in process. And the fire John is describing is the same fire Malachi saw coming from the other direction, the day that sets them ablaze so completely it leaves neither root nor branch. Unquenchable. That is not a word that leaves room for negotiation.</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"#c8bfa0",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:14}}>Two persons. Three baptisms. One arc.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>John administers the first. Water. Declaration. The beginning of the sequence. He is the human instrument, humble enough to know exactly where his authority ends. He says it plainly: I am not worthy to carry his sandals. That is not false modesty. That is a man who understands jurisdiction. He can start it. He cannot finish it. The same way a father can put his child in the water and cannot put Christ in his child. You can mark the beginning. Only Christ delivers what comes next.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:12}}>Christ administers the second and the third. Holy Spirit and fire. Different substance. Different weight. Same person receiving, but a different Person delivering.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"#6a5a30",lineHeight:1.8,marginBottom:24}}>There will be a final baptism. Not of water. Not even of the Spirit as we know Him now. The final baptism is of glory and fire. We will not receive Him then. We will be one with Him. Eternity does not begin at death. It begins at indwelling. For those who have been marked, it has already started.</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6,textAlign:"center"}}>The arc begins in water. It ends in fire.</p>
-                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"#c8bfa0",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:20,textAlign:"center"}}>John declared it. Christ delivers it.</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:19,color:"#c9a84c",lineHeight:1.6,textAlign:"center"}}>It was already declared before you arrived. John just read it out loud.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--text2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:14}}>Three baptisms. Not one.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:20}}>Most people stop at the first. They get wet, they sign the card, they shake the pastor's hand and go home. They are not wrong. Water is real. Water is the gate. But John said it himself, plainly, with no apology: water is not the end.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--text2)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Water is the first. It is a declaration.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>Not just to the people watching from the bank. Not just to the pastor lowering you in. The Levitical tradition required living water, running water, water that moved. There is theology in that. What is still cannot cleanse what is dead. The water has to be going somewhere. And so does the man going under.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:20}}>When you go beneath the surface you are making a declaration to every room that exists. To the witnesses standing there in sandals. To the angels watching from above. To the principalities and powers Paul warned us about in Ephesians 6, the ones that have nothing to do with flesh and blood and everything to do with the war that is actually being fought. Your baptism of water is a line drawn in the spiritual realm before it is ever photographed. You are announcing: I am no longer what I was. You are telling the enemy the same thing you are telling your family. It is a burial. Public, declared, witnessed across dimensions.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--text2)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>The Holy Spirit is the second.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>And here is where precision matters, because this is where the pushback always comes. There are sincere people, pastors who have served for decades, who will tell you the Holy Spirit enters at the moment of salvation. I understand that position. But I believe the full picture is more layered than that, and I believe Scripture bears it out.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>We are not born indwelt. But we are not born alone either.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>The Spirit of God was hovering over the surface of the deep before anything existed. He postures. He orbits. He aligns things in advance of the moment He inhabits them. That is not a lesser work. That is the same God who kept your lungs inflating through seasons you did not deserve to survive, who turned you aside to see certain things and shielded you from others. He was near before He was in. He was assigned before He inhabited.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>But there is a difference between orbiting and indwelling. An enormous one.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>When He comes in, He does not come in quietly. He does not enter with caution or ask for a small corner of the room. The accounts in Acts are not subtle. When the Spirit falls on the Gentiles in Acts 11, nobody in that room needs to ask what just happened. That is not a feeling. That is not an emotional response to a worship song. That is the in-dwelling presence of God himself taking permanent residence in a human being. He becomes your counsel, your correction, your compass. He reorders how you hear, how you read, how you carry pain. Without this baptism you are religious. With it you are alive.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>There was a day, undisclosed, when the door opened.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:20}}>He did not walk in. He flooded. I have lived for some time consumed by that fire. I cannot unsee what I have seen. The Spirit does not come in and leave the furniture where it was. He redefines the room. He measures you differently. And even if a man turns from the flame, the flame does not turn from him. You do not forget what it felt like to be inhabited. You cannot go back to casual Sunday attendance after being branded with that kind of holy presence. You can run from it. You cannot unsee it.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--text2)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Fire is the third.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:20}}>This is the one most avoid. Fire does not comfort. Fire consumes. It burns what cannot survive the kingdom and refines what can. Every forge season, every loss, every stripping away of what you thought you were, that is fire doing its work. You do not come out of fire the way you went in. What was pretending to be you does not survive it. What He put in you does. The indwelt man is not the same man who walked in. He is the one who was always in there, buried under the old shell, waiting for the fire to finish what baptism started.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",lineHeight:1.7,marginBottom:4,borderLeft:"2px solid rgba(var(--accent-rgb),0.2)",paddingLeft:12}}>"His winnowing fork is in his hand, and he will clear his threshing floor and gather his wheat into the barn, but the chaff he will burn with unquenchable fire."</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.1em",marginBottom:20,paddingLeft:12}}>Matthew 3:12</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:20}}>He is not only coming. He is already equipped. The floor is already being prepared. The separation is already in process. And the fire John is describing is the same fire Malachi saw coming from the other direction, the day that sets them ablaze so completely it leaves neither root nor branch. Unquenchable. That is not a word that leaves room for negotiation.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:11,color:"var(--text2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:14}}>Two persons. Three baptisms. One arc.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>John administers the first. Water. Declaration. The beginning of the sequence. He is the human instrument, humble enough to know exactly where his authority ends. He says it plainly: I am not worthy to carry his sandals. That is not false modesty. That is a man who understands jurisdiction. He can start it. He cannot finish it. The same way a father can put his child in the water and cannot put Christ in his child. You can mark the beginning. Only Christ delivers what comes next.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:12}}>Christ administers the second and the third. Holy Spirit and fire. Different substance. Different weight. Same person receiving, but a different Person delivering.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--m2)",lineHeight:1.8,marginBottom:24}}>There will be a final baptism. Not of water. Not even of the Spirit as we know Him now. The final baptism is of glory and fire. We will not receive Him then. We will be one with Him. Eternity does not begin at death. It begins at indwelling. For those who have been marked, it has already started.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--text2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6,textAlign:"center"}}>The arc begins in water. It ends in fire.</p>
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--text2)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:20,textAlign:"center"}}>John declared it. Christ delivers it.</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:19,color:"var(--accent)",lineHeight:1.6,textAlign:"center"}}>It was already declared before you arrived. John just read it out loud.</p>
               </>
             )}
 
-            <button onClick={()=>setEggOpen(null)} style={{width:"100%",marginTop:24,padding:"12px",background:"transparent",border:"1px solid #2e2408",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:10,color:"#3a3010",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
+            <button onClick={()=>setEggOpen(null)} style={{width:"100%",marginTop:24,padding:"12px",background:"transparent",border:"1px solid var(--border2)",borderRadius:6,fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m5)",letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer"}}>Close</button>
           </div>
         </div>
       )}
