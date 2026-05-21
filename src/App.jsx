@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b67";
+const BUILD = "2026.05.21-b68";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -327,7 +327,7 @@ function composeCard(session, layout) {
       ctx.globalAlpha = (el.opacity==null?1:el.opacity);
       ctx.textAlign="center"; ctx.textBaseline="middle";
       ctx.font = `${el.weight||""} ${el.italic?"italic ":""}${fpx}px ${fam}`;
-      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*fpx*0.6; }
+      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*fpx*0.3; }
       ctx.fillStyle = el.color;
       const lines = wrapText(ctx, el.text, W*0.86);
       let y = -(lines.length-1)*fpx*0.6;
@@ -344,7 +344,7 @@ function composeCard(session, layout) {
       t2.globalCompositeOperation="source-atop"; t2.fillStyle=el.color; t2.fillRect(0,0,tmp.width,tmp.height);
       ctx.save(); ctx.translate(el.xf*W, el.yf*H); ctx.rotate((el.rot||0)*Math.PI/180);
       ctx.globalAlpha = (el.opacity==null?1:el.opacity);
-      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*ch*0.4; }
+      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*ch*0.2; }
       ctx.drawImage(tmp,-cw/2,-ch/2,cw,ch); ctx.restore();
     }
     function finish(){
@@ -832,11 +832,20 @@ function ExportSheet({ session, onClose }) {
 
   const elName={ cross:"Cross", selah:"SELAH", body:"Verse", mm:"Ministry" };
   const renderEl=(key)=>{ const el=layout.els[key]; if(!el.show) return null;
-    const selRing=sel===key?"drop-shadow(0 0 8px rgba(201,168,76,0.8))":"";
-    const elGlow=el.glow?`drop-shadow(0 0 ${(el.glow*12).toFixed(1)}px ${el.glowColor||"#0e0c06"})`:"";
-    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), filter:[elGlow,selRing].filter(Boolean).join(" ")||"none" };
-    if(el.kind==="cross") return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%", backgroundColor:el.color, WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" }}/>;
-    return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
+    const selected=sel===key;
+    const gc=el.glowColor||"#0e0c06";
+    // selection = a crisp gold outline ring (NOT a glow), so it never mixes with
+    // the element's own glow color; offset so it doesn't hug the letters.
+    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1.5px solid rgba(201,168,76,0.9)":"none", outlineOffset:"5px" };
+    if(el.kind==="cross"){
+      // cross glow stays a drop-shadow (it's a masked shape); willChange promotes
+      // it to its own layer so dragging doesn't leave glow trails. Halved intensity.
+      const g = el.glow ? `drop-shadow(0 0 ${(el.glow*6).toFixed(1)}px ${gc})` : "none";
+      return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%", backgroundColor:el.color, filter:g, willChange:"transform,filter", WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" }}/>;
+    }
+    // text glow = text-shadow (true color, no drag trails). Halved intensity.
+    const ts = el.glow ? `0 0 ${(el.glow*6).toFixed(1)}px ${gc}, 0 0 ${(el.glow*11).toFixed(1)}px ${gc}` : "none";
+    return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
   const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.15)",border:"1.5px solid var(--accent)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:700,...extra });
