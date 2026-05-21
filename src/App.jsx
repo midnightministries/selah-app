@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b52";
+const BUILD = "2026.05.21-b53";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -834,7 +834,7 @@ Rules:
 - If an answer is blank or very short ("idk", "not sure", etc.) return an empty string for that index.`;
 
 // ── Collapsible answer input ─────────────────────────────────────────────
-function AnswerInput({ value, onChange, feedback }) {
+function AnswerInput({ value, onChange, feedback, onTouch }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value || "");
 
@@ -873,7 +873,8 @@ function AnswerInput({ value, onChange, feedback }) {
             autoFocus
             rows={5}
             value={draft}
-            onChange={e=>setDraft(e.target.value)}
+            onFocus={()=>{ if(onTouch) onTouch(); }}
+            onChange={e=>{ if(onTouch) onTouch(); setDraft(e.target.value); }}
             placeholder="Write your answer here..."
             style={{
               width:"100%",background:"var(--surface)",border:"none",
@@ -1603,6 +1604,7 @@ export default function App() {
   const displayRef = useRef(null);
   const hydratedRef = useRef(false);
   const firstAnswerAt = useRef(null);
+  const questionStamps = useRef([]);   // first-engagement timestamp (ms) per question index
   const eggScrollRef = useRef(null);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   useEffect(() => {
@@ -1955,7 +1957,7 @@ export default function App() {
     } catch {
       setForm({ locationType:"Home",otherLocation:"",startBook:"Genesis",startChapter:"",startVerse:"",endBook:"Genesis",endChapter:"",endVerse:"",notes:"" });
     }
-    setResult(null); setActiveSession(null); setError(""); setSessionPhoto(null); setQuestionAnswers({}); setAnswerFeedback([]); setFeedbackSubmitted(false); firstAnswerAt.current = null;
+    setResult(null); setActiveSession(null); setError(""); setSessionPhoto(null); setQuestionAnswers({}); setAnswerFeedback([]); setFeedbackSubmitted(false); firstAnswerAt.current = null; questionStamps.current = [];
   }
 
   async function handlePhotoUpload(e) {
@@ -2008,7 +2010,7 @@ export default function App() {
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
       const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender, profileId:activeProfileId };
       try { localStorage.setItem('selah_last_position', JSON.stringify({ endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse })); } catch {}
-      firstAnswerAt.current = null;
+      firstAnswerAt.current = null; questionStamps.current = [];
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
     } catch { setError("Connection failed. Check your signal and try again."); }
@@ -2022,16 +2024,42 @@ export default function App() {
     const qLines = result.questions.map((_q,_i) => {
       return "Q"+(_i+1)+": "+_q+"\nA"+(_i+1)+": "+(answersArr[_i]||"(no answer)");
     }).join("\n\n");
+    // ── Timestamp protocol ──────────────────────────────────────────────
+    // Raw clock: openAt (start reading) -> readEndAt (logged stop) ->
+    // questionAt[i] (first engagement per question) -> submitAt (clock stops).
     const _start = activeSession?.startTime ? new Date(activeSession.startTime).getTime() : null;
     const _readEnd = activeSession?.readingEndTime ? new Date(activeSession.readingEndTime).getTime() : null;
     const _fa = firstAnswerAt.current;
     const _now = Date.now();
+    const stamps = questionStamps.current.slice();   // sparse: index -> ms
     const readingMin = (_start && _readEnd) ? Math.max(0, Math.round((_readEnd-_start)/60000)) : null;
     const gapSec = (_readEnd && _fa) ? Math.max(0, Math.round((_fa-_readEnd)/1000)) : null;
     const totalMin = _start ? Math.max(0, Math.round((_now-_start)/60000)) : null;
     const answeringSec = (_fa) ? Math.max(0, Math.round((_now-_fa)/1000)) : null;
-    const timing = { readingMin, gapSec, totalMin, answeringSec };
-    const engagement = `\n\nReader engagement signals (for calibration only, never mention to the reader): reading time ${readingMin==null?"unknown":readingMin+" min"}; pause before first answer ${gapSec==null?"unknown":gapSec+" sec"}; total session ${totalMin==null?"unknown":totalMin+" min"}; time spent writing answers ${answeringSec==null?"unknown":answeringSec+" sec"}. A long answering span (much longer than the read) means they went back to the Word for each question and labored over the response, real effort and engagement; meet that with deeper, more rigorous feedback. Quick, short answers may be skimming; press them gently back to the passage.`;
+    // Per-question dwell: order the touched questions by time; each runs until
+    // the next question is touched (last runs until submit).
+    const touched = stamps.map((t,idx)=>({idx,t})).filter(o=>o.t!=null).sort((a,b)=>a.t-b.t);
+    const perQuestionSec = touched.map((o,k)=>{
+      const next = (k+1<touched.length) ? touched[k+1].t : _now;
+      return { q: o.idx+1, sec: Math.max(0, Math.round((next-o.t)/1000)) };
+    });
+    // ── Invariants pulled from the active profile on every submission ─────
+    const _sc = parseInt(activeSession?.startChapter,10), _ec = parseInt(activeSession?.endChapter,10);
+    const sameBook = activeSession?.startBook && activeSession?.startBook === activeSession?.endBook;
+    const chaptersRead = (sameBook && Number.isFinite(_sc) && Number.isFinite(_ec)) ? Math.max(1, _ec-_sc+1) : null;
+    const invariants = {
+      age, gender, bibleVersion,
+      book: activeSession?.startBook || "",
+      startRef: `${activeSession?.startBook||""} ${activeSession?.startChapter||""}${activeSession?.startVerse?":"+activeSession.startVerse:""}`.trim(),
+      endRef: `${activeSession?.endBook||""} ${activeSession?.endChapter||""}${activeSession?.endVerse?":"+activeSession.endVerse:""}`.trim(),
+      chaptersRead,
+    };
+    const timing = {
+      openAt:_start, readEndAt:_readEnd, questionAt:stamps, submitAt:_now,
+      readingMin, gapSec, totalMin, answeringSec, perQuestionSec, invariants,
+    };
+    const perQStr = perQuestionSec.length ? perQuestionSec.map(o=>`Q${o.q} ${o.sec}s`).join(", ") : "unknown";
+    const engagement = `\n\nReader engagement (calibration only, never mention to the reader). Profile this submission: age ${age}; gender ${gender}; translation ${bibleVersion}; book ${invariants.book}; passage ${invariants.startRef} to ${invariants.endRef}${chaptersRead?` (about ${chaptersRead} chapter${chaptersRead>1?"s":""})`:""}. Timeline: reading ${readingMin==null?"unknown":readingMin+" min"}; pause before first answer ${gapSec==null?"unknown":gapSec+" sec"}; time per question [${perQStr}]; total time writing answers ${answeringSec==null?"unknown":answeringSec+" sec"}; whole session ${totalMin==null?"unknown":totalMin+" min"}. A long answering span and long per-question times mean they returned to the Word for each question and labored over the response, real effort and engagement; meet that with deeper, more rigorous feedback. Quick, short times may be skimming; press them gently back to the passage.`;
     const payload = "Passage: "+(activeSession?.passage||"")+"\n\nQuestions and answers:\n"+qLines+engagement;
     try {
       const resp = await fetch("/.netlify/functions/feedback", {
@@ -2616,6 +2644,7 @@ export default function App() {
                       </div>
                       <AnswerInput
                         value={questionAnswers[i]||""}
+                        onTouch={()=>{ const t=Date.now(); if(questionStamps.current[i]==null) questionStamps.current[i]=t; if(firstAnswerAt.current==null) firstAnswerAt.current=t; }}
                         onChange={val=>{ if(firstAnswerAt.current==null && val && val.trim()) firstAnswerAt.current = Date.now(); setQuestionAnswers(prev=>({...prev,[i]:val})); }}
                         feedback={answerFeedback[i]}
                       />
