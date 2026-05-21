@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b69";
+const BUILD = "2026.05.21-b70";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -637,8 +637,24 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
 
 // ── Midnight Ministries footer (always visible) ──
 function MMFooter({ onEggOpen, onHomeView }) {
+  const ref = useRef(null);
+  // Pin the footer to the BOTTOM OF THE VISIBLE AREA. iPad Safari's auto-hiding
+  // toolbar leaves a plain `bottom:0` footer floating with a gap; VisualViewport
+  // gives the true visible bottom so we translate the footer to sit on it.
+  useEffect(()=>{
+    const vv = (typeof window!=="undefined") && window.visualViewport;
+    if(!vv) return;
+    const pin=()=>{ const el=ref.current; if(!el) return;
+      const off = document.documentElement.clientHeight - (vv.height + vv.offsetTop);
+      el.style.transform = (off>0.5) ? `translateY(${-off}px)` : "translateY(0)";
+    };
+    pin();
+    vv.addEventListener("resize",pin); vv.addEventListener("scroll",pin);
+    window.addEventListener("scroll",pin,{passive:true}); window.addEventListener("orientationchange",pin);
+    return ()=>{ vv.removeEventListener("resize",pin); vv.removeEventListener("scroll",pin); window.removeEventListener("scroll",pin); window.removeEventListener("orientationchange",pin); };
+  },[]);
   return (
-    <div style={{
+    <div ref={ref} style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
       background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
       paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
@@ -753,6 +769,8 @@ function ExportSheet({ session, onClose }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [tool, setTool] = useState("color");   // active control for the selected element
   const stageRef = useRef(null);
+  const containerRef = useRef(null);
+  const [stageDim, setStageDim] = useState(null);   // explicit px size so aspect never breaks on big screens
   const ptrs = useRef(new Map());
   const dragRef = useRef(null);
   const pinch = useRef(null);
@@ -780,6 +798,18 @@ function ExportSheet({ session, onClose }) {
       return {...L, aspect:na, els, photo:{...L.photo, ...tPhoto}};
     });
   }
+
+  // Size the stage to the LARGEST box with the right aspect ratio that fits the
+  // screen — works on phones, all iPads, landscape, etc. (avoids the width:100% +
+  // maxHeight aspect-break that mangled the editor on big devices). Recompute on
+  // resize and whenever the format (W/H) changes.
+  useEffect(()=>{
+    const fit=()=>{ const c=containerRef.current; if(!c) return; const cw=c.clientWidth, ch=c.clientHeight, ar=W/H; let w=cw, h=cw/ar; if(h>ch){ h=ch; w=ch*ar; } setStageDim({w:Math.round(w),h:Math.round(h)}); };
+    fit();
+    window.addEventListener("resize",fit);
+    window.visualViewport && window.visualViewport.addEventListener("resize",fit);
+    return ()=>{ window.removeEventListener("resize",fit); window.visualViewport && window.visualViewport.removeEventListener("resize",fit); };
+  },[W,H]);
 
   useEffect(()=>{ if(session.photoData){ const im=new Image(); im.onload=()=>{
     setNat({w:im.width,h:im.height});
@@ -851,11 +881,11 @@ function ExportSheet({ session, onClose }) {
   const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.15)",border:"1.5px solid var(--accent)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:700,...extra });
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-      {/* full-bleed stage */}
-      <div ref={el=>{ stageRef.current=el; if(el) el.style.setProperty('--stagew', el.getBoundingClientRect().width+'px'); }}
+    <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+      {/* stage sized to fit any screen while keeping its true aspect ratio */}
+      <div ref={stageRef}
         onPointerDown={stageDown} onPointerMove={stageMove} onPointerUp={stageUp} onPointerCancel={stageUp}
-        style={{position:"relative",aspectRatio:`${W} / ${H}`,maxWidth:"100%",maxHeight:"100%",width:"100%",overflow:"hidden",background:stageBg,touchAction:"none",userSelect:"none"}}>
+        style={{position:"relative",width:(stageDim?stageDim.w:0)+"px",height:(stageDim?stageDim.h:0)+"px","--stagew":(stageDim?stageDim.w:320)+"px",overflow:"hidden",background:stageBg,touchAction:"none",userSelect:"none"}}>
         {layout.photo.show && hasPhoto
           && <div style={{position:"absolute",inset:0,backgroundImage:`url(${session.photoData})`,backgroundRepeat:"no-repeat",backgroundSize:`${bgWpct}% ${bgHpct}%`,backgroundPosition:`${layout.photo.x*100}% ${layout.photo.y*100}%`}}/>}
         {layout.photo.show && hasPhoto && <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"linear-gradient(180deg,rgba(10,8,4,0.5),rgba(10,8,4,0.22),rgba(10,8,4,0.62))"}}/>}
@@ -3292,6 +3322,7 @@ export default function App() {
             <div className="card" style={{textAlign:"center",paddingTop:20,paddingBottom:20}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:10}}>Contact Midnight Ministries</p>
               <a href="mailto:midnightministries.co@gmail.com" style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--accent)",textDecoration:"none",letterSpacing:"0.04em"}}>midnightministries.co@gmail.com</a>
+              <p style={{fontSize:14,color:"var(--m3)",lineHeight:1.6,marginTop:14,overflowWrap:"break-word"}}>SELAH is new. If something looks broken, glitches, or does not work right, email us. We want to know. We would rather hear it from you now and fix it than let it stand. Tell us the device you are on and what happened.</p>
             </div>
             <div style={{textAlign:"center",paddingTop:8}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--border2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
