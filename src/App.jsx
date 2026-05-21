@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b26";
+const BUILD = "2026.05.20-b27";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1441,15 +1441,21 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
   const [t, setT] = useState(textScale);
   const rafB = useRef(0);
   const debT = useRef(0);
+  const lastZoom = useRef(0);
   // Brightness uses CSS filter (GPU-composited, cheap) -> apply live each frame.
   function applyFilter(bv) { const el = layerRef.current; if (el) el.style.filter = bv !== 1 ? `brightness(${bv})` : "none"; }
-  // Text size uses zoom (forces full layout reflow, costly) -> debounce so the
-  // thumb stays buttery while the page re-lays out only after you pause.
+  // Text size uses zoom (forces a full layout reflow, costly). Apply it live but
+  // THROTTLED to ~11x/sec so the page tracks your finger without trying to
+  // re-lay-out on every frame. The thumb itself stays at full smoothness.
   function applyZoom(tv) { const el = layerRef.current; if (el) el.style.zoom = tv; }
   function changeB(v) { setB(v); if (rafB.current) cancelAnimationFrame(rafB.current); rafB.current = requestAnimationFrame(() => applyFilter(v)); }
-  // Text size uses zoom (full layout reflow). Don't reflow mid-drag at all —
-  // just glide the thumb; apply the resize once, on release.
-  function changeT(v) { setT(v); }
+  function changeT(v) {
+    setT(v);
+    const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
+    if (now - lastZoom.current > 90) { lastZoom.current = now; applyZoom(v); }
+    if (debT.current) clearTimeout(debT.current);
+    debT.current = setTimeout(() => applyZoom(v), 100); // guarantee final value lands
+  }
   function commit() { if (debT.current) clearTimeout(debT.current); applyFilter(b); applyZoom(t); onCommit(b, t); }
   const pill = { background:"transparent",border:"1px solid var(--border)",borderRadius:4,padding:"3px 9px",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
   const cap = { fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m4)",letterSpacing:"0.08em" };
@@ -1468,7 +1474,7 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
           <span style={cap}>BRIGHTER</span>
         </div>
         <p style={{...head,margin:"16px 0 10px"}}>Text Size</p>
-        <input type="range" min="0.9" max="1.3" step="0.02" value={t}
+        <input type="range" min="0.9" max="1.3" step="0.01" value={t}
           onChange={e=>changeT(parseFloat(e.target.value))}
           onMouseUp={commit} onTouchEnd={commit} onKeyUp={commit}
           style={{width:"100%",accentColor:"var(--accent)"}}/>
