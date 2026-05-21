@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b42";
+const BUILD = "2026.05.20-b43";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1375,20 +1375,24 @@ function AboutScreen({ onBack }) {
         <div>
           <div className="card">
             <p className="label" style={{color:"var(--accent)"}}>The Whole Flow</p>
-            <P mb={0}>SELAH holds the practice around your Bible. Open the Word, sit with it, answer what it asks. That is it. Five steps.</P>
+            <P mb={0}>SELAH holds the practice around your Bible. The app is your companion to His Word. Open your Bible, sit with it, answer what it asks. That is it. Five steps.</P>
           </div>
           {[
-            ["1 · Set Up Once","In Settings, pick your translation, your gender, and your age. That is the whole setup. The model uses it to meet you where you are. Come back only when something changes."],
+            ["1 · Set Up Once","In Settings, pick your translation, your gender, and your age. That is the whole setup. The model uses what you give it, the time you spend, and how you answer to keep you one step ahead of where you are. Come back only when something changes."],
             ["2 · Start a Session","Choose where you are and the book, chapter, and verse you are opening. Tap Open His Word and the clock starts. Put the phone down."],
             ["3 · Read","Read your Bible. SELAH does not replace it; it sits beside it. Come back when you are done."],
-            ["4 · Close It Out","Log where you finished and add any notes. SELAH gives you the ground, a few questions the passage demands, plain field notes, and verses to return to."],
-            ["5 · Return","Every session is saved in your Log. Set a reminder so your time holds its place. Share a card or save to Notes whenever you want."],
+            ["4 · Close It Out","Log where you finished and add any notes. SELAH gives you the ground (context), a few questions the passage demands, plain field notes, and verses to return to."],
+            ["5 · Return","Every session is saved in your Log. Set a reminder so your time holds its place. Share your card or save to Notes whenever you want."],
           ].map(([title,body])=>(
             <div key={title} className="card">
               <p className="label" style={{color:"var(--accent)"}}>{title}</p>
               <P mb={0}>{body}</P>
             </div>
           ))}
+          <div className="card" style={{borderColor:"rgba(var(--accent-rgb),0.2)"}}>
+            <p className="label" style={{color:"var(--accent)"}}>Before You Start</p>
+            <P mb={0}>This is not built to make you feel good. The questions will not be soft. The notes will not flatter you. The verses are chosen because they demand something. If you want easy answers or a pat on the back, this is the wrong app. We ask for your translation, your age, the time you spend, and how you answer because that is how the model stays honest and stays one step ahead of you. We will not lower the standard. He deserves better than we give Him.</P>
+          </div>
           <div style={{textAlign:"center",paddingTop:8,paddingBottom:16}}>
             <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--border2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
           </div>
@@ -1554,6 +1558,7 @@ export default function App() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const displayRef = useRef(null);
   const hydratedRef = useRef(false);
+  const firstAnswerAt = useRef(null);
   const eggScrollRef = useRef(null);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   useEffect(() => {
@@ -1870,7 +1875,7 @@ export default function App() {
     } catch {
       setForm({ locationType:"Home",otherLocation:"",startBook:"Genesis",startChapter:"",startVerse:"",endBook:"Genesis",endChapter:"",endVerse:"",notes:"" });
     }
-    setResult(null); setActiveSession(null); setError(""); setSessionPhoto(null); setQuestionAnswers({}); setAnswerFeedback([]); setFeedbackSubmitted(false);
+    setResult(null); setActiveSession(null); setError(""); setSessionPhoto(null); setQuestionAnswers({}); setAnswerFeedback([]); setFeedbackSubmitted(false); firstAnswerAt.current = null;
   }
 
   async function handlePhotoUpload(e) {
@@ -1897,7 +1902,14 @@ export default function App() {
     const depth = getDepthLevel(visibleSessions, isKid);
     const kidNote = isKid ? ` This reader is a child between 5 and 12. Write everything for a young child. Use short, simple sentences and plain words a child knows. Explain any hard word in the verse the moment you use it. Keep the context to 2 or 3 short sentences that tell the story simply. Make the questions concrete and about what happened, who was there, and what they did, not abstract ideas. Notes should be short and clear. Return verses should be easy to picture. Stay warm and honest. Do not water down the truth, just say it in words a child understands. Never frighten or shame the child.` : "";
     const nivNote = bibleVersion === "NIV" ? ` For the NIV, follow the classic NIV wording. Do not adopt the 2011 revision's gender-neutral language choices.` : "";
-    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
+    const recentT = visibleSessions.filter(x=>x.timing).slice(0,5);
+    let engageNote = "";
+    if (recentT.length) {
+      const avgRead = Math.round(recentT.reduce((a,x)=>a+(x.timing.readingMin||0),0)/recentT.length);
+      const avgGap = Math.round(recentT.reduce((a,x)=>a+(x.timing.gapSec||0),0)/recentT.length);
+      engageNote = ` Engagement signals (do not mention to the reader): over the last ${recentT.length} sessions this reader averages ${avgRead} min reading and a ${avgGap} sec pause before answering. Longer reading and longer pauses mean they wrestle with the text and return to it, so push depth and rigor a notch. Very short reading and instant answers suggest skimming, so write questions that cannot be answered without returning to the passage.`;
+    }
+    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote}${engageNote} Calibrate examples, language, and application questions to reflect this. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
     try {
       const resp = await fetch("/.netlify/functions/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -1908,6 +1920,7 @@ export default function App() {
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
       const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, bibleVersion, gender, profileId:activeProfileId };
       try { localStorage.setItem('selah_last_position', JSON.stringify({ endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse })); } catch {}
+      firstAnswerAt.current = null;
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
     } catch { setError("Connection failed. Check your signal and try again."); }
@@ -1921,7 +1934,16 @@ export default function App() {
     const qLines = result.questions.map((_q,_i) => {
       return "Q"+(_i+1)+": "+_q+"\nA"+(_i+1)+": "+(answersArr[_i]||"(no answer)");
     }).join("\n\n");
-    const payload = "Passage: "+(activeSession?.passage||"")+"\n\nQuestions and answers:\n"+qLines;
+    const _start = activeSession?.startTime ? new Date(activeSession.startTime).getTime() : null;
+    const _readEnd = activeSession?.readingEndTime ? new Date(activeSession.readingEndTime).getTime() : null;
+    const _fa = firstAnswerAt.current;
+    const _now = Date.now();
+    const readingMin = (_start && _readEnd) ? Math.max(0, Math.round((_readEnd-_start)/60000)) : null;
+    const gapSec = (_readEnd && _fa) ? Math.max(0, Math.round((_fa-_readEnd)/1000)) : null;
+    const totalMin = _start ? Math.max(0, Math.round((_now-_start)/60000)) : null;
+    const timing = { readingMin, gapSec, totalMin };
+    const engagement = `\n\nReader engagement signals (for calibration only, never mention to the reader): reading time ${readingMin==null?"unknown":readingMin+" min"}; pause before first answer ${gapSec==null?"unknown":gapSec+" sec"}; total session ${totalMin==null?"unknown":totalMin+" min"}. A longer pause before answering and longer reading suggest the reader wrestled and returned to the text; meet that with deeper, more rigorous feedback. Quick, short answers may be skimming; press them gently back to the passage.`;
+    const payload = "Passage: "+(activeSession?.passage||"")+"\n\nQuestions and answers:\n"+qLines+engagement;
     try {
       const resp = await fetch("/.netlify/functions/feedback", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -1936,7 +1958,7 @@ export default function App() {
       // Persist answers and feedback to the session log
       if (activeSession?.id) {
         setSessions(prev => prev.map(s => s.id === activeSession.id
-          ? { ...s, questionAnswers: questionAnswers, answerFeedback: fb }
+          ? { ...s, questionAnswers: questionAnswers, answerFeedback: fb, timing }
           : s
         ));
       }
@@ -2505,7 +2527,7 @@ export default function App() {
                       </div>
                       <AnswerInput
                         value={questionAnswers[i]||""}
-                        onChange={val=>setQuestionAnswers(prev=>({...prev,[i]:val}))}
+                        onChange={val=>{ if(firstAnswerAt.current==null && val && val.trim()) firstAnswerAt.current = Date.now(); setQuestionAnswers(prev=>({...prev,[i]:val})); }}
                         feedback={answerFeedback[i]}
                       />
                     </div>
