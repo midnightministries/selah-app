@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b63";
+const BUILD = "2026.05.21-b64";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -740,6 +740,10 @@ function ExportSheet({ session, onClose }) {
     const L=defaultLayout(session, hasPhoto);
     const ap=L.aspect, dp=DEFAULT_POS[ap]||DEFAULT_POS.square, els={...L.els};
     Object.keys(dp).forEach(k=>{ if(els[k]) els[k]={...els[k], ...dp[k]}; });
+    // default colors from the active palette; Midnight Ministries stays blood red
+    const acc=(typeof document!=="undefined" && getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())||"#c9a84c";
+    ["cross","selah","body"].forEach(k=>{ if(els[k]) els[k]={...els[k], color:acc}; });
+    if(els.mm) els.mm={...els.mm, color:"#b5302f"};
     return { ...L, els, font:"serif", photo:{ show:!!hasPhoto, x:0.5, y:0.5, zoom:1 } };
   });
   const [sel, setSel] = useState(null);
@@ -823,7 +827,7 @@ function ExportSheet({ session, onClose }) {
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.08)",border:"1px solid rgba(201,168,76,0.7)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:600,...extra });
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.15)",border:"1.5px solid var(--accent)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:700,...extra });
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
@@ -861,7 +865,7 @@ function ExportSheet({ session, onClose }) {
 
       {/* SELECTED ELEMENT — floating bubbles at the very bottom, no box */}
       {selEl && (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 12px)",display:"flex",flexDirection:"column",alignItems:"center",gap:10,zIndex:4}}>
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 54px)",display:"flex",flexDirection:"column",alignItems:"center",gap:10,zIndex:4}}>
           <div style={{maxWidth:"94%",display:"flex",justifyContent:"center"}}>
             {tool==="color" && (
               <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
@@ -882,9 +886,9 @@ function ExportSheet({ session, onClose }) {
           </div>
           <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.72)",borderRadius:24,padding:"6px 8px"}}>
             {[["color","Color"],["size","Size"],["rotate","Turn"],["opacity","Fade"],["glow","Glow"]].map(([id,lbl])=>(
-              <button key={id} onClick={()=>setTool(id)} style={{borderRadius:16,padding:"7px 11px",background:tool===id?"var(--accent)":"transparent",color:tool===id?"var(--ink)":"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>
+              <button key={id} onClick={()=>setTool(id)} style={{borderRadius:16,padding:"7px 11px",background:tool===id?"var(--accent)":"transparent",color:tool===id?"var(--ink)":"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>
             ))}
-            <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{borderRadius:16,padding:"7px 11px",background:"transparent",color:"var(--text2)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
+            <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{borderRadius:16,padding:"7px 11px",background:"transparent",color:"var(--text2)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
           </div>
         </div>
       )}
@@ -2922,7 +2926,7 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:12,marginLeft:8,flexShrink:0}}>
-                        <button className="btn-danger" aria-label="Delete session" onClick={e=>{e.stopPropagation();deleteSession(s.id);}} style={{padding:0,width:33,height:30,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid #b5302f",background:"rgba(181,48,47,0.10)",color:"#b5302f",borderRadius:6}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b5302f" strokeWidth="2.6" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+                        <button className="btn-danger" aria-label="Delete session" onClick={e=>{e.stopPropagation();deleteSession(s.id);}} style={{padding:0,width:29,height:27,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid #b5302f",background:"rgba(181,48,47,0.10)",color:"#b5302f",borderRadius:6}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b5302f" strokeWidth="2.6" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
                         <ChevronIcon open={expandedSession===s.id} size={24}/>
                       </div>
                     </div>
