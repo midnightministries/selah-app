@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b66";
+const BUILD = "2026.05.21-b67";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -488,7 +488,7 @@ function applyAppIcon(name) {
   if (typeof document === "undefined") return;
   const t = ICON_THEMES[name] || ICON_THEMES.default;
   const b = t.base;
-  const v = "?v=" + encodeURIComponent(name);   // cache-buster so the browser refetches
+  const v = "?v=" + encodeURIComponent(name) + "-" + encodeURIComponent(BUILD);   // cache-buster: changes per icon AND per deploy so Chrome refetches updated art
   const head = document.head;
   // Recreate the link nodes instead of mutating href in place. Browsers
   // (Chrome especially) often ignore an in-place href change and keep the
