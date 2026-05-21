@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b33";
+const BUILD = "2026.05.20-b34";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2057,9 +2057,9 @@ export default function App() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
-          <div style={{position:"absolute",left:6,top:"calc(env(safe-area-inset-top, 0px) + 37px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
+          <div style={{position:"absolute",left:(profiles[activeProfileId] && profiles[activeProfileId].kid)?10:6,top:"calc(env(safe-area-inset-top, 0px) + 34px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
             {profiles[activeProfileId] && profiles[activeProfileId].kid
-              ? <img src={(ICON_THEMES[profileIcon]||ICON_THEMES.default).thumb} alt="" width={32} height={32} style={{borderRadius:8,display:"block",border:"1px solid var(--border)"}}/>
+              ? <img src={(ICON_THEMES[profileIcon]||ICON_THEMES.default).thumb} alt="" width={40} height={40} style={{borderRadius:10,display:"block",border:"1px solid var(--border)"}}/>
               : <CrossIcon size={30} glow={false}/>}
           </div>
           <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",cursor:"pointer"}}>SELAH</h1>
@@ -2122,36 +2122,13 @@ export default function App() {
           const ownerAge = ageFromBirthday(ownerBday);
           const kidIds = Object.keys(profiles).filter(k=>profiles[k].kid);
           const canAddKid = ownerAge!==null && ownerAge>=18 && kidIds.length<3;
+          const isKidActive = !!(profiles[activeProfileId] && profiles[activeProfileId].kid);
           const KIDV = ["NIrV","ICB","NLT"];
           const dateStyle = {width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"};
           const tileThumb = (id) => (ICON_THEMES[(id===activeProfileId ? profileIcon : ((profileSnaps.current[id]||{}).profileIcon)) || "default"]||ICON_THEMES.default).thumb;
           return (
             <div className="fade-in">
               <button onClick={()=>setView("settings")} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:16,display:"flex",alignItems:"center",gap:6,padding:0}}>← Settings</button>
-
-              {/* Collapsible teaching */}
-              <div className="card">
-                <button onClick={()=>setTorchOpen(o=>!o)} style={{width:"100%",background:"transparent",border:"none",padding:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <span className="label" style={{marginBottom:0}}>The Next Watch</span>
-                  <span style={{color:"var(--accent)",fontSize:18,transform:torchOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>⌄</span>
-                </button>
-                {torchOpen && (
-                  <div style={{marginTop:14}}>
-                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
-                      Discipleship is not a lecture series. It is atmosphere. The young read what we live long before they read what we say. They absorb the room.
-                    </p>
-                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
-                      What we carry moves down the line. Not only sin, but habit, hunger, and posture. So we put the Word in front of them early, and we read beside them. Not flattery. Formation.
-                    </p>
-                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
-                      A profile here is for a young reader in your care, your own or one set under your charge. You are not holding their place. You are handing them the torch.
-                    </p>
-                    <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m4)",lineHeight:1.6}}>
-                      Draft drawn from your own writing. Replace with your words whenever you are ready.
-                    </p>
-                  </div>
-                )}
-              </div>
 
               {/* Who is reading */}
               <div className="card">
@@ -2173,7 +2150,7 @@ export default function App() {
               <div className="card">
                 <p className="label">This Profile</p>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Profile Name</p>
-                <input value={profiles[activeProfileId]?.name || ""} onChange={e=>{ const v=e.target.value.slice(0,24); setProfiles(p=>({...p,[activeProfileId]:{...p[activeProfileId],name:v}})); }}
+                <input value={profiles[activeProfileId]?.name || ""} onFocus={e=>e.target.select()} onChange={e=>{ const v=e.target.value.slice(0,24); setProfiles(p=>({...p,[activeProfileId]:{...p[activeProfileId],name:v}})); }}
                   placeholder={profiles[activeProfileId]?.kid?"Child's name":"Your name"}
                   style={{width:"100%",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",marginBottom:14}}/>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>Profile Icon</p>
@@ -2191,7 +2168,33 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Add a young reader */}
+              {/* Collapsible teaching */}
+              <div className="card">
+                <button onClick={()=>setTorchOpen(o=>!o)} style={{width:"100%",background:"transparent",border:"none",padding:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <span className="label" style={{marginBottom:0}}>The Next Watch</span>
+                  <span style={{color:"var(--accent)",fontSize:18,transform:torchOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>⌄</span>
+                </button>
+                {torchOpen && (
+                  <div style={{marginTop:14}}>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                      Your profile here is for the young reader you disciple. Your own, or one set under your charge.
+                    </p>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                      Discipleship is not a lecture series. It is atmosphere. The young read what we live long before they read what we say. They absorb the room.
+                    </p>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:12}}>
+                      What we carry moves down the line. Not only sin, but habit, hunger, and posture. So we put the Word in front of them early, and we read beside them. Not flattery. Formation.
+                    </p>
+                    <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:14}}>
+                      You are not holding their place. You are handing them the torch.
+                    </p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--accent)",letterSpacing:"0.14em",textTransform:"uppercase",textAlign:"right"}}>Midnight Ministries</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Young readers (owner only) */}
+              {!isKidActive && (
               <div className="card">
                 <p className="label">Young Readers</p>
                 {canAddKid ? (
@@ -2263,8 +2266,10 @@ export default function App() {
                   </div>
                 )}
               </div>
+              )}
 
-              {/* Sign-in behavior */}
+              {/* Sign-in behavior (owner only) */}
+              {!isKidActive && (
               <div className="card">
                 <p className="label">At Sign-In</p>
                 <button onClick={()=>setAskProfile(a=>!a)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"transparent",border:"none",padding:0,cursor:"pointer"}}>
@@ -2277,6 +2282,7 @@ export default function App() {
                   Off means you go straight into the last profile you used.
                 </p>
               </div>
+              )}
             </div>
           );
         })()}
