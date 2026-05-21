@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.20-b24";
+const BUILD = "2026.05.20-b25";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1413,7 +1413,9 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
   // thumb stays buttery while the page re-lays out only after you pause.
   function applyZoom(tv) { const el = layerRef.current; if (el) el.style.zoom = tv; }
   function changeB(v) { setB(v); if (rafB.current) cancelAnimationFrame(rafB.current); rafB.current = requestAnimationFrame(() => applyFilter(v)); }
-  function changeT(v) { setT(v); if (debT.current) clearTimeout(debT.current); debT.current = setTimeout(() => applyZoom(v), 110); }
+  // Text size uses zoom (full layout reflow). Don't reflow mid-drag at all —
+  // just glide the thumb; apply the resize once, on release.
+  function changeT(v) { setT(v); }
   function commit() { if (debT.current) clearTimeout(debT.current); applyFilter(b); applyZoom(t); onCommit(b, t); }
   const pill = { background:"transparent",border:"1px solid #36241c",borderRadius:4,padding:"3px 9px",color:"#6a5a30",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer" };
   const cap = { fontFamily:"'Cinzel',serif",fontSize:8,color:"#4a3e1a",letterSpacing:"0.08em" };
@@ -1798,7 +1800,7 @@ export default function App() {
     <div style={{minHeight:"100vh",background:"#190f0b",color:"#e4dcc8",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
-        html,body{background:#190f0b;-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
+        html,body{background:#190f0b;-webkit-overflow-scrolling:touch;overscroll-behavior:none;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:#3a2e10;border-radius:2px;}
         input,select,textarea{background:#221610;border:1px solid #2e2408;color:#e4dcc8;border-radius:5px;padding:10px 13px;font-family:'Crimson Text',Georgia,serif;font-size:16px;outline:none;width:100%;transition:border-color 0.2s,box-shadow 0.2s;}
