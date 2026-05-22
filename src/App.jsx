@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b73";
+const BUILD = "2026.05.21-b74";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -315,7 +315,7 @@ function composeCard(session, layout) {
       const o = BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink")) || BG_OPTIONS[0];
       let top=o[2], bot=o[3];
       if(layout.bgRev){ const t=top; top=bot; bot=t; }
-      const fade = layout.bgFade==null?1:layout.bgFade;
+      const fade = layout.bgFade==null?0.5:layout.bgFade;
       const end = mixHex(top, bot, fade);   // fade=0 -> solid top, fade=1 -> full bottom
       if(top===end){ ctx.fillStyle=top; ctx.fillRect(0,0,W,H); }
       else { const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,top); g.addColorStop(1,end); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
@@ -817,7 +817,7 @@ function ExportSheet({ session, onClose }) {
   const bgOpt=BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink"))||BG_OPTIONS[0];
   const selectedBgLabel=bgOpt[1];
   const bgTop = layout.bgRev?bgOpt[3]:bgOpt[2], bgBot = layout.bgRev?bgOpt[2]:bgOpt[3];
-  const bgEnd = mixHex(bgTop, bgBot, layout.bgFade==null?1:layout.bgFade);
+  const bgEnd = mixHex(bgTop, bgBot, layout.bgFade==null?0.5:layout.bgFade);
   const stageBg = bgTop===bgEnd ? bgTop : `linear-gradient(180deg,${bgTop},${bgEnd})`;
 
   function stageDown(e){
@@ -953,7 +953,7 @@ function ExportSheet({ session, onClose }) {
           ); })}
           <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginTop:2}}>
             <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)"}}>Fade</span>
-            <Slider value={layout.bgFade==null?1:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={150}/>
+            <Slider value={layout.bgFade==null?0.5:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={150}/>
             <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 11px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid var(--accent2)",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
           </div>
         </div>
