@@ -867,7 +867,13 @@ function ExportSheet({ session, onClose }) {
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.15)",border:"1.5px solid var(--accent2)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:700,...extra });
+  // Derive three distinct shades from the active palette accent so the circles
+  // read as border (dark) / fill (barely visible) / letters (light) instead of
+  // one flat color — works even on single-hue palettes like the pinks.
+  const accentHex = ((typeof document!=="undefined" && getComputedStyle(document.documentElement).getPropertyValue("--accent").trim())||"#c9a84c");
+  const circBorder = mixHex(accentHex, "#0e0c06", 0.55);   // darker shade for the outline
+  const circText   = mixHex(accentHex, "#ffffff", 0.14);   // lighter shade for the letters
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.22)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
 
   return (
     <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
@@ -886,7 +892,7 @@ function ExportSheet({ session, onClose }) {
 
       {/* TOP-RIGHT stack: Share, Verse/content, Font, Hide Photo, Format */}
       <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
-        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.68)",border:"1.5px solid var(--accent2)",color:"var(--ink)",textShadow:"none"})}>
+        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.5)",border:"1.5px solid "+circBorder,color:"var(--ink)",textShadow:"none"})}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
         <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel}</button>
@@ -958,7 +964,7 @@ function ExportSheet({ session, onClose }) {
           </div>
         </div>
       ) : (
-        <button onClick={()=>setBgOpen(true)} style={{position:"absolute",right:16,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",background:"rgba(14,10,6,0.4)",border:"1.5px solid var(--accent2)",borderRadius:18,padding:"9px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)",cursor:"pointer",zIndex:4}}>Background</button>
+        <button onClick={()=>setBgOpen(true)} style={{position:"absolute",right:16,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",background:"rgba(14,10,6,0.55)",border:"1.5px solid "+circBorder,borderRadius:18,padding:"9px 16px",color:circText,fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)",cursor:"pointer",zIndex:4}}>Background</button>
       ))}
     </div>
   );
