@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b91";
+const BUILD = "2026.05.21-b92";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1561,7 +1561,7 @@ function AboutScreen({ onBack, onFaith }) {
             <P>God is Spirit. This is what John gives us in chapter 4, verse 24, and no word we own can hold Him. He spoke the heavens and the earth into being and hung the stars by His voice alone; we see this in Genesis 1. No man can see His face and live. Moses was hidden in the rock and shown only His back, as told in Exodus 33:20-23. How do you define the One who defines everything?</P>
             <P>He reveals Himself as Father, and that is the name we keep. Yet in the original Hebrew the word for Spirit, Ruach, is grammatically feminine; the verbs and modifiers the Scriptures attach to it are feminine, and He sets that Spirit inside every one of us. It is why He calls us His bride, as Paul tells us in Ephesians 5. Father, Son, and Spirit: three and one, not bound to time, space, or matter.</P>
             <P>Then the Son came in the flesh, born of a virgin, fully man and fully God, the last Adam, to finish what the first Adam did not and to cleanse us by His blood, as Paul tells us more than once, in Romans 5 and Ephesians 1. Not by accident. With purpose, in a set direction. Moses could not look at His face; we are given Christ to look upon, as John tells us in chapter 14 and Paul in Colossians 1.</P>
-            <P>We are made to be masters of His Word and novices in the mystery, and to rest there. What we cannot define, we trust, and that trust becomes <span onClick={(e)=>{ e.stopPropagation(); onFaith && onFaith(); }} role="button" tabIndex={0} style={{color:"var(--accent)",textDecoration:"underline",textUnderlineOffset:"3px",cursor:"pointer"}}>faith</span>. That is the foundation.</P>
+            <P>We are made to be masters of His Word and novices in the mystery, and to rest there. What we cannot define, we trust, and that trust becomes <span onClick={(e)=>{ e.stopPropagation(); onFaith && onFaith(); }} role="button" tabIndex={0} style={{color:CROSS_RED,cursor:"pointer"}}>faith</span>, and through faith we will find relationship. That is the foundation.</P>
             <P>The one this ministry was handed to is a man, and he writes from that place without apology. What was handed to him was not for men only.</P>
             <P mb={0}>His Word is for every person who has breath. This app is built on that. If you are a man, a woman, or a child who wants to know His Word with more honesty and less performance, this was built for you.</P>
           </Section>
