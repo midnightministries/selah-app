@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b70";
+const BUILD = "2026.05.21-b71";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -637,24 +637,8 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
 
 // ── Midnight Ministries footer (always visible) ──
 function MMFooter({ onEggOpen, onHomeView }) {
-  const ref = useRef(null);
-  // Pin the footer to the BOTTOM OF THE VISIBLE AREA. iPad Safari's auto-hiding
-  // toolbar leaves a plain `bottom:0` footer floating with a gap; VisualViewport
-  // gives the true visible bottom so we translate the footer to sit on it.
-  useEffect(()=>{
-    const vv = (typeof window!=="undefined") && window.visualViewport;
-    if(!vv) return;
-    const pin=()=>{ const el=ref.current; if(!el) return;
-      const off = document.documentElement.clientHeight - (vv.height + vv.offsetTop);
-      el.style.transform = (off>0.5) ? `translateY(${-off}px)` : "translateY(0)";
-    };
-    pin();
-    vv.addEventListener("resize",pin); vv.addEventListener("scroll",pin);
-    window.addEventListener("scroll",pin,{passive:true}); window.addEventListener("orientationchange",pin);
-    return ()=>{ vv.removeEventListener("resize",pin); vv.removeEventListener("scroll",pin); window.removeEventListener("scroll",pin); window.removeEventListener("orientationchange",pin); };
-  },[]);
   return (
-    <div ref={ref} style={{
+    <div style={{
       position:"fixed", bottom:0, left:0, right:0, zIndex:100,
       background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
       paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
@@ -768,6 +752,7 @@ function ExportSheet({ session, onClose }) {
   const [shareFile, setShareFile] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [tool, setTool] = useState("color");   // active control for the selected element
+  const [bgOpen, setBgOpen] = useState(true);   // background picker visible (when no photo)
   const stageRef = useRef(null);
   const containerRef = useRef(null);
   const [stageDim, setStageDim] = useState(null);   // explicit px size so aspect never breaks on big screens
@@ -830,6 +815,7 @@ function ExportSheet({ session, onClose }) {
   const minZoom=fitRatio/baseRatio;   // zoom-out limit: photo just fits inside frame
   const bgWpct=(nat.w*baseRatio*z)/W*100, bgHpct=(nat.h*baseRatio*z)/H*100;
   const bgOpt=BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink"))||BG_OPTIONS[0];
+  const selectedBgLabel=bgOpt[1];
   const bgTop = layout.bgRev?bgOpt[3]:bgOpt[2], bgBot = layout.bgRev?bgOpt[2]:bgOpt[3];
   const bgEnd = mixHex(bgTop, bgBot, layout.bgFade==null?1:layout.bgFade);
   const stageBg = bgTop===bgEnd ? bgTop : `linear-gradient(180deg,${bgTop},${bgEnd})`;
@@ -868,17 +854,20 @@ function ExportSheet({ session, onClose }) {
     // the element's own glow color; offset so it doesn't hug the letters.
     const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1.5px solid rgba(201,168,76,0.9)":"none", outlineOffset:"5px" };
     if(el.kind==="cross"){
-      // cross glow stays a drop-shadow (it's a masked shape); willChange promotes
-      // it to its own layer so dragging doesn't leave glow trails. Halved intensity.
-      const g = el.glow ? `drop-shadow(0 0 ${(el.glow*6).toFixed(1)}px ${gc})` : "none";
-      return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%", backgroundColor:el.color, filter:g, willChange:"transform,filter", WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" }}/>;
+      // Real cross glow: a blurred, glow-colored copy of the cross shape behind it.
+      // (drop-shadow on a CSS-masked element doesn't render reliably across browsers.)
+      const mask={ position:"absolute", inset:0, WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" };
+      return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%" }}>
+        {el.glow ? <div style={{ ...mask, backgroundColor:gc, filter:`blur(${(el.glow*9).toFixed(1)}px)` }}/> : null}
+        <div style={{ ...mask, backgroundColor:el.color }}/>
+      </div>;
     }
-    // text glow = text-shadow (true color, no drag trails). Halved intensity.
-    const ts = el.glow ? `0 0 ${(el.glow*6).toFixed(1)}px ${gc}, 0 0 ${(el.glow*11).toFixed(1)}px ${gc}` : "none";
+    // text glow = text-shadow (true color, no drag trails).
+    const ts = el.glow ? `0 0 ${(el.glow*7).toFixed(1)}px ${gc}, 0 0 ${(el.glow*14).toFixed(1)}px ${gc}` : "none";
     return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
-  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.15)",border:"1.5px solid var(--accent)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:700,...extra });
+  const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.15)",border:"1.5px solid var(--accent2)",boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:"var(--accent)",fontWeight:700,...extra });
 
   return (
     <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
@@ -898,7 +887,7 @@ function ExportSheet({ session, onClose }) {
       {/* TOP-RIGHT stack: Share, Verse/content, Font, Hide Photo, Format */}
       <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
         <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.8)",border:"none",color:"var(--ink)",textShadow:"none"})}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
         <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel}</button>
         <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={circle({fontFamily:CARD_FONTS[layout.font],fontSize:18})}>Aa</button>
@@ -952,19 +941,24 @@ function ExportSheet({ session, onClose }) {
       )}
 
       {/* background picker (when no photo showing and nothing selected) */}
-      {!selEl && (!hasPhoto || !layout.photo.show) && (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 78px)",display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",alignItems:"center",zIndex:4}}>
-          <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",letterSpacing:"0.12em",textTransform:"uppercase",width:"100%",textAlign:"center"}}>Background</span>
-          {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; return (
-            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:34,height:34,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:(layout.bg||"ink")===id?"2px solid var(--accent)":"1px solid rgba(255,255,255,0.35)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>
+      {!selEl && (!hasPhoto || !layout.photo.show) && (bgOpen ? (
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 70px)",background:"rgba(14,10,6,0.72)",borderRadius:14,padding:"10px 12px",display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",alignItems:"center",zIndex:4}}>
+          <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Background · {selectedBgLabel}</span>
+            <button onClick={()=>setBgOpen(false)} style={{borderRadius:14,padding:"5px 12px",background:"var(--accent)",color:"var(--ink)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
+          </div>
+          {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; const on=(layout.bg||"ink")===id; return (
+            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:40,height:40,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid var(--accent)":"1px solid rgba(255,255,255,0.4)",boxShadow:on?"0 0 10px rgba(var(--accent-rgb),0.6)":"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>
           ); })}
           <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginTop:2}}>
-            <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--text3)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Fade</span>
+            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--text3)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Fade</span>
             <Slider value={layout.bgFade==null?1:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={150}/>
-            <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 11px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid rgba(201,168,76,0.5)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
+            <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 11px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid var(--accent2)",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
           </div>
         </div>
-      )}
+      ) : (
+        <button onClick={()=>setBgOpen(true)} style={{position:"absolute",left:"50%",transform:"translateX(-50%)",bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",background:"rgba(14,10,6,0.72)",border:"1px solid var(--accent2)",borderRadius:18,padding:"8px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",zIndex:4}}>Background</button>
+      ))}
     </div>
   );
 }
