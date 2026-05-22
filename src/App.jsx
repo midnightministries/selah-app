@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b77";
+const BUILD = "2026.05.21-b78";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -871,8 +871,8 @@ function ExportSheet({ session, onClose }) {
   // read as border (dark) / fill (barely visible) / letters (light) instead of
   // one flat color — works even on single-hue palettes like the pinks.
   const accentHex = ((typeof document!=="undefined" && getComputedStyle(document.documentElement).getPropertyValue("--accent").trim())||"#c9a84c");
-  const circBorder = mixHex(accentHex, "#0e0c06", 0.55);   // darker shade for the outline
-  const circText   = mixHex(accentHex, "#ffffff", 0.14);   // lighter shade for the letters
+  const circBorder = mixHex(accentHex, "#0e0c06", 0.62);   // clearly darker shade for the outline
+  const circText   = mixHex(accentHex, "#ffffff", 0.34);   // clearly lighter shade for the letters
   const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.22)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
 
   return (
@@ -2950,11 +2950,12 @@ export default function App() {
                     </div>
                   );
                 })()}
-                {/* Day box or full list */}
-                <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:10}}>
-                    {filteredSessions.length === 0 ? (
-                      <EmptyDayPanel date={activeFd} alarms={alarms} onSaveAlarm={handleSaveAlarm}/>
-                    ) : (
+                {/* Empty day keeps a box; sessions render as separate floating cards so the page background shows in the gaps */}
+                {filteredSessions.length === 0 ? (
+                  <div style={{background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+                    <EmptyDayPanel date={activeFd} alarms={alarms} onSaveAlarm={handleSaveAlarm}/>
+                  </div>
+                ) : (
                       filteredSessions.map(s=>(
                   <div key={s.id} className="hist-card" ref={el=>{ if(el) sessionRefs.current[s.id]=el; }}>
                     {s.photoData && (
@@ -3044,8 +3045,7 @@ export default function App() {
                     )}
                   </div>
                 ))
-                    )}
-                </div>
+                )}
               </>
               );
             })()}
