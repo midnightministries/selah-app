@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b90";
+const BUILD = "2026.05.21-b91";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -724,9 +724,9 @@ function Slider({ value, min, max, step, onChange, onCommit, width=240 }) {
   return (
     <div ref={ref} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
       style={{position:"relative",width,height:30,maxWidth:"82vw",touchAction:"none",cursor:"pointer",display:"flex",alignItems:"center"}}>
-      <div style={{position:"absolute",left:0,right:0,height:4,borderRadius:2,background:"rgba(255,255,255,0.28)"}}/>
-      <div style={{position:"absolute",left:0,width:`${pct*100}%`,height:4,borderRadius:2,background:"var(--accent)"}}/>
-      <div style={{position:"absolute",left:`calc(${pct*100}% - 9px)`,width:18,height:18,borderRadius:"50%",background:"var(--accent)",boxShadow:"0 1px 5px rgba(0,0,0,0.7)"}}/>
+      <div style={{position:"absolute",left:0,right:0,height:5,borderRadius:3,background:"rgba(255,255,255,0.2)"}}/>
+      <div style={{position:"absolute",left:0,width:`${pct*100}%`,height:5,borderRadius:3,background:"var(--accent)"}}/>
+      <div style={{position:"absolute",left:`calc(${pct*100}% - 10px)`,width:20,height:20,borderRadius:"50%",background:"var(--accent)",border:"2px solid var(--bg)",boxShadow:"0 1px 3px rgba(0,0,0,0.35)"}}/>
     </div>
   );
 }
@@ -842,7 +842,10 @@ function ExportSheet({ session, onClose }) {
     else if(d.type==="el"){ setEl(d.key,{ xf:clamp(d.ox+(e.clientX-d.sx)/r.width,0.02,0.98), yf:clamp(d.oy+(e.clientY-d.sy)/r.height,0.02,0.98) }); }
   }
   function stageUp(e){ ptrs.current.delete(e.pointerId); if(ptrs.current.size<2) pinch.current=null; if(ptrs.current.size===0) dragRef.current=null; }
-  function elDown(e,key){ e.stopPropagation(); setSel(key); setTool("color"); setShareOpen(false); dragRef.current={ type:"el", key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
+  function elDown(e,key){ e.stopPropagation(); setSel(key); setTool("color"); setShareOpen(false);
+    // Midnight Ministries is locked in place — selectable for color/size, not draggable.
+    if(key==="mm") return;
+    dragRef.current={ type:"el", key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
 
   const FONT_ORDER=["serif","cinzel","crimson","sans"], FONT_LABEL={serif:"Serif",cinzel:"Cinzel",crimson:"Crimson",sans:"Sans"};
   const CONTENT_ORDER=[["session","Passage"],...(hasRV?[["return","Verse"]]:[]),["anchor","RMR"]];
@@ -1705,7 +1708,7 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
   const head = { fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:12,zIndex:300,background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
         <Slider value={b} min={0.85} max={1.45} step={0.01} onChange={changeB} onCommit={commit} width="100%"/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
