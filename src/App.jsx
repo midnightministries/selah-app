@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b71";
+const BUILD = "2026.05.21-b72";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -886,7 +886,7 @@ function ExportSheet({ session, onClose }) {
 
       {/* TOP-RIGHT stack: Share, Verse/content, Font, Hide Photo, Format */}
       <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
-        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.8)",border:"none",color:"var(--ink)",textShadow:"none"})}>
+        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.55)",border:"1.5px solid var(--accent2)",color:"var(--ink)",textShadow:"none"})}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </button>
         <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel}</button>
@@ -940,24 +940,25 @@ function ExportSheet({ session, onClose }) {
         </div>
       )}
 
-      {/* background picker (when no photo showing and nothing selected) */}
+      {/* background picker (when no photo showing and nothing selected) — no box, floating */}
       {!selEl && (!hasPhoto || !layout.photo.show) && (bgOpen ? (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 70px)",background:"rgba(14,10,6,0.72)",borderRadius:14,padding:"10px 12px",display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",alignItems:"center",zIndex:4}}>
-          <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Background · {selectedBgLabel}</span>
-            <button onClick={()=>setBgOpen(false)} style={{borderRadius:14,padding:"5px 12px",background:"var(--accent)",color:"var(--ink)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:10,right:10,bottom:"calc(env(safe-area-inset-bottom,0px) + 64px)",display:"flex",flexWrap:"wrap",gap:9,justifyContent:"center",alignItems:"center",zIndex:4}}>
+          {/* name + Done, centered above the colors */}
+          <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
+            <span style={{fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)"}}>Background · {selectedBgLabel}</span>
+            <button onClick={()=>setBgOpen(false)} style={{borderRadius:14,padding:"5px 13px",background:"rgba(var(--accent-rgb),0.85)",color:"var(--ink)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
           </div>
           {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; const on=(layout.bg||"ink")===id; return (
-            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:40,height:40,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid var(--accent)":"1px solid rgba(255,255,255,0.4)",boxShadow:on?"0 0 10px rgba(var(--accent-rgb),0.6)":"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>
+            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:40,height:40,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid #fff":"1.5px solid rgba(255,255,255,0.7)",boxShadow:on?"0 0 12px rgba(var(--accent-rgb),0.85)":"0 1px 6px rgba(0,0,0,0.7)",cursor:"pointer",padding:0}}/>
           ); })}
           <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginTop:2}}>
-            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--text3)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Fade</span>
+            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)"}}>Fade</span>
             <Slider value={layout.bgFade==null?1:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={150}/>
             <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 11px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid var(--accent2)",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
           </div>
         </div>
       ) : (
-        <button onClick={()=>setBgOpen(true)} style={{position:"absolute",left:"50%",transform:"translateX(-50%)",bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",background:"rgba(14,10,6,0.72)",border:"1px solid var(--accent2)",borderRadius:18,padding:"8px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",zIndex:4}}>Background</button>
+        <button onClick={()=>setBgOpen(true)} aria-label="Background" style={{position:"absolute",right:16,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",width:46,height:46,borderRadius:"50%",background:"rgba(14,10,6,0.4)",border:"1.5px solid var(--accent2)",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",textShadow:"0 1px 4px rgba(0,0,0,0.95)",cursor:"pointer",zIndex:4}}>BG</button>
       ))}
     </div>
   );
