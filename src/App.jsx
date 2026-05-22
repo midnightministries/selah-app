@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b82";
+const BUILD = "2026.05.21-b83";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -488,6 +488,9 @@ function applyAppIcon(name) {
   if (typeof document === "undefined") return;
   const t = ICON_THEMES[name] || ICON_THEMES.default;
   const b = t.base;
+  // Cookie so the Netlify edge function can inject the right favicon into the
+  // HTML on first paint (the only thing that fixes Safari's frozen tab icon).
+  try { document.cookie = "selah_icon=" + encodeURIComponent(name) + ";path=/;max-age=31536000;samesite=lax"; } catch {}
   const v = "?v=" + encodeURIComponent(name) + "-" + Date.now();   // unique per application so the browser is forced to refetch and re-render the tab icon
   const head = document.head;
   // Recreate the link nodes instead of mutating href in place. Browsers
