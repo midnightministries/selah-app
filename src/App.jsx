@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b83";
+const BUILD = "2026.05.21-b84";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1671,7 +1671,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
 }
 
 // ── Display controls popover (brightness + text size, smooth) ──
-function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose }) {
+function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommit, onClose }) {
   const [b, setB] = useState(brightness);
   const [t, setT] = useState(textScale);
   const rafB = useRef(0);
@@ -1681,8 +1681,8 @@ function DisplayControls({ layerRef, brightness, textScale, onCommit, onClose })
   function applyFilter(bv) { const el = layerRef.current; if (el) el.style.filter = bv !== 1 ? `brightness(${bv})` : "none"; }
   // Text size uses zoom (forces a full layout reflow, costly). Apply it live but
   // THROTTLED to ~11x/sec so the page tracks your finger without trying to
-  // re-lay-out on every frame. The thumb itself stays at full smoothness.
-  function applyZoom(tv) { const el = layerRef.current; if (el) el.style.zoom = tv; }
+  // re-lay-out on every frame. baseScale bumps the whole thing up on tablets.
+  function applyZoom(tv) { const el = layerRef.current; if (el) el.style.zoom = tv * baseScale; }
   function changeB(v) { setB(v); if (rafB.current) cancelAnimationFrame(rafB.current); rafB.current = requestAnimationFrame(() => applyFilter(v)); }
   function changeT(v) {
     setT(v);
@@ -1755,6 +1755,9 @@ export default function App() {
   const [lightItem, setLightItem] = useState(null);
   const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 0.85 && v <= 1.45) ? v : 1.22; });
   const [textScale, setTextScale] = useState(() => { const v = parseFloat(localStorage.getItem("selah_textscale")); return (v >= 0.9 && v <= 1.3) ? v : 1; });
+  // Tablets (iPad mini/Air/Pro, Android tablets) start a touch bigger than phones.
+  // The text-size slider still has its full range; this just raises the baseline.
+  const tabletScale = useRef((()=>{ try { return (navigator.maxTouchPoints>1 && Math.min(window.screen.width,window.screen.height)>=700) ? 1.14 : 1; } catch { return 1; } })()).current;
   useEffect(() => { localStorage.setItem("selah_textscale", String(textScale)); }, [textScale]);
   useEffect(() => { localStorage.setItem("selah_birthday", birthday); }, [birthday]);
   useEffect(() => { localStorage.setItem("selah_app_icon", appIcon); applyAppIcon(appIcon); }, [appIcon]);
@@ -2380,7 +2383,7 @@ export default function App() {
         </div>
 
         {/* DISPLAY LAYER — brightness + text-size apply here, not the header (keeps gold/cross true color) */}
-        <div ref={displayRef} style={{filter:brightness!==1?`brightness(${brightness})`:"none",zoom:textScale}}>
+        <div ref={displayRef} style={{filter:brightness!==1?`brightness(${brightness})`:"none",zoom:textScale*tabletScale}}>
 
         {/* NAV */}
         {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && view !== "profiles" && view !== "profilepick" && (
@@ -3367,6 +3370,7 @@ export default function App() {
           layerRef={displayRef}
           brightness={brightness}
           textScale={textScale}
+          baseScale={tabletScale}
           onCommit={(bv,tv)=>{ setBrightness(bv); setTextScale(tv); }}
           onClose={()=>setShowBright(false)}
         />
