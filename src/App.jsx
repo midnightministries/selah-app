@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b76";
+const BUILD = "2026.05.21-b77";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1767,13 +1767,18 @@ export default function App() {
   const firstAnswerAt = useRef(null);
   const questionStamps = useRef([]);   // first-engagement timestamp (ms) per question index
   const eggScrollRef = useRef(null);
+  const logScrollY = useRef(0);   // remembers your scroll position in the Log
+  const viewRef = useRef("home");
+  useEffect(() => { viewRef.current = view; }, [view]);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 420);
+    const onScroll = () => { setShowTop(window.scrollY > 420); if (viewRef.current === "history") logScrollY.current = window.scrollY; };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  // Quick jump back to the Log, restoring where you were (not the top).
+  const gotoLog = () => { setView("history"); setTimeout(() => window.scrollTo({ top: logScrollY.current || 0, behavior: "auto" }), 60); };
   const [sessionPhoto, setSessionPhoto] = useState(null);
   const [photoAspect, setPhotoAspect] = useState("square");   // "square" (1:1) | "story" (9:16), chosen at capture
   const [loading, setLoading] = useState(false);
@@ -3339,20 +3344,16 @@ export default function App() {
       {exportSession && <ExportSheet session={exportSession} onClose={()=>setExportSession(null)}/>}
 
       {/* ══ PHOTO LIGHTBOX ══ */}
-      {showTop && (
-        <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",right:14,zIndex:110,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
-        </button>
-      )}
-
-      {/* COMPARE: two calendar-jump buttons — pick the one we like, drop the other */}
       {showTop && (<>
-        {/* Option A: calendar icon, just above the back-to-top arrow */}
-        <button onClick={()=>{ setView("history"); setTimeout(()=>window.scrollTo({top:0,behavior:"smooth"}),60); }} aria-label="Calendar" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 104px)",right:14,zIndex:110,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+        {/* Calendar/date — quick jump back to the Log where you were; faint calendar behind the day number */}
+        <button onClick={gotoLog} aria-label="Go to log calendar" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 112px)",right:13,zIndex:110,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{position:"absolute",opacity:0.1}}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+          <span style={{position:"relative",fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,lineHeight:1}}>{new Date().getDate()}</span>
         </button>
-        {/* Option B: day number, top-right */}
-        <button onClick={()=>{ setView("history"); setTimeout(()=>window.scrollTo({top:0,behavior:"smooth"}),60); }} aria-label="Calendar" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 74px)",right:14,zIndex:110,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:42,height:42,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0,fontFamily:"'Cinzel',serif",fontSize:17,fontWeight:700}}>{new Date().getDate()}</button>
+        {/* Back to top */}
+        <button onClick={()=>window.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",right:13,zIndex:110,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
       </>)}
 
       {showBright && (
