@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b80";
+const BUILD = "2026.05.21-b81";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1960,9 +1960,12 @@ export default function App() {
       const ask = (typeof serverData.askProfile === 'boolean') ? serverData.askProfile : true;
       multiProfile = ask && serverData.v === 2 && serverData.profiles && Object.keys(serverData.profiles).length > 1;
     } else {
-      // new signup, or login with nothing stored: push current local data up
+      // new signup, or login with nothing stored. A fresh account must always be
+      // asked the setup questions — never inherit this device's prior "setup done"
+      // flag or pre-filled answers.
+      if (isNew) { loadSettings({}); localStorage.setItem("selah_setup_done","0"); }
       syncRequest("save", acc, gatherSync()).then(()=>setSyncState("synced")).catch(()=>{});
-      setNeedsSetup(!setupIsDone());
+      setNeedsSetup(true);
     }
     hydratedRef.current = true; // safe to auto-save now
     setView(multiProfile ? "profilepick" : "home");
@@ -3424,6 +3427,16 @@ export default function App() {
                   <button key={g} className={`version-pill ${gender===g?"active":""}`} onClick={()=>setGender(g)}>{g}</button>
                 ))}
               </div>
+            </div>
+
+            <div className="card" style={{borderColor:"rgba(var(--accent-rgb),0.18)"}}>
+              <p className="label" style={{color:"var(--accent)"}}>Before You Begin</p>
+              <p style={{fontSize:15,color:"var(--m2)",lineHeight:1.65,marginBottom:10}}>
+                Take your time in here. Read the passage, sit with it, and answer honestly and fully. This is not a race. The care you bring to it is the care you get back.
+              </p>
+              <p style={{fontSize:14,color:"var(--m3)",lineHeight:1.6}}>
+                What you log — passages, notes, answers, and times — is saved on this device, and carries to your other devices if you made an account. Your photos and location never leave this device, and nothing is sold or shared.
+              </p>
             </div>
 
             <button className="btn-primary" style={{width:"100%",padding:"14px",marginTop:4}} onClick={completeSetup}>Begin</button>
