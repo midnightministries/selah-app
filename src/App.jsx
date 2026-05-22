@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b89";
+const BUILD = "2026.05.21-b90";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1505,7 +1505,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
 }
 
 // ── About screen ──────────────────────────────────────────────────────────
-function AboutScreen({ onBack }) {
+function AboutScreen({ onBack, onFaith }) {
   const [tab, setTab] = useState("ministry");
   const P = ({children, mb=14}) => (
     <p style={{fontSize:17,lineHeight:1.78,color:"var(--m1b)",marginBottom:mb}}>{children}</p>
@@ -1558,7 +1558,7 @@ function AboutScreen({ onBack }) {
             <P>God is Spirit. This is what John gives us in chapter 4, verse 24, and no word we own can hold Him. He spoke the heavens and the earth into being and hung the stars by His voice alone; we see this in Genesis 1. No man can see His face and live. Moses was hidden in the rock and shown only His back, as told in Exodus 33:20-23. How do you define the One who defines everything?</P>
             <P>He reveals Himself as Father, and that is the name we keep. Yet in the original Hebrew the word for Spirit, Ruach, is grammatically feminine; the verbs and modifiers the Scriptures attach to it are feminine, and He sets that Spirit inside every one of us. It is why He calls us His bride, as Paul tells us in Ephesians 5. Father, Son, and Spirit: three and one, not bound to time, space, or matter.</P>
             <P>Then the Son came in the flesh, born of a virgin, fully man and fully God, the last Adam, to finish what the first Adam did not and to cleanse us by His blood, as Paul tells us more than once, in Romans 5 and Ephesians 1. Not by accident. With purpose, in a set direction. Moses could not look at His face; we are given Christ to look upon, as John tells us in chapter 14 and Paul in Colossians 1.</P>
-            <P>We are made to be masters of His Word and novices in the mystery, and to rest there. What we cannot define, we trust, and that trust becomes <a href="https://www.esv.org/Hebrews+11/" target="_blank" rel="noopener noreferrer" style={{color:"var(--accent)",textDecoration:"underline",textUnderlineOffset:"3px"}}>faith</a>. That is the foundation.</P>
+            <P>We are made to be masters of His Word and novices in the mystery, and to rest there. What we cannot define, we trust, and that trust becomes <span onClick={(e)=>{ e.stopPropagation(); onFaith && onFaith(); }} role="button" tabIndex={0} style={{color:"var(--accent)",textDecoration:"underline",textUnderlineOffset:"3px",cursor:"pointer"}}>faith</span>. That is the foundation.</P>
             <P>The one this ministry was handed to is a man, and he writes from that place without apology. What was handed to him was not for men only.</P>
             <P mb={0}>His Word is for every person who has breath. This app is built on that. If you are a man, a woman, or a child who wants to know His Word with more honesty and less performance, this was built for you.</P>
           </Section>
@@ -1809,6 +1809,20 @@ export default function App() {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [alarms, setAlarms] = useState(() => { try { return JSON.parse(localStorage.getItem("selah_alarms")||"{}"); } catch { return {}; } });
   const [eggOpen, setEggOpen] = useState(null); // "mm" | "cross" | null
+  const [faithOpen, setFaithOpen] = useState(false);   // Hebrews 11 (ESV) reader
+  const [faithText, setFaithText] = useState("");
+  const [faithErr, setFaithErr] = useState("");
+  const faithScrollRef = useRef(null);
+  useEffect(()=>{
+    if(!faithOpen || faithText) return;
+    setFaithErr("");
+    const cached = localStorage.getItem("selah_esv_heb11");
+    if(cached){ setFaithText(cached); return; }
+    fetch("/.netlify/functions/esv?ref="+encodeURIComponent("Hebrews 11"))
+      .then(r=>r.json())
+      .then(d=>{ if(d.text){ setFaithText(d.text); try{localStorage.setItem("selah_esv_heb11",d.text);}catch{} } else setFaithErr("Hebrews 11 will appear here once the ESV key is connected."); })
+      .catch(()=>setFaithErr("Could not load right now. Check your connection and try again."));
+  },[faithOpen, faithText]);
   const [account, setAccount] = useState(loadAccount);
   const [authIntro, setAuthIntro] = useState(false);
   const [syncState, setSyncState] = useState("idle"); // idle | saving | synced | error
@@ -2091,12 +2105,12 @@ export default function App() {
   // Lock background scroll behind any open modal (simple overflow lock — no
   // layout shift, so it doesn't glitch taps on the modal's close button).
   useEffect(() => {
-    const open = !!(eggOpen || photoView || exportSession);
+    const open = !!(eggOpen || photoView || exportSession || faithOpen);
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
-  }, [eggOpen, photoView, exportSession]);
+  }, [eggOpen, photoView, exportSession, faithOpen]);
 
   function handleSaveAlarm(dayKey, alarm) {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
@@ -3073,7 +3087,7 @@ export default function App() {
         )}
 
         {/* ══ ABOUT ══ */}
-        {view === "about" && <AboutScreen onBack={()=>setView("home")}/>}
+        {view === "about" && <AboutScreen onBack={()=>setView("home")} onFaith={()=>setFaithOpen(true)}/>}
 
         {/* ══ SETTINGS ══ */}
         {view === "settings" && (
@@ -3484,6 +3498,28 @@ export default function App() {
       )}
 
       {/* ══ EASTER EGG SHEETS ══ */}
+      {faithOpen && (
+        <div ref={faithScrollRef} style={{position:"fixed",inset:0,zIndex:420,background:"var(--bg)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain"}}>
+          <button onClick={()=>setFaithOpen(false)} aria-label="Back" style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 14px)",left:14,zIndex:430,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 2px 14px rgba(0,0,0,0.55)",padding:0}}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div style={{maxWidth:640,margin:"0 auto",padding:"calc(env(safe-area-inset-top, 0px) + 78px) 24px calc(env(safe-area-inset-bottom, 0px) + 40px)"}}>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.16em",textTransform:"uppercase",color:"var(--accent)",textAlign:"center",marginBottom:5}}>Hebrews 11</p>
+            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",textAlign:"center",marginBottom:26}}>English Standard Version</p>
+            {faithText
+              ? <div style={{fontFamily:"'Crimson Text',Georgia,serif",fontSize:18,lineHeight:1.9,color:"var(--text4)",whiteSpace:"pre-wrap"}}>{faithText}</div>
+              : <p style={{textAlign:"center",color:"var(--m4)",fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,padding:"48px 0"}}>{faithErr || "Loading…"}</p>}
+            <p style={{fontSize:11,lineHeight:1.65,color:"var(--m5)",marginTop:34,borderTop:"1px solid var(--border)",paddingTop:16}}>
+              Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.
+            </p>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.22em",textTransform:"uppercase",color:CROSS_RED,textAlign:"center",marginTop:22}}>Midnight Ministries</p>
+          </div>
+          <button onClick={()=>faithScrollRef.current?.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",right:14,bottom:"calc(env(safe-area-inset-bottom, 0px) + 18px)",zIndex:430,background:"var(--surface)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+      )}
+
       {eggOpen && (
         <div ref={eggScrollRef} style={{position:"fixed",inset:0,zIndex:400,background:"rgba(8,6,3,0.96)",overflowY:"auto",WebkitOverflowScrolling:"touch",overscrollBehavior:"contain",padding:"0 14px"}}
           onClick={()=>setEggOpen(null)}>
