@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b84";
+const BUILD = "2026.05.21-b89";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -39,7 +39,8 @@ Rules:
 - Questions must be specific to this exact passage. Never generic.
 - Notes must be factual and grounded. No speculation presented as fact.
 - Return verses must come from within the passage read, not outside it.
-- Language: strong nouns, active verbs, direct sentences. No em dashes. No therapy tone. No flattery.`;
+- Language: strong nouns, active verbs, direct sentences. No em dashes. No therapy tone. No flattery.
+- Honesty is the standard. Calibrate to where the reader actually is and aim one step ahead, never below their demonstrated level and never beyond reach. Growth is real and small: ten minutes, twelve verses, one book is a reader beginning to form. Name that honestly. Do not inflate it and do not diminish it. This is not about metrics. It is about telling the reader the truth about where they are and where they are headed.`;
 
 // ── Brand colors held constant across every palette ──
 const CROSS_RED = "#8e1c1c";     // blood-red cross, every palette
@@ -646,7 +647,8 @@ function MMFooter({ onEggOpen, onHomeView }) {
       background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
       paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"none"
+      pointerEvents:"none",
+      transform:"translateZ(0)", WebkitTransform:"translateZ(0)", willChange:"transform"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -661,7 +663,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
       </svg>
       <span onClick={()=>{ if(onHomeView) onEggOpen("mm"); }} style={{
         fontFamily:"'Cinzel',serif",
-        fontSize:12,
+        fontSize:13,
         letterSpacing:"0.22em",
         textTransform:"uppercase",
         color:CROSS_RED,
@@ -879,7 +881,7 @@ function ExportSheet({ session, onClose }) {
   const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.22)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
 
   return (
-    <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+    <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none"}}>
       {/* stage sized to fit any screen while keeping its true aspect ratio */}
       <div ref={stageRef}
         onPointerDown={stageDown} onPointerMove={stageMove} onPointerUp={stageUp} onPointerCancel={stageUp}
@@ -1542,30 +1544,36 @@ function AboutScreen({ onBack }) {
           <Section label="Why This Exists">
             <P>Midnight Ministries was not built in a boardroom. It was built in the forge. Out of a season where the only anchor was His Word and the only company was God, a decision was made to stop waiting for permission to build what the people around us actually needed.</P>
             <P>Most people do not lack access to Scripture. They lack a practice. They open the Bible, read a few verses, close it, and carry nothing out. The knowledge sits on the page. The forge stays cold.</P>
-            <P mb={0}>SELAH was built to fix that. Not by making Bible reading easier. By making it stick. The pause, the questions, the notes, the return verses; those are not features. That is how serious readers have always engaged His Word. We built a tool to hold the structure.</P>
+            <P mb={0}>SELAH was built to fix that. Not by making Bible reading easier. By making it stick. The pause, the questions, the notes, the return verses are not features we hope will land. This is how serious readers have always engaged His Word. We built the tool to help you hold it.</P>
           </Section>
 
           <Section label="The Name">
             <P>Selah appears 71 times in the Psalms and 3 times in Habakkuk, 74 occurrences in total. Scholars still debate its exact meaning. The most honest translation sits somewhere between pause and lift up. Both are true. You stop. You sit in what you just read. Then you carry it higher than where you found it.</P>
-            <P>Selah does not appear in Paul's letters. Paul wrote in Greek to Greek-speaking churches, and Selah is a Hebrew term rooted in the Psalter and temple worship. But Paul quotes the Psalms repeatedly throughout his letters. The posture Selah names, the pause, the weight of the text, the return, is present in everything Paul wrote.</P>
+            <P>Why would a ministry built on the Psalms lean so hard on a man who never wrote one? Midnight Ministries holds the apostle Paul close. Not for his story. Not because he may be the most influential writer this world has seen. We hold him close for who handed it to him. He carried two names his whole life, Saul among the Hebrews and Paul among the Greeks. What changed on the road to Damascus was not the name but the man: the persecutor undone by Christ and remade, carrying out something that was never his own.</P>
+            <P>Paul quotes the Psalms again and again throughout his letters. Selah does not appear in them; Paul wrote in Greek to Greek-speaking churches, and Selah is a Hebrew term rooted in the Psalter and temple worship. Yet the posture Selah names, the pause, the weight of the text, the return, all of it is present in everything Paul writes.</P>
             <P mb={0}>Paul also made clear, as did Jesus in Matthew 7:21-23 and Paul himself in Ephesians 2:8-9, that works in Christ alone do not produce salvation. Faith does. Not performance. Not religious habit. Not how often you open the app. What you do with what you read when no one is watching. That is the practice Selah was built to support.</P>
           </Section>
 
           <Section label="The Foundation">
-            <P>Yahweh. Elohim. Neither masculine nor feminine in the way we assign those categories. He is beyond the categories. The one this ministry was handed to is a man, and he writes from that place without apology. But what was handed to him was not for men only.</P>
+            <P>God is Spirit. This is what John gives us in chapter 4, verse 24, and no word we own can hold Him. He spoke the heavens and the earth into being and hung the stars by His voice alone; we see this in Genesis 1. No man can see His face and live. Moses was hidden in the rock and shown only His back, as told in Exodus 33:20-23. How do you define the One who defines everything?</P>
+            <P>He reveals Himself as Father, and that is the name we keep. Yet in the original Hebrew the word for Spirit, Ruach, is grammatically feminine; the verbs and modifiers the Scriptures attach to it are feminine, and He sets that Spirit inside every one of us. It is why He calls us His bride, as Paul tells us in Ephesians 5. Father, Son, and Spirit: three and one, not bound to time, space, or matter.</P>
+            <P>Then the Son came in the flesh, born of a virgin, fully man and fully God, the last Adam, to finish what the first Adam did not and to cleanse us by His blood, as Paul tells us more than once, in Romans 5 and Ephesians 1. Not by accident. With purpose, in a set direction. Moses could not look at His face; we are given Christ to look upon, as John tells us in chapter 14 and Paul in Colossians 1.</P>
+            <P>We are made to be masters of His Word and novices in the mystery, and to rest there. What we cannot define, we trust, and that trust becomes <a href="https://www.esv.org/Hebrews+11/" target="_blank" rel="noopener noreferrer" style={{color:"var(--accent)",textDecoration:"underline",textUnderlineOffset:"3px"}}>faith</a>. That is the foundation.</P>
+            <P>The one this ministry was handed to is a man, and he writes from that place without apology. What was handed to him was not for men only.</P>
             <P mb={0}>His Word is for every person who has breath. This app is built on that. If you are a man, a woman, or a child who wants to know His Word with more honesty and less performance, this was built for you.</P>
           </Section>
 
           <Section label="The Standard">
             <P>Scripture is the final authority. Not tradition. Not preference. Not what feels right. His Word. Everything built inside this app bends toward Him.</P>
             <P>The questions will not be soft. The notes will not flatter you. The return verses are not chosen to make you feel good. They are chosen because they demand something. He demands something. That is the standard we build to. We must not lower it. He deserves better than we give Him.</P>
-            <P mb={0}>If you are looking for something that tells you what you want to hear, this is the wrong app. If you are looking for something that tells you what is true, you are in the right place.</P>
+            <P>If you are looking for something that tells you what you want to hear, this is the wrong app. We have confidence that if you stay in trust and in faith, you will shed the need to be fed falsities that guard your feelings. And if you are looking for something that tells you what is true, no matter your capacity or your depth, you are in the right place.</P>
+            <P mb={0}>The standard does not bend for the certain or the unsure. It does not change for anyone. We move together in Christ toward a greater plan, set in motion before the expanses were separated and creation was given dominion. So we move forward, together, with purpose.</P>
           </Section>
 
           <Section label="Who We Build For">
             <P>The man in the truck before the sun comes up. The soldier sleeping in a bunk, waking up at 0200, prepared to get on a helicopter, the destination a target building. The father who wants to carry something into his house worth carrying. The man who is done with performance spirituality and wants to actually know the God he claims to follow.</P>
             <P>The woman who opens His Word in the margins of her day because it is the only place that does not move. The mother who opens His Word before the house wakes up because she knows what she carries out of that time is what she carries into them. The woman who has been told her whole life what to believe and is finally ready to read it for herself.</P>
-            <P>The teenager who suspects there is more to this than what they have been handed in youth group. The child who is just beginning to open His Word for the first time.</P>
+            <P>The teenager who suspects there is more to this than what they have been handed in youth group. The child who is just beginning to open his or her Bible for the first time.</P>
             <P mb={0}>We build for them.</P>
           </Section>
 
@@ -1857,6 +1865,9 @@ export default function App() {
       startVerse: lp.endVerse || prev.startVerse,
       endBook: lp.endBook || lp.startBook || prev.endBook,
     }));
+    // No saved position (e.g. a brand-new profile) — start fresh at Genesis 1,
+    // never inherit the previous profile's book.
+    else setForm(prev => ({ ...prev, startBook:"Genesis", startChapter:"", startVerse:"", endBook:"Genesis", endChapter:"", endVerse:"" }));
   }
   function switchProfile(id) {
     if (id === activeProfileId || !profiles[id]) return;
