@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b104";
+const BUILD = "2026.05.22-b105";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1710,7 +1710,7 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
   const head = { fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.25)",backdropFilter:"blur(7px) saturate(1.4)",WebkitBackdropFilter:"blur(7px) saturate(1.4)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.25)",backdropFilter:"blur(6px) saturate(1.4)",WebkitBackdropFilter:"blur(6px) saturate(1.4)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
         <Slider value={b} min={0.85} max={1.45} step={0.01} onChange={changeB} onCommit={commit} width="100%"/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
