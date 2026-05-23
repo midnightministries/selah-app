@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.23-b148";
+const BUILD = "2026.05.23-b149";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -65,13 +65,13 @@ const READING_PLANS = {
   kidsgospels: {
     name: "The Gospels",
     kid: true,
-    blurb: "Read all about Jesus: the things He said, the things He did, His love, and how He came back to life, through Matthew, Mark, Luke, and John. The best place to start.",
+    blurb: "Meet Jesus! Watch Him heal sick people, calm a giant storm, feed a huge crowd, and beat death itself. Four books, one amazing true story, and it's all about Him. Start your adventure here!",
     readings: buildReadings([["Matthew", 28], ["Mark", 16], ["Luke", 24], ["John", 21]]),
   },
   kidspsalms: {
     name: "Psalms",
     kid: true,
-    blurb: "The Psalms are songs and prayers to God, for happy days and hard days. Read one at a time and learn how to talk to Him about everything.",
+    blurb: "These are God's songs! Some are happy, some are brave, some are for when you're sad or scared. Read one each time and learn how to talk to God about anything, He always listens.",
     readings: buildReadings([["Psalms", 150]]),
   },
 };
