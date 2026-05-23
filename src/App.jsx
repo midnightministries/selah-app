@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b133";
+const BUILD = "2026.05.22-b134";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1796,6 +1796,8 @@ export default function App() {
   const [palette, setPalette] = useState(() => localStorage.getItem("selah_palette") || "midnight");
   const [profileIcon, setProfileIcon] = useState(() => localStorage.getItem("selah_profile_icon") || "default");
   const [askProfile, setAskProfile] = useState(() => localStorage.getItem("selah_ask_profile") !== "0");
+  const [guidanceOff, setGuidanceOff] = useState(() => localStorage.getItem("selah_guidance_off") === "1");
+  const [helpOpen, setHelpOpen] = useState(false);
   const [passcode, setPasscode] = useState(() => localStorage.getItem("selah_passcode") || "");
   const [lockPrompt, setLockPrompt] = useState(null);
   const [lockEntry, setLockEntry] = useState("");
@@ -1833,6 +1835,11 @@ export default function App() {
   useEffect(() => { localStorage.setItem("selah_palette", palette); applyPalette(palette); }, [palette]);
   useEffect(() => { localStorage.setItem("selah_profile_icon", profileIcon); }, [profileIcon]);
   useEffect(() => { localStorage.setItem("selah_ask_profile", askProfile ? "1" : "0"); }, [askProfile]);
+  useEffect(() => { localStorage.setItem("selah_guidance_off", guidanceOff ? "1" : "0"); }, [guidanceOff]);
+  // First-run guidance: auto-show the orientation card once per profile (unless turned off).
+  useEffect(() => {
+    if (view === "home" && !guidanceOff && !needsSetup && localStorage.getItem("selah_help_seen_" + activeProfileId) !== "1") setHelpOpen(true);
+  }, [view, guidanceOff, needsSetup, activeProfileId]);
   useEffect(() => { localStorage.setItem("selah_passcode", passcode); }, [passcode]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
@@ -2712,6 +2719,22 @@ export default function App() {
               </div>
               )}
 
+              {/* Guidance cards (owner only) */}
+              {!isKidActive && (
+              <div className="card">
+                <p className="label">Guidance</p>
+                <button onClick={()=>setGuidanceOff(g=>!g)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"transparent",border:"none",padding:0,cursor:"pointer"}}>
+                  <span style={{fontSize:16,color:"var(--m2)",textAlign:"left",lineHeight:1.5,paddingRight:12}}>Show guidance cards</span>
+                  <span style={{flexShrink:0,width:46,height:26,borderRadius:13,background:!guidanceOff?"var(--accent)":"var(--border)",position:"relative",transition:"background 0.2s"}}>
+                    <span style={{position:"absolute",top:3,left:!guidanceOff?23:3,width:20,height:20,borderRadius:"50%",background:"var(--text4)",transition:"left 0.2s"}}/>
+                  </span>
+                </button>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",lineHeight:1.5,marginTop:10}}>
+                  The first-run helper on the home screen and the "?" button. Turn it off once you know your way around.
+                </p>
+              </div>
+              )}
+
               {/* Profile lock (owner only) */}
               {!isKidActive && (
               <div className="card">
@@ -2737,6 +2760,23 @@ export default function App() {
         {/* ══ HOME ══ */}
         {view === "home" && (
           <div className="fade-in">
+            {helpOpen && (
+              <div className="card" style={{border:"1px solid rgba(var(--accent-rgb),0.35)"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                  <p className="label" style={{margin:0,color:"var(--accent)"}}>{isKidAge ? "How it works" : "Getting started"}</p>
+                  <button onClick={()=>{ setHelpOpen(false); try{localStorage.setItem("selah_help_seen_"+activeProfileId,"1");}catch(_){} }} aria-label="Close" style={{background:"transparent",border:"none",color:"var(--m3)",fontSize:20,lineHeight:1,cursor:"pointer",padding:0}}>×</button>
+                </div>
+                {isKidAge ? (
+                  <p style={{fontSize:15,color:"var(--m1b)",lineHeight:1.6,marginBottom:12}}>Pick a book and chapter, then tap Open His Word. Read your Bible, then come back. <Selah /> gives you questions and notes to help you understand it, and your fire grows the more you read.</p>
+                ) : (
+                  <p style={{fontSize:16,color:"var(--m1b)",lineHeight:1.7,marginBottom:12}}>Set your translation, age, and gender once and you are ready. Choose where you are and the book, chapter, and verse, then Open His Word. <Selah /> times your reading and meets you with context, questions, field notes, and verses to return to. Change your translation, age, or gender anytime in Settings, where you can also add a young reader, lock profiles, and turn these guidance cards off.</p>
+                )}
+                <button className="btn-primary" style={{width:"100%",padding:"11px"}} onClick={()=>{ setHelpOpen(false); try{localStorage.setItem("selah_help_seen_"+activeProfileId,"1");}catch(_){} }}>Got it</button>
+              </div>
+            )}
+            {!guidanceOff && !helpOpen && (
+              <button onClick={()=>setHelpOpen(true)} aria-label="Help" style={{position:"fixed",right:16,bottom:"calc(env(safe-area-inset-bottom,0px) + 70px)",zIndex:90,width:40,height:40,borderRadius:"50%",background:"rgba(var(--surface-rgb),0.6)",backdropFilter:"blur(9px) saturate(1.4)",WebkitBackdropFilter:"blur(9px) saturate(1.4)",border:"1.5px solid var(--accent)",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",padding:0}}>?</button>
+            )}
             {isKidAge && (()=>{
               const d = getDepthLevel(visibleSessions, true);
               const FLAME = "M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z";
