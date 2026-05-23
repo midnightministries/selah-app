@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b138";
+const BUILD = "2026.05.22-b139";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -78,7 +78,7 @@ function HelpDot({ text, show = true }) {
   return (
     <span style={{ position: "relative", display: "inline-flex", marginLeft: 8, verticalAlign: "middle" }}>
       <button onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }} aria-label="Help"
-        style={{ width: 18, height: 18, borderRadius: "50%", border: "1px solid var(--m4)", background: "transparent", color: "var(--m3)", fontFamily: "'Cinzel',serif", fontSize: 11, lineHeight: 1, cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>?</button>
+        style={{ width: 21, height: 21, borderRadius: "50%", border: "1px solid var(--m3)", background: "transparent", color: "var(--m2)", fontFamily: "'Cinzel',serif", fontSize: 13, lineHeight: 1, cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>?</button>
       {open && (
         <span onClick={() => setOpen(false)} style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 200, minWidth: 210, maxWidth: 260, background: "rgba(var(--surface-rgb),0.97)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", boxShadow: "0 8px 24px rgba(0,0,0,0.55)", fontFamily: "'Crimson Text',serif", fontSize: 13, lineHeight: 1.5, color: "var(--text2)", textTransform: "none", letterSpacing: "normal", fontWeight: 400, textAlign: "left" }}>{text}</span>
       )}
@@ -2507,12 +2507,6 @@ export default function App() {
               <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
-          {view === "home" && !guidanceOff && (
-            <button onClick={()=>setHelpOpen(true)} aria-label="Help" style={{position:"absolute",right:66,top:"calc(env(safe-area-inset-top, 0px) + 28px)",background:"transparent",border:"none",color:"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}
-              onMouseOver={e=>e.currentTarget.style.color="var(--accent)"} onMouseOut={e=>e.currentTarget.style.color="var(--m5)"}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.2a3 3 0 0 1 5.8 1c0 2-2.9 2.5-2.9 4"/><circle cx="12" cy="17.6" r="0.7" fill="currentColor" stroke="none"/></svg>
-            </button>
-          )}
           <div style={{position:"absolute",left:(profiles[activeProfileId] && profiles[activeProfileId].kid)?10:6,top:"calc(env(safe-area-inset-top, 0px) + 34px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
             {profiles[activeProfileId] && profiles[activeProfileId].kid
               ? <img src={(ICON_THEMES[profileIcon]||ICON_THEMES.default).thumb} alt="" width={40} height={40} style={{borderRadius:10,display:"block",border:"1px solid var(--border)"}}/>
@@ -2604,7 +2598,7 @@ export default function App() {
 
               {/* This profile: name + icon */}
               <div className="card">
-                <p className="label">This Profile</p>
+                <p className="label">This Profile<HelpDot show={!guidanceOff} text="Your name and icon for this reader, this is what shows on the profile picker." /></p>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>Profile Name</p>
                 <input value={profiles[activeProfileId]?.name || ""} onFocus={e=>e.target.select()} onChange={e=>{ const v=e.target.value.slice(0,24); setProfiles(p=>({...p,[activeProfileId]:{...p[activeProfileId],name:v}})); }}
                   placeholder={profiles[activeProfileId]?.kid?"Child's name":"Your name"}
@@ -2655,7 +2649,7 @@ export default function App() {
               {/* Young readers (owner only) */}
               {!isKidActive && (
               <div className="card">
-                <p className="label">Young Readers</p>
+                <p className="label">Young Readers<HelpDot show={!guidanceOff} text="Add up to three children. Each gets a kid-friendly translation and their own saved sessions and progress." /></p>
                 {canAddKid ? (
                   !showAddReader ? (
                     <button className="btn-primary" style={{width:"100%",padding:"13px"}} onClick={()=>setShowAddReader(true)}>Add a Young Reader</button>
@@ -2730,7 +2724,7 @@ export default function App() {
               {/* Sign-in behavior (owner only) */}
               {!isKidActive && (
               <div className="card">
-                <p className="label">At Sign-In</p>
+                <p className="label">At Sign-In<HelpDot show={!guidanceOff} text="On asks who is reading each time the app opens. Off goes straight into the last profile you used." /></p>
                 <button onClick={()=>setAskProfile(a=>!a)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"transparent",border:"none",padding:0,cursor:"pointer"}}>
                   <span style={{fontSize:16,color:"var(--m2)",textAlign:"left",lineHeight:1.5,paddingRight:12}}>Ask who is reading at sign-in</span>
                   <span style={{flexShrink:0,width:46,height:26,borderRadius:13,background:askProfile?"var(--accent)":"var(--border)",position:"relative",transition:"background 0.2s"}}>
@@ -2762,7 +2756,7 @@ export default function App() {
               {/* Profile lock (owner only) */}
               {!isKidActive && (
               <div className="card">
-                <p className="label">Profile Lock</p>
+                <p className="label">Profile Lock<HelpDot show={!guidanceOff} text="Set a 6-digit passcode to protect an adult profile and to gate removing a reader." /></p>
                 <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>
                   Set a 6-digit code. When it is on, a young reader cannot leave their profile and switch into yours without it. Good for when they have the device.
                 </p>
@@ -2824,7 +2818,7 @@ export default function App() {
               );
             })()}
             <div className="card">
-              <label className="label">Where you are</label>
+              <label className="label">Where you are<HelpDot show={!guidanceOff} text="Where you're reading from. It's tagged to this session and woven into the context the model gives you." /></label>
               <select value={form.locationType} onChange={e=>setForm(f=>({...f,locationType:e.target.value}))}>
                 {LOCATION_TYPES.map(l=><option key={l}>{l}</option>)}
               </select>
@@ -2846,7 +2840,7 @@ export default function App() {
             </div>
 
             <div className="card">
-              <label className="label">Opening at</label>
+              <label className="label">Opening at<HelpDot show={!guidanceOff} text="The book, chapter, and verse you're starting from. You'll log where you finished when you close the session." /></label>
               <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8}}>
                 <select value={form.startBook} onChange={e=>setForm(f=>({...f,startBook:e.target.value,endBook:e.target.value}))}>
                   {BOOKS.map(b=><option key={b}>{b}</option>)}
@@ -3367,7 +3361,7 @@ export default function App() {
             {/* Profiles launcher */}
             {account && (
               <div className="card">
-                <p className="label">Profiles</p>
+                <p className="label">Profiles<HelpDot show={!guidanceOff} text="Switch readers, or open the full screen to add a child, rename, set icons, and lock with a passcode." /></p>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:10}}>Who is Reading</p>
                 <div style={{display:"flex",flexWrap:"wrap",gap:14,marginBottom:16}}>
                   {Object.entries(profiles).map(([id,p])=>{
