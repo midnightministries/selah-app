@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b121";
+const BUILD = "2026.05.22-b122";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1887,7 +1887,11 @@ export default function App() {
     catch { return { owner: { name: "You", kid: false } }; }
   });
   const [activeProfileId, setActiveProfileId] = useState(() => localStorage.getItem("selah_active_profile") || "owner");
-  const profileSnaps = useRef({}); // saved per-profile content settings for inactive profiles
+  // saved per-profile content settings for inactive profiles; persisted locally so a
+  // reload doesn't wipe them (otherwise switching back to a profile reset its translation
+  // and re-triggered setup).
+  const profileSnaps = useRef((() => { try { return JSON.parse(localStorage.getItem("selah_profile_snaps") || "{}") || {}; } catch { return {}; } })());
+  const saveSnaps = () => { try { localStorage.setItem("selah_profile_snaps", JSON.stringify(profileSnaps.current)); } catch {} };
   useEffect(() => { localStorage.setItem("selah_profiles", JSON.stringify(profiles)); }, [profiles]);
   useEffect(() => { localStorage.setItem("selah_active_profile", activeProfileId); }, [activeProfileId]);
 
@@ -1931,9 +1935,17 @@ export default function App() {
   function switchProfile(id) {
     if (id === activeProfileId || !profiles[id]) return;
     profileSnaps.current[activeProfileId] = liveSettings();      // save current
-    loadSettings(profileSnaps.current[id] || {});                // load target
+    const target = profileSnaps.current[id];
+    if (target && Object.keys(target).length) {
+      loadSettings(target);                                      // restore saved settings (incl. translation)
+      setNeedsSetup(!target.setupDone);
+    } else {
+      // No saved snapshot for this profile (e.g. lost on reload). Don't wipe the
+      // translation to defaults or force setup on an existing profile.
+      setNeedsSetup(false);
+    }
     setActiveProfileId(id);
-    setNeedsSetup(!(profileSnaps.current[id] && profileSnaps.current[id].setupDone));
+    saveSnaps();
   }
   function requestSwitch(id) {
     if (passcode && profiles[activeProfileId] && profiles[activeProfileId].kid && profiles[id] && !profiles[id].kid) {
@@ -1962,6 +1974,7 @@ export default function App() {
     setActiveProfileId(id);
     setNeedsSetup(false);
     setTorchOpen(false);
+    saveSnaps();
   }
   function deleteKidProfile(id) {
     if (!profiles[id] || !profiles[id].kid) return;
@@ -1969,6 +1982,7 @@ export default function App() {
     delete profileSnaps.current[id];
     setProfiles(p => { const n = { ...p }; delete n[id]; return n; });
     if (activeProfileId === id) { loadSettings(profileSnaps.current["owner"] || {}); setActiveProfileId("owner"); }
+    saveSnaps();
   }
 
   useEffect(() => { localStorage.setItem("selah_alarms", JSON.stringify(alarms)); }, [alarms]);
@@ -2706,6 +2720,31 @@ export default function App() {
         {/* ══ HOME ══ */}
         {view === "home" && (
           <div className="fade-in">
+            {isKidAge && (()=>{
+              const d = getDepthLevel(visibleSessions, true);
+              const FLAME = "M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z";
+              const stages = [["Spark",22],["Ember",27],["Flame",32],["Torch",38],["Wildfire",46]];
+              return (
+                <div className="card" style={{textAlign:"center"}}>
+                  <p className="label">Your Fire</p>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:24,color:"#f5894a",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",margin:"2px 0 16px",textShadow:"0 0 18px rgba(245,137,74,0.55)"}}>{d.name}</p>
+                  <div style={{display:"flex",alignItems:"flex-end",justifyContent:"center",gap:12}}>
+                    {stages.map(([name,size],i)=>{
+                      const lit = i < d.level, current = i === d.level-1;
+                      return (
+                        <div key={name} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7}}>
+                          <svg width={size} height={size} viewBox="0 0 24 24" className={current?"pulse":""} style={{filter:lit?"drop-shadow(0 0 7px rgba(245,137,74,0.9))":"none"}}>
+                            <path d={FLAME} fill={lit?(current?"#ffc05a":"#f5894a"):"none"} stroke={lit?"none":"var(--m5)"} strokeWidth={lit?0:1.5} strokeLinejoin="round"/>
+                          </svg>
+                          <span style={{fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.03em",textTransform:"uppercase",color:lit?"#f5894a":"var(--m5)",fontWeight:current?700:400}}>{name}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m3)",marginTop:16}}>You're a {d.name}! Keep reading His Word and watch your fire grow.</p>
+                </div>
+              );
+            })()}
             <div className="card">
               <label className="label">Where you are</label>
               <select value={form.locationType} onChange={e=>setForm(f=>({...f,locationType:e.target.value}))}>
