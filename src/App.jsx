@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b118";
+const BUILD = "2026.05.22-b119";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -665,15 +665,12 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
 // ── Midnight Ministries footer (always visible) ──
 function MMFooter({ onEggOpen, onHomeView }) {
   return (
-    <div style={{
-      position:"fixed", bottom:0, left:0, right:0, zIndex:100,
+    <div className="mm-shell">
+     <div style={{
       background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
       paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"none",
-      transform:"translateY(calc(-1 * var(--vv-bottom, 0px))) translateZ(0)",
-      WebkitTransform:"translateY(calc(-1 * var(--vv-bottom, 0px))) translateZ(0)",
-      willChange:"transform"
+      pointerEvents:"none"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -700,6 +697,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
       }}>
         MIDNIGHT MINISTRIES
       </span>
+     </div>
     </div>
   );
 }
@@ -2159,32 +2157,9 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [eggOpen, photoView, exportSession, faithOpen]);
 
-  // Keep the fixed footer glued to the top of iOS Safari's bottom toolbar. We expose
-  // --vv-bottom = the slice of the layout viewport hidden at the bottom (the toolbar),
-  // and the footer lifts by that via transform. iOS does NOT fire viewport events
-  // frame-by-frame during the toolbar animation, so a start/stop listener lags and
-  // "pops" into place a beat late (a gap appears, then it snaps up). Instead we poll
-  // visualViewport every frame so the footer rides the toolbar smoothly. We only write
-  // the CSS var when the value actually changes, and pause the loop while the tab is
-  // hidden. On Chrome/desktop the overlap stays 0, so the footer never moves (no bounce).
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    let raf = 0, last = -1, alive = true;
-    const tick = () => {
-      if (!alive) return;
-      const overlap = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-      if (overlap !== last) { last = overlap; document.documentElement.style.setProperty("--vv-bottom", overlap + "px"); }
-      raf = requestAnimationFrame(tick);
-    };
-    const onVis = () => {
-      if (document.hidden) { alive = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
-      else if (!alive) { alive = true; raf = requestAnimationFrame(tick); }
-    };
-    document.addEventListener("visibilitychange", onVis);
-    raf = requestAnimationFrame(tick);
-    return () => { alive = false; if (raf) cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVis); };
-  }, []);
+  // Footer stays above the iOS Safari toolbar structurally: it lives in a fixed
+  // `.mm-shell` sized to 100dvh, so the browser keeps it at the bottom of the visible
+  // viewport natively (no JS toolbar-tracking, hence no jitter/bounce). See MMFooter.
 
   function handleSaveAlarm(dayKey, alarm) {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
@@ -2442,6 +2417,7 @@ export default function App() {
         .photo-drop:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.03);}
         .no-sb{scrollbar-width:none;-ms-overflow-style:none;}
         .no-sb::-webkit-scrollbar{display:none;}
+        .mm-shell{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;z-index:100;}
         .photo-preview{width:100%;border-radius:6px;overflow:hidden;position:relative;}
         .photo-preview img{width:100%;display:block;max-height:260px;object-fit:cover;}
         .photo-remove{position:absolute;top:8px;right:8px;background:rgba(10,8,4,0.8);border:1px solid #3a1810;color:#a04030;border-radius:4px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;}
