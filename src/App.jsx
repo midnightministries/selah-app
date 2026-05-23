@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b141";
+const BUILD = "2026.05.22-b142";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -78,7 +78,7 @@ function HelpDot({ text, show = true }) {
   return (
     <span style={{ position: "relative", display: "inline-flex", marginLeft: 8, verticalAlign: "middle", visibility: show ? "visible" : "hidden", pointerEvents: show ? "auto" : "none" }}>
       <button onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }} aria-label="Help"
-        style={{ width: 21, height: 21, borderRadius: "50%", border: "1px solid var(--m3)", background: "transparent", color: "var(--m2)", fontFamily: "'Cinzel',serif", fontSize: 13, fontWeight: 700, lineHeight: 1, cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>?</button>
+        style={{ width: 21, height: 21, boxSizing: "border-box", borderRadius: "50%", border: "1px solid var(--m3)", background: "transparent", color: "var(--m2)", fontFamily: "-apple-system, system-ui, sans-serif", fontSize: 13, fontWeight: 700, lineHeight: 1, cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>?</button>
       {show && open && (
         <span onClick={() => setOpen(false)} style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 200, minWidth: 210, maxWidth: 260, background: "rgba(var(--surface-rgb),0.97)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", boxShadow: "0 8px 24px rgba(0,0,0,0.55)", fontFamily: "'Crimson Text',serif", fontSize: 13, lineHeight: 1.5, color: "var(--text2)", textTransform: "none", letterSpacing: "normal", fontWeight: 400, textAlign: "left" }}>{text}</span>
       )}
