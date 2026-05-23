@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b117";
+const BUILD = "2026.05.22-b118";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2159,38 +2159,31 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [eggOpen, photoView, exportSession, faithOpen]);
 
-  // Keep the fixed footer glued to the top of iOS Safari's bottom toolbar as it
-  // animates. We expose --vv-bottom = the slice of the layout viewport hidden at
-  // the bottom (the toolbar), and the footer lifts by that via transform. To
-  // track the toolbar *during* the scroll (not just when it settles), we run a
-  // short rAF loop while there's motion and stop it once things go still. On
-  // Chrome/desktop the overlap is always 0, so the footer never moves (no bounce).
+  // Keep the fixed footer glued to the top of iOS Safari's bottom toolbar. We expose
+  // --vv-bottom = the slice of the layout viewport hidden at the bottom (the toolbar),
+  // and the footer lifts by that via transform. iOS does NOT fire viewport events
+  // frame-by-frame during the toolbar animation, so a start/stop listener lags and
+  // "pops" into place a beat late (a gap appears, then it snaps up). Instead we poll
+  // visualViewport every frame so the footer rides the toolbar smoothly. We only write
+  // the CSS var when the value actually changes, and pause the loop while the tab is
+  // hidden. On Chrome/desktop the overlap stays 0, so the footer never moves (no bounce).
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    let raf = 0, idle = 0, looping = false;
-    const measure = () => Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-    const setVar = () => document.documentElement.style.setProperty("--vv-bottom", measure() + "px");
-    const loop = () => { setVar(); raf = requestAnimationFrame(loop); };
-    const stop = () => { looping = false; if (raf) cancelAnimationFrame(raf); raf = 0; setVar(); };
-    const kick = () => {
-      if (!looping) { looping = true; loop(); }
-      clearTimeout(idle);
-      idle = setTimeout(stop, 350);
+    let raf = 0, last = -1, alive = true;
+    const tick = () => {
+      if (!alive) return;
+      const overlap = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      if (overlap !== last) { last = overlap; document.documentElement.style.setProperty("--vv-bottom", overlap + "px"); }
+      raf = requestAnimationFrame(tick);
     };
-    window.addEventListener("scroll", kick, { passive: true });
-    window.addEventListener("touchmove", kick, { passive: true });
-    vv.addEventListener("resize", kick);
-    vv.addEventListener("scroll", kick);
-    setVar();
-    return () => {
-      window.removeEventListener("scroll", kick);
-      window.removeEventListener("touchmove", kick);
-      vv.removeEventListener("resize", kick);
-      vv.removeEventListener("scroll", kick);
-      if (raf) cancelAnimationFrame(raf);
-      clearTimeout(idle);
+    const onVis = () => {
+      if (document.hidden) { alive = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
+      else if (!alive) { alive = true; raf = requestAnimationFrame(tick); }
     };
+    document.addEventListener("visibilitychange", onVis);
+    raf = requestAnimationFrame(tick);
+    return () => { alive = false; if (raf) cancelAnimationFrame(raf); document.removeEventListener("visibilitychange", onVis); };
   }, []);
 
   function handleSaveAlarm(dayKey, alarm) {
