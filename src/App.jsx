@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b113";
+const BUILD = "2026.05.22-b114";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -49,7 +49,7 @@ const SELAH_CREAM = "#ece0c6";   // beautiful cream wordmark, every palette
 // Inline SELAH wordmark: cream with a hint of palette hue and a thin outline,
 // scaled to whatever text it sits in. Use anywhere "SELAH" appears in prose.
 function Selah() {
-  return <span style={{ fontFamily:"'Cinzel',serif", fontWeight:600, color:SELAH_CREAM, letterSpacing:"0.04em", WebkitTextStroke:"0.4px rgba(var(--accent-rgb),0.45)", textShadow:"0 0 5px rgba(var(--accent-rgb),0.15)" }}>SELAH</span>;
+  return <span style={{ fontFamily:"'Cinzel',serif", fontWeight:600, fontSize:"0.92em", color:SELAH_CREAM, letterSpacing:"0.04em", WebkitTextStroke:"0.4px rgba(var(--accent-rgb),0.45)", textShadow:"0 0 5px rgba(var(--accent-rgb),0.15)" }}>SELAH</span>;
 }
 // Walk prose children and swap the bare word "SELAH" for the wordmark component.
 function withSelah(children) {
