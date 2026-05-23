@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.23-b146";
+const BUILD = "2026.05.23-b147";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -61,6 +61,18 @@ const READING_PLANS = {
     name: "Psalms & Proverbs",
     blurb: "The prayer book and the wisdom book of Israel. Psalms teaches you to bring every season honestly to God; Proverbs teaches you to walk wisely before Him. A chapter at a time, shaping how you pray and how you live.",
     readings: buildReadings([["Psalms", 150], ["Proverbs", 31]]),
+  },
+  kidsgospels: {
+    name: "The Gospels",
+    kid: true,
+    blurb: "Read all about Jesus: the things He said, the things He did, His love, and how He came back to life, through Matthew, Mark, Luke, and John. The best place to start.",
+    readings: buildReadings([["Matthew", 28], ["Mark", 16], ["Luke", 24], ["John", 21]]),
+  },
+  kidspsalms: {
+    name: "Psalms",
+    kid: true,
+    blurb: "The Psalms are songs and prayers to God, for happy days and hard days. Read one at a time and learn how to talk to Him about everything.",
+    readings: buildReadings([["Psalms", 150]]),
   },
 };
 
@@ -2342,7 +2354,7 @@ export default function App() {
     const planCur = plan ? plan.readings[planIndex] : null;
     const planPrev = (plan && planIndex > 0) ? plan.readings[planIndex - 1] : null;
     const planNote = plan
-      ? ` This reader is following the "${plan.name}" reading plan${planCur ? `, currently at ${planCur.book} ${planCur.chapter}` : ""}${planPrev ? ` (their previous reading was ${planPrev.book} ${planPrev.chapter})` : ""}. Where it fits naturally, set this passage within the plan's larger arc and connect it to where they have recently been, as honest, grounded encouragement. The plan is context, not a theme to force, and never flatter.`
+      ? ` This reader is following the "${plan.name}" reading plan${planCur ? `, on ${planCur.book} ${planCur.chapter} (reading ${planIndex + 1} of ${plan.readings.length})` : ""}${planPrev ? `; their previous reading was ${planPrev.book} ${planPrev.chapter}` : ""}. Use the plan as a calibration data point: set this passage within the plan's arc, connect it to where they have recently been, and where it fits, show the movement toward Christ across the plan. Honest, grounded encouragement only. Never flatter, and never change the content.`
       : "";
     const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote}${bookNote}${genderNote}${engageNote}${planNote} Scale the depth and density of the context, the notes, and the questions to the depth level: at higher levels include more historical, literary, and theological grounding and connect to the surrounding chapters and books. Do not hand a beginner and a Harvest-level reader the same context for the same passage. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
     try {
@@ -3392,7 +3404,7 @@ export default function App() {
               <p className="label">Reading Plan<HelpDot show={!guidanceOff} text="Follow a guided path through Scripture. With a plan on, your home opens to the next reading and finishing it moves you forward. You can read freely anytime." /></p>
               <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>Optional. A plan sets where you open each session, and the model reads along with you, it uses where you are in the plan and where you have already been to shape the context, the questions, and the encouragement it gives. The truth never changes, only the framing. You can read something else anytime.</p>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {[["","Free reading (no plan)"]].concat(Object.entries(READING_PLANS).map(([id,p])=>[id,p.name])).map(([id,label])=>(
+                {[["","Free reading (no plan)"]].concat(Object.entries(READING_PLANS).filter(([id,p])=>!!p.kid===isKidAge).map(([id,p])=>[id,p.name])).map(([id,label])=>(
                   <button key={id||"none"} onClick={()=>{ if(id!==readingPlan) setPlanIndex(0); setReadingPlan(id); }}
                     style={{textAlign:"left",background:"transparent",border:readingPlan===id?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:8,padding:"11px 14px",cursor:"pointer",transition:"border-color 0.2s"}}>
                     <span style={{fontFamily:"'Cinzel',serif",fontSize:13,letterSpacing:"0.04em",color:readingPlan===id?"var(--accent)":"var(--text2)"}}>{label}</span>
