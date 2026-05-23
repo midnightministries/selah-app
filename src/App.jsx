@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b122";
+const BUILD = "2026.05.22-b123";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -3419,6 +3419,11 @@ export default function App() {
               const d = getDepthLevel(visibleSessions, isKidAge);
               const totalMins = visibleSessions.reduce((a,s)=>a+Math.round((new Date(s.endTime)-new Date(s.startTime))/60000),0);
               const levels = isKidAge ? ["Spark","Ember","Flame","Torch","Wildfire"] : ["Seed","Root","Branch","Fruit","Harvest"];
+              const TH = [6,21,61,151];
+              const need = TH.find(t => visibleSessions.length < t);
+              const nextLine = need
+                ? `${need - visibleSessions.length} more session${need - visibleSessions.length !== 1 ? "s" : ""} to ${levels[d.level]}. The questions and notes deepen as you go, never softer.`
+                : `You have reached ${d.name}, the deepest level. Keep gathering. The standard does not drop.`;
               return (
                 <div className="card">
                   <p className="label">Depth Level</p>
@@ -3432,13 +3437,16 @@ export default function App() {
                       <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)"}}>{visibleSessions.length} sessions · {totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h"} in His Word</p>
                     </div>
                   </div>
-                  <div style={{display:"flex",gap:4}}>
+                  <div style={{display:"flex",gap:6}}>
                     {levels.map((l,i)=>(
-                      <div key={l} style={{flex:1,height:4,borderRadius:2,background:i<d.level?"var(--accent)":"var(--border)",transition:"background 0.3s"}}/>
+                      <div key={l} style={{flex:1,textAlign:"center"}}>
+                        <div style={{height:5,borderRadius:3,background:i<d.level?"var(--accent)":"var(--border)",transition:"background 0.3s"}}/>
+                        <span style={{display:"block",marginTop:5,fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.03em",textTransform:"uppercase",color:i===d.level-1?"var(--accent)":"var(--m5)",fontWeight:i===d.level-1?700:400}}>{l}</span>
+                      </div>
                     ))}
                   </div>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m5)",marginTop:10,lineHeight:1.5}}>
-                    The questions and notes adjust as you grow. You are always gathering.
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginTop:12,lineHeight:1.5}}>
+                    {nextLine}
                   </p>
                 </div>
               );
