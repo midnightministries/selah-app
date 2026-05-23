@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b123";
+const BUILD = "2026.05.22-b124";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -3419,11 +3419,9 @@ export default function App() {
               const d = getDepthLevel(visibleSessions, isKidAge);
               const totalMins = visibleSessions.reduce((a,s)=>a+Math.round((new Date(s.endTime)-new Date(s.startTime))/60000),0);
               const levels = isKidAge ? ["Spark","Ember","Flame","Torch","Wildfire"] : ["Seed","Root","Branch","Fruit","Harvest"];
-              const TH = [6,21,61,151];
-              const need = TH.find(t => visibleSessions.length < t);
-              const nextLine = need
-                ? `${need - visibleSessions.length} more session${need - visibleSessions.length !== 1 ? "s" : ""} to ${levels[d.level]}. The questions and notes deepen as you go, never softer.`
-                : `You have reached ${d.name}, the deepest level. Keep gathering. The standard does not drop.`;
+              const nextLine = d.level >= 5
+                ? `You have reached ${d.name}, the deepest level. Keep gathering. The standard does not drop.`
+                : `This is where you are now, not a finish line. Growth comes at your own pace; the questions and notes deepen as you go, never softer.`;
               return (
                 <div className="card">
                   <p className="label">Depth Level</p>
