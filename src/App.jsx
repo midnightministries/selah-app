@@ -2169,9 +2169,9 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [eggOpen, photoView, exportSession, faithOpen]);
 
-  // Footer stays above the iOS Safari toolbar structurally: it lives in a fixed
-  // `.mm-shell` sized to 100dvh, so the browser keeps it at the bottom of the visible
-  // viewport natively (no JS toolbar-tracking, hence no jitter/bounce). See MMFooter.
+  // Footer is a normal in-flow bar at the bottom of the page (not a fixed overlay), so
+  // the page flows full-height like a regular site and the iOS toolbar just glasses over
+  // the content. Nothing is pinned to the viewport, so there is nothing to bounce.
 
   function handleSaveAlarm(dayKey, alarm) {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
