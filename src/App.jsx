@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b130";
+const BUILD = "2026.05.22-b131";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -675,9 +675,9 @@ function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div className="mm-shell">
      <div style={{
-      background:"rgba(8,6,3,0.66)", backdropFilter:"blur(18px) saturate(1.2)", WebkitBackdropFilter:"blur(18px) saturate(1.2)",
+      background:"rgba(8,6,3,0.56)", backdropFilter:"blur(18px) saturate(1.2)", WebkitBackdropFilter:"blur(18px) saturate(1.2)",
       borderTop:"1px solid rgba(255,255,255,0.06)",
-      paddingTop:12, paddingBottom:"calc(12px + env(safe-area-inset-bottom))",
+      paddingTop:12, paddingBottom:"calc(42px + env(safe-area-inset-bottom))", marginBottom:-30,
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
       pointerEvents:"none"
     }}>
@@ -694,7 +694,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
       </svg>
       <span onClick={()=>{ if(onHomeView) onEggOpen("mm"); }} style={{
         fontFamily:"'Cinzel',serif",
-        fontSize:13,
+        fontSize:14,
         letterSpacing:"0.22em",
         textTransform:"uppercase",
         color:CROSS_RED,
@@ -2445,7 +2445,7 @@ export default function App() {
         .photo-drop:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.03);}
         .no-sb{scrollbar-width:none;-ms-overflow-style:none;}
         .no-sb::-webkit-scrollbar{display:none;}
-        .mm-shell{position:fixed;left:0;right:0;top:0;height:calc(100vh + 34px);height:calc(100dvh + 34px);pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;z-index:100;}
+        .mm-shell{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;z-index:100;}
         .app-root{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;}
         .photo-preview{width:100%;border-radius:6px;overflow:hidden;position:relative;}
         .photo-preview img{width:100%;display:block;max-height:260px;object-fit:cover;}
