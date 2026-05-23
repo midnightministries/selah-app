@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b144";
+const BUILD = "2026.05.23-b145";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -42,6 +42,27 @@ Rules:
 - Language: strong nouns, active verbs, direct sentences. No em dashes. No therapy tone. No flattery.
 - Honesty is the standard. Calibrate to where the reader actually is and aim one step ahead, never below their demonstrated level and never beyond reach. Growth is real and small: ten minutes, twelve verses, one book is a reader beginning to form. Name that honestly. Do not inflate it and do not diminish it. This is not about metrics. It is about telling the reader the truth about where they are and where they are headed.
 - Always connect the passage to Christ. The whole of Scripture leads to Him. If the reader is in the Old Testament, draw the thread forward to its fulfillment in Christ and the New Testament. If the reader is in the New Testament, anchor it back to its Old Testament root. Make the connection plainly, grounded in the text, never forced. Work this into the context and notes where it fits, not as a tacked-on moral.`;
+
+// ── Reading plans ──────────────────────────────────────────────────────────
+// Each plan is an ordered list of single-chapter readings. Finishing the plan's
+// current reading advances the reader to the next one.
+function buildReadings(books) {
+  const out = [];
+  books.forEach(([b, n]) => { for (let c = 1; c <= n; c++) out.push({ book: b, chapter: c }); });
+  return out;
+}
+const READING_PLANS = {
+  gospels: {
+    name: "The Gospels",
+    blurb: "Walk straight through the four Gospels: Matthew, Mark, Luke, and John. The whole life of Christ in one continuous reading, His words, His works, His death, and His resurrection. Start here if you want to meet Jesus in the text before anything else.",
+    readings: buildReadings([["Matthew", 28], ["Mark", 16], ["Luke", 24], ["John", 21]]),
+  },
+  psalmsproverbs: {
+    name: "Psalms & Proverbs",
+    blurb: "The prayer book and the wisdom book of Israel. Psalms teaches you to bring every season honestly to God; Proverbs teaches you to walk wisely before Him. A chapter at a time, shaping how you pray and how you live.",
+    readings: buildReadings([["Psalms", 150], ["Proverbs", 31]]),
+  },
+};
 
 // ── Brand colors held constant across every palette ──
 const CROSS_RED = "#8e1c1c";     // blood-red cross, every palette
@@ -1816,6 +1837,8 @@ export default function App() {
   const [askProfile, setAskProfile] = useState(() => localStorage.getItem("selah_ask_profile") !== "0");
   const [guidanceOff, setGuidanceOff] = useState(() => localStorage.getItem("selah_guidance_off") === "1");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [readingPlan, setReadingPlan] = useState(() => localStorage.getItem("selah_reading_plan") || "");
+  const [planIndex, setPlanIndex] = useState(() => { const n = parseInt(localStorage.getItem("selah_plan_index") || "0", 10); return isNaN(n) ? 0 : n; });
   const [passcode, setPasscode] = useState(() => localStorage.getItem("selah_passcode") || "");
   const [lockPrompt, setLockPrompt] = useState(null);
   const [lockEntry, setLockEntry] = useState("");
@@ -1945,6 +1968,7 @@ export default function App() {
     try { lastPosition = JSON.parse(localStorage.getItem("selah_last_position") || "null"); } catch {}
     return {
       bibleVersion, gender, age, birthday, palette, profileIcon,
+      readingPlan, planIndex,
       alarms,
       lastPosition,
       setupDone: localStorage.getItem("selah_setup_done") === "1",
@@ -1960,6 +1984,8 @@ export default function App() {
     setAlarms(st.alarms && typeof st.alarms === "object" ? st.alarms : {});
     setPalette(st.palette && PALETTES[st.palette] ? st.palette : "midnight");
     setProfileIcon(st.profileIcon && ICON_THEMES[st.profileIcon] ? st.profileIcon : "default");
+    setReadingPlan(st.readingPlan && READING_PLANS[st.readingPlan] ? st.readingPlan : "");
+    setPlanIndex(typeof st.planIndex === "number" ? st.planIndex : 0);
     try { localStorage.setItem("selah_last_position", JSON.stringify(st.lastPosition || null)); } catch {}
     localStorage.setItem("selah_setup_done", st.setupDone ? "1" : "0");
     const lp = st.lastPosition;
@@ -2238,6 +2264,8 @@ export default function App() {
   useEffect(() => { localStorage.setItem("selah_age", age); }, [age]);
   useEffect(() => { localStorage.setItem("selah_clock_fmt", clockFmt); }, [clockFmt]);
   useEffect(() => { localStorage.setItem("selah_timezone", timezone); }, [timezone]);
+  useEffect(() => { localStorage.setItem("selah_reading_plan", readingPlan); }, [readingPlan]);
+  useEffect(() => { localStorage.setItem("selah_plan_index", String(planIndex)); }, [planIndex]);
 
   // Scroll to session after calendar tap
   useEffect(() => {
@@ -2310,7 +2338,13 @@ export default function App() {
       const avg = (k)=>Math.round(recentT.reduce((a,x)=>a+(x.timing[k]||0),0)/recentT.length);
       engageNote = ` Engagement signals (never mention to the reader): over the last ${recentT.length} sessions this reader averages ${avg("readingMin")} min reading, a ${avg("gapSec")} sec pause before answering, and ${avg("answeringSec")} sec writing answers. Long reading, long pauses, and a long answering span mean they wrestle, return to the text between questions, and labor over their words; push real depth and rigor and richer context. Short times mean skimming; tighten and force a return to the passage.`;
     }
-    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote}${bookNote}${genderNote}${engageNote} Scale the depth and density of the context, the notes, and the questions to the depth level: at higher levels include more historical, literary, and theological grounding and connect to the surrounding chapters and books. Do not hand a beginner and a Harvest-level reader the same context for the same passage. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
+    const plan = readingPlan && READING_PLANS[readingPlan];
+    const planCur = plan ? plan.readings[planIndex] : null;
+    const planPrev = (plan && planIndex > 0) ? plan.readings[planIndex - 1] : null;
+    const planNote = plan
+      ? ` This reader is following the "${plan.name}" reading plan${planCur ? `, currently at ${planCur.book} ${planCur.chapter}` : ""}${planPrev ? ` (their previous reading was ${planPrev.book} ${planPrev.chapter})` : ""}. Where it fits naturally, set this passage within the plan's larger arc and connect it to where they have recently been, as honest, grounded encouragement. The plan is context, not a theme to force, and never flatter.`
+      : "";
+    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote}${bookNote}${genderNote}${engageNote}${planNote} Scale the depth and density of the context, the notes, and the questions to the depth level: at higher levels include more historical, literary, and theological grounding and connect to the surrounding chapters and books. Do not hand a beginner and a Harvest-level reader the same context for the same passage. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
     try {
       const resp = await fetch("/.netlify/functions/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -2324,6 +2358,10 @@ export default function App() {
       firstAnswerAt.current = null; questionStamps.current = [];
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
+      // Advance the reading plan when this session was the plan's current reading.
+      if (plan && planCur && (activeSession.startBook || "") === planCur.book && parseInt(activeSession.startChapter, 10) === planCur.chapter) {
+        setPlanIndex(i => Math.min(i + 1, plan.readings.length));
+      }
     } catch { setError("Connection failed. Check your signal and try again."); }
     setLoading(false);
   }
@@ -2818,6 +2856,24 @@ export default function App() {
                 </div>
               );
             })()}
+            {readingPlan && READING_PLANS[readingPlan] && planIndex < READING_PLANS[readingPlan].readings.length && (()=>{
+              const rp = READING_PLANS[readingPlan]; const cur = rp.readings[planIndex];
+              return (
+                <div className="card" style={{border:"1px solid rgba(var(--accent-rgb),0.3)"}}>
+                  <p className="label" style={{color:"var(--accent)"}}>Reading Plan · {rp.name}</p>
+                  <p style={{fontSize:16,color:"var(--m1b)",lineHeight:1.6,marginBottom:12}}>Today's reading: <span style={{color:"var(--text2)",fontWeight:600}}>{cur.book} {cur.chapter}</span>. Finishing it moves you to the next.</p>
+                  <button className="btn-primary" style={{width:"100%",padding:"11px"}} onClick={()=>{ setForm(f=>({...f,startBook:cur.book,startChapter:String(cur.chapter),startVerse:"",endBook:cur.book,endChapter:String(cur.chapter),endVerse:""})); }}>Read {cur.book} {cur.chapter}</button>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m4)",marginTop:10,lineHeight:1.5}}>Or set your own passage below to read freely.</p>
+                </div>
+              );
+            })()}
+            {readingPlan && READING_PLANS[readingPlan] && planIndex >= READING_PLANS[readingPlan].readings.length && (
+              <div className="card" style={{border:"1px solid rgba(var(--accent-rgb),0.3)",textAlign:"center"}}>
+                <p className="label" style={{color:"var(--accent)"}}>Reading Plan · {READING_PLANS[readingPlan].name}</p>
+                <p style={{fontSize:16,color:"var(--m1b)",lineHeight:1.6,marginBottom:12}}>You have read through the whole plan. Gather it and carry it.</p>
+                <button className="btn-ghost" style={{width:"100%",padding:"11px"}} onClick={()=>setPlanIndex(0)}>Start over</button>
+              </div>
+            )}
             <div className="card">
               <label className="label">Where you are<HelpDot show={!guidanceOff} text="Where you're reading from. It's tagged to this session and woven into the context the model gives you." /></label>
               <select value={form.locationType} onChange={e=>setForm(f=>({...f,locationType:e.target.value}))}>
@@ -3328,6 +3384,29 @@ export default function App() {
                   <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:5}}>A Note on the NIV</p>
                   <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m1)",lineHeight:1.6}}><Selah /> follows the classic NIV wording. It is not calibrated to the 2011 revision and its gender-language changes.</p>
                 </div>
+              )}
+            </div>
+
+            {/* Reading Plan */}
+            <div className="card">
+              <p className="label">Reading Plan<HelpDot show={!guidanceOff} text="Follow a guided path through Scripture. With a plan on, your home opens to the next reading and finishing it moves you forward. You can read freely anytime." /></p>
+              <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>Optional. A plan sets where you open each session. You can always read something else instead.</p>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {[["","Free reading (no plan)"]].concat(Object.entries(READING_PLANS).map(([id,p])=>[id,p.name])).map(([id,label])=>(
+                  <button key={id||"none"} onClick={()=>{ if(id!==readingPlan) setPlanIndex(0); setReadingPlan(id); }}
+                    style={{textAlign:"left",background:"transparent",border:readingPlan===id?"1px solid var(--accent)":"1px solid var(--border)",borderRadius:8,padding:"11px 14px",cursor:"pointer",transition:"border-color 0.2s"}}>
+                    <span style={{fontFamily:"'Cinzel',serif",fontSize:13,letterSpacing:"0.04em",color:readingPlan===id?"var(--accent)":"var(--text2)"}}>{label}</span>
+                    {id && READING_PLANS[id] && <span style={{display:"block",fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m3)",lineHeight:1.55,marginTop:6}}>{READING_PLANS[id].blurb}</span>}
+                  </button>
+                ))}
+              </div>
+              {readingPlan && READING_PLANS[readingPlan] && (
+                <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:12}}>
+                  {planIndex >= READING_PLANS[readingPlan].readings.length
+                    ? "Plan complete"
+                    : "Next: " + READING_PLANS[readingPlan].readings[planIndex].book + " " + READING_PLANS[readingPlan].readings[planIndex].chapter}
+                  {planIndex > 0 && <button onClick={()=>setPlanIndex(0)} style={{marginLeft:10,background:"transparent",border:"none",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",padding:0}}>Restart</button>}
+                </p>
               )}
             </div>
 
