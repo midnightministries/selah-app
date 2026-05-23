@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b135";
+const BUILD = "2026.05.22-b136";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2464,8 +2464,8 @@ export default function App() {
         .version-pill{background:transparent;border:1px solid var(--border2);border-radius:4px;padding:7px 12px;font-family:'Cinzel',serif;font-size:10px;color:var(--m3);letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .version-pill.active{background:rgba(var(--accent-rgb),0.12);border-color:var(--accent);color:var(--accent);}
         .version-pill:hover:not(.active){border-color:var(--m3);color:var(--m1);}
-        @media (min-width:600px){.app-container{padding:0 24px 24px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
-        @media (min-width:768px){.app-container{padding:0 32px 24px !important;max-width:600px !important;}h1{font-size:30px !important;}}
+        @media (min-width:600px){.app-container{padding:0 24px calc(76px + env(safe-area-inset-bottom)) !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
+        @media (min-width:768px){.app-container{padding:0 32px calc(76px + env(safe-area-inset-bottom)) !important;max-width:600px !important;}h1{font-size:30px !important;}}
         @media (min-width:1024px){.app-container{max-width:640px !important;}}
       `}</style>
 
@@ -2474,7 +2474,7 @@ export default function App() {
       {/* Pulsing gold edge-glow vignette */}
       <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(var(--accent-rgb),0.17), inset 0 0 ${glowRed}px rgba(var(--blood-rgb),0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,flex:1,width:"100%",maxWidth:480,margin:"0 auto",padding:"0 16px 24px",overflowAnchor:"none"}}>
+      <div className="app-container" style={{position:"relative",zIndex:1,flex:1,width:"100%",maxWidth:480,margin:"0 auto",padding:"0 16px calc(76px + env(safe-area-inset-bottom))",overflowAnchor:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"calc(env(safe-area-inset-top, 0px) + 28px) 0 18px",position:"relative"}}>
