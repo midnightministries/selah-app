@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b111";
+const BUILD = "2026.05.22-b112";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -3421,7 +3421,7 @@ export default function App() {
       {showTop && (<>
         {/* Calendar/date — quick jump back to the Log where you were; faint calendar behind the day number */}
         <button onClick={gotoLog} aria-label="Go to log calendar" style={{position:"fixed",bottom:"calc(env(safe-area-inset-bottom, 0px) + 126px)",right:13,zIndex:110,background:"rgba(var(--surface-rgb),0.6)",backdropFilter:"blur(9px) saturate(1.4)",WebkitBackdropFilter:"blur(9px) saturate(1.4)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",opacity:0.12}}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,calc(-50% - 2px))",opacity:0.12}}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
           <span style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,lineHeight:1}}>{new Date().getDate()}</span>
         </button>
         {/* Back to top */}
