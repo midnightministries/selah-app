@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.21-b92";
+const BUILD = "2026.05.22-b97";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -520,43 +520,43 @@ const PALETTES = {
     "--border":"#36241c","--border2":"#2e2408","--accent":"#c9a84c","--accent2":"#a8832a",
     "--ink":"#0e0c06","--text":"#e4dcc8","--text2":"#c8bfa0","--text3":"#c0b898","--text4":"#d4ccb8",
     "--m1":"#8a7a4a","--m1b":"#8a7a5a","--m2":"#6a5a30","--m3":"#5a4a20","--m3b":"#5a4a2a","--m4":"#4a3e1a","--m5":"#3a3010",
-    "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28" } },
+    "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28","--surface-rgb":"32,19,15" } },
   warm: { label: "Warm Amber", swatch: ["#241108","#f5894a","#a4734e"], vars: {
     "--bg":"#241108","--surface":"#311a0e","--input":"#3a2012","--input2":"#2a1409",
     "--border":"#4a2e1c","--border2":"#3e2616","--accent":"#f5894a","--accent2":"#d2632a",
     "--ink":"#1a0d05","--text":"#f7e7d6","--text2":"#ecccb4","--text3":"#e2c0a6","--text4":"#f5e6d6",
     "--m1":"#c79874","--m1b":"#c79874","--m2":"#a4734e","--m3":"#875b3c","--m3b":"#875b3c","--m4":"#6a4630","--m5":"#523524",
-    "--accent-rgb":"245,137,74","--blood-rgb":"150,40,40" } },
+    "--accent-rgb":"245,137,74","--blood-rgb":"150,40,40","--surface-rgb":"49,26,14" } },
   rose: { label: "Rose", swatch: ["#26101c","#f08fb5","#a86883"], vars: {
     "--bg":"#26101c","--surface":"#341624","--input":"#3c1a2b","--input2":"#2a1320",
     "--border":"#4e2840","--border2":"#432234","--accent":"#f08fb5","--accent2":"#cc6090",
     "--ink":"#1c0c14","--text":"#f8e7ee","--text2":"#edccd8","--text3":"#e2c0cf","--text4":"#f3dde8",
     "--m1":"#c98ba2","--m1b":"#c98ba2","--m2":"#a86883","--m3":"#8a536c","--m3b":"#8a536c","--m4":"#6c3f53","--m5":"#543141",
-    "--accent-rgb":"240,143,181","--blood-rgb":"160,50,90" } },
+    "--accent-rgb":"240,143,181","--blood-rgb":"160,50,90","--surface-rgb":"52,22,36" } },
   blossom: { label: "Blossom", swatch: ["#1d1336","#cf9bff","#8772aa"], vars: {
     "--bg":"#1d1336","--surface":"#271a45","--input":"#2d1e4f","--input2":"#211541",
     "--border":"#3c2c63","--border2":"#322455","--accent":"#cf9bff","--accent2":"#a86fe0",
     "--ink":"#150c28","--text":"#f0e8fb","--text2":"#d8ccef","--text3":"#cdc0e6","--text4":"#e6dcf6",
     "--m1":"#a995c9","--m1b":"#a995c9","--m2":"#8772aa","--m3":"#6f5b90","--m3b":"#6f5b90","--m4":"#564574","--m5":"#43355c",
-    "--accent-rgb":"207,155,255","--blood-rgb":"170,70,120" } },
+    "--accent-rgb":"207,155,255","--blood-rgb":"170,70,120","--surface-rgb":"39,26,69" } },
   cadet: { label: "Cadet Blue", swatch: ["#0b1a30","#4ec4ff","#5e7a9c"], vars: {
     "--bg":"#0b1a30","--surface":"#11233f","--input":"#13294a","--input2":"#0e1d36",
     "--border":"#25405f","--border2":"#1f3650","--accent":"#4ec4ff","--accent2":"#2e84cc",
     "--ink":"#08121f","--text":"#e4eef8","--text2":"#c4d8ee","--text3":"#bacfe6","--text4":"#d8e6f4",
     "--m1":"#7e9bbb","--m1b":"#7e9bbb","--m2":"#5e7a9c","--m3":"#4e6582","--m3b":"#4e6582","--m4":"#3e5168","--m5":"#314052",
-    "--accent-rgb":"78,196,255","--blood-rgb":"60,100,170" } },
+    "--accent-rgb":"78,196,255","--blood-rgb":"60,100,170","--surface-rgb":"17,35,63" } },
   steel: { label: "Steel", swatch: ["#14181d","#93b6cf","#6a7c8a"], vars: {
     "--bg":"#14181d","--surface":"#1d232a","--input":"#212831","--input2":"#161b21",
     "--border":"#333c46","--border2":"#2a323b","--accent":"#93b6cf","--accent2":"#5f87a4",
     "--ink":"#0c1116","--text":"#e8edf2","--text2":"#cdd8e0","--text3":"#c2cfd8","--text4":"#dde6ed",
     "--m1":"#8a9aa8","--m1b":"#8a9aa8","--m2":"#6a7c8a","--m3":"#586774","--m3b":"#586774","--m4":"#45525d","--m5":"#364049",
-    "--accent-rgb":"147,182,207","--blood-rgb":"100,120,150" } },
+    "--accent-rgb":"147,182,207","--blood-rgb":"100,120,150","--surface-rgb":"29,35,42" } },
   dark: { label: "Dark", swatch: ["#141215","#c7414c","#7a6f78"], vars: {
     "--bg":"#141215","--surface":"#1d1a20","--input":"#221e26","--input2":"#17141a",
     "--border":"#352f3e","--border2":"#2b2733","--accent":"#c7414c","--accent2":"#93303a",
     "--ink":"#14080a","--text":"#ece6ea","--text2":"#d4ccd2","--text3":"#c8bfc6","--text4":"#f0eaef",
     "--m1":"#9a8f98","--m1b":"#9a8f98","--m2":"#7a6f78","--m3":"#645b66","--m3b":"#645b66","--m4":"#4e4654","--m5":"#3c3542",
-    "--accent-rgb":"199,65,76","--blood-rgb":"150,40,40" } },
+    "--accent-rgb":"199,65,76","--blood-rgb":"150,40,40","--surface-rgb":"29,26,32" } },
 };
 function ageFromBirthday(bday) {
   if (!bday) return null;
@@ -648,7 +648,9 @@ function MMFooter({ onEggOpen, onHomeView }) {
       paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
       pointerEvents:"none",
-      transform:"translateZ(0)", WebkitTransform:"translateZ(0)", willChange:"transform"
+      transform:"translateY(calc(-1 * var(--vv-bottom, 0px))) translateZ(0)",
+      WebkitTransform:"translateY(calc(-1 * var(--vv-bottom, 0px))) translateZ(0)",
+      willChange:"transform"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -1561,7 +1563,7 @@ function AboutScreen({ onBack, onFaith }) {
             <P>God is Spirit. This is what John gives us in chapter 4, verse 24, and no word we own can hold Him. He spoke the heavens and the earth into being and hung the stars by His voice alone; we see this in Genesis 1. No man can see His face and live. Moses was hidden in the rock and shown only His back, as told in Exodus 33:20-23. How do you define the One who defines everything?</P>
             <P>He reveals Himself as Father, and that is the name we keep. Yet in the original Hebrew the word for Spirit, Ruach, is grammatically feminine; the verbs and modifiers the Scriptures attach to it are feminine, and He sets that Spirit inside every one of us. It is why He calls us His bride, as Paul tells us in Ephesians 5. Father, Son, and Spirit: three and one, not bound to time, space, or matter.</P>
             <P>Then the Son came in the flesh, born of a virgin, fully man and fully God, the last Adam, to finish what the first Adam did not and to cleanse us by His blood, as Paul tells us more than once, in Romans 5 and Ephesians 1. Not by accident. With purpose, in a set direction. Moses could not look at His face; we are given Christ to look upon, as John tells us in chapter 14 and Paul in Colossians 1.</P>
-            <P>We are made to be masters of His Word and novices in the mystery, and to rest there. What we cannot define, we trust, and that trust becomes <span onClick={(e)=>{ e.stopPropagation(); onFaith && onFaith(); }} role="button" tabIndex={0} style={{color:CROSS_RED,cursor:"pointer"}}>faith</span>, and through faith we will find relationship. That is the foundation.</P>
+            <P>We are made to be masters of His Word and novices in the mystery, and to rest there. What we cannot define, we trust, and that trust becomes <span onClick={(e)=>{ e.stopPropagation(); onFaith && onFaith(); }} role="button" tabIndex={0} style={{color:CROSS_RED,cursor:"pointer",textShadow:"0 0 8px rgba(160,40,40,0.5), 0 1px 2px rgba(0,0,0,0.9)"}}>faith</span>, and through faith we will find relationship. That is the foundation.</P>
             <P>The one this ministry was handed to is a man, and he writes from that place without apology. What was handed to him was not for men only.</P>
             <P mb={0}>His Word is for every person who has breath. This app is built on that. If you are a man, a woman, or a child who wants to know His Word with more honesty and less performance, this was built for you.</P>
           </Section>
@@ -1708,7 +1710,7 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
   const head = { fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.97)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
         <Slider value={b} min={0.85} max={1.45} step={0.01} onChange={changeB} onCommit={commit} width="100%"/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
@@ -2115,6 +2117,40 @@ export default function App() {
     return () => { document.body.style.overflow = prev; };
   }, [eggOpen, photoView, exportSession, faithOpen]);
 
+  // Keep the fixed footer glued to the top of iOS Safari's bottom toolbar as it
+  // animates. We expose --vv-bottom = the slice of the layout viewport hidden at
+  // the bottom (the toolbar), and the footer lifts by that via transform. To
+  // track the toolbar *during* the scroll (not just when it settles), we run a
+  // short rAF loop while there's motion and stop it once things go still. On
+  // Chrome/desktop the overlap is always 0, so the footer never moves (no bounce).
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    let raf = 0, idle = 0, looping = false;
+    const measure = () => Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    const setVar = () => document.documentElement.style.setProperty("--vv-bottom", measure() + "px");
+    const loop = () => { setVar(); raf = requestAnimationFrame(loop); };
+    const stop = () => { looping = false; if (raf) cancelAnimationFrame(raf); raf = 0; setVar(); };
+    const kick = () => {
+      if (!looping) { looping = true; loop(); }
+      clearTimeout(idle);
+      idle = setTimeout(stop, 350);
+    };
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("touchmove", kick, { passive: true });
+    vv.addEventListener("resize", kick);
+    vv.addEventListener("scroll", kick);
+    setVar();
+    return () => {
+      window.removeEventListener("scroll", kick);
+      window.removeEventListener("touchmove", kick);
+      vv.removeEventListener("resize", kick);
+      vv.removeEventListener("scroll", kick);
+      if (raf) cancelAnimationFrame(raf);
+      clearTimeout(idle);
+    };
+  }, []);
+
   function handleSaveAlarm(dayKey, alarm) {
     setAlarms(prev => ({ ...prev, [dayKey]: alarm }));
   }
@@ -2326,7 +2362,7 @@ export default function App() {
           --border:#36241c;--border2:#2e2408;--accent:#c9a84c;--accent2:#a8832a;
           --ink:#0e0c06;--text:#e4dcc8;--text2:#c8bfa0;--text3:#c0b898;--text4:#d4ccb8;
           --m1:#8a7a4a;--m1b:#8a7a5a;--m2:#6a5a30;--m3:#5a4a20;--m3b:#5a4a2a;--m4:#4a3e1a;--m5:#3a3010;
-          --accent-rgb:201,168,76;--blood-rgb:110,28,28;
+          --accent-rgb:201,168,76;--blood-rgb:110,28,28;--surface-rgb:32,19,15;
         }
         html,body{background:var(--bg);-webkit-overflow-scrolling:touch;}*{box-sizing:border-box;margin:0;padding:0;}
         ::-webkit-scrollbar{width:3px;}
