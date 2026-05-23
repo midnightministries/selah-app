@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b134";
+const BUILD = "2026.05.22-b135";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1836,10 +1836,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem("selah_profile_icon", profileIcon); }, [profileIcon]);
   useEffect(() => { localStorage.setItem("selah_ask_profile", askProfile ? "1" : "0"); }, [askProfile]);
   useEffect(() => { localStorage.setItem("selah_guidance_off", guidanceOff ? "1" : "0"); }, [guidanceOff]);
-  // First-run guidance: auto-show the orientation card once per profile (unless turned off).
-  useEffect(() => {
-    if (view === "home" && !guidanceOff && !needsSetup && localStorage.getItem("selah_help_seen_" + activeProfileId) !== "1") setHelpOpen(true);
-  }, [view, guidanceOff, needsSetup, activeProfileId]);
   useEffect(() => { localStorage.setItem("selah_passcode", passcode); }, [passcode]);
   const [showBright, setShowBright] = useState(false);
   const [showTop, setShowTop] = useState(false);
@@ -1917,6 +1913,11 @@ export default function App() {
   const saveSnaps = () => { try { localStorage.setItem("selah_profile_snaps", JSON.stringify(profileSnaps.current)); } catch {} };
   useEffect(() => { localStorage.setItem("selah_profiles", JSON.stringify(profiles)); }, [profiles]);
   useEffect(() => { localStorage.setItem("selah_active_profile", activeProfileId); }, [activeProfileId]);
+  // First-run guidance: auto-show the orientation card once per profile (unless turned off).
+  // (Placed after activeProfileId is declared to avoid a temporal-dead-zone crash.)
+  useEffect(() => {
+    if (view === "home" && !guidanceOff && !needsSetup && localStorage.getItem("selah_help_seen_" + activeProfileId) !== "1") setHelpOpen(true);
+  }, [view, guidanceOff, needsSetup, activeProfileId]);
 
   const visibleSessions = sessions.filter(s => (s.profileId || "owner") === activeProfileId);
 
