@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b119";
+const BUILD = "2026.05.22-b120";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2364,7 +2364,7 @@ export default function App() {
   const glowRed = Math.max(30, Math.min(Math.round((vw || 1200) * 0.11), 150));
 
   return (
-    <div style={{minHeight:"100vh",background:"var(--bg)",color:"var(--text)",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
+    <div className="app-root" style={{background:"var(--bg)",color:"var(--text)",fontFamily:"'Crimson Text',Georgia,serif",position:"relative"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Cinzel:wght@400;600;700&display=swap');
         :root{
@@ -2417,7 +2417,8 @@ export default function App() {
         .photo-drop:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.03);}
         .no-sb{scrollbar-width:none;-ms-overflow-style:none;}
         .no-sb::-webkit-scrollbar{display:none;}
-        .mm-shell{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;z-index:100;}
+        .mm-shell{position:fixed;left:0;right:0;top:0;height:100vh;height:100svh;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;z-index:100;}
+        .app-root{min-height:100vh;min-height:100svh;}
         .photo-preview{width:100%;border-radius:6px;overflow:hidden;position:relative;}
         .photo-preview img{width:100%;display:block;max-height:260px;object-fit:cover;}
         .photo-remove{position:absolute;top:8px;right:8px;background:rgba(10,8,4,0.8);border:1px solid #3a1810;color:#a04030;border-radius:4px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;}
