@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.23-b145";
+const BUILD = "2026.05.23-b146";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -3390,7 +3390,7 @@ export default function App() {
             {/* Reading Plan */}
             <div className="card">
               <p className="label">Reading Plan<HelpDot show={!guidanceOff} text="Follow a guided path through Scripture. With a plan on, your home opens to the next reading and finishing it moves you forward. You can read freely anytime." /></p>
-              <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>Optional. A plan sets where you open each session. You can always read something else instead.</p>
+              <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:14}}>Optional. A plan sets where you open each session, and the model reads along with you, it uses where you are in the plan and where you have already been to shape the context, the questions, and the encouragement it gives. The truth never changes, only the framing. You can read something else anytime.</p>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {[["","Free reading (no plan)"]].concat(Object.entries(READING_PLANS).map(([id,p])=>[id,p.name])).map(([id,label])=>(
                   <button key={id||"none"} onClick={()=>{ if(id!==readingPlan) setPlanIndex(0); setReadingPlan(id); }}
