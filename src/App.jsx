@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b129";
+const BUILD = "2026.05.22-b130";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1781,7 +1781,11 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
 
 // ── Main App ─────────────────────────────────────────────────────────────
 export default function App() {
-  const [view, setView] = useState("home");
+  const [view, setView] = useState(() => {
+    // Restore the last navigational screen on reload. Transient views (a live session,
+    // a result, the auth/profile-pick flow) fall back to home since their state is gone.
+    try { const v = localStorage.getItem("selah_view"); return ["home","history","settings","about","profiles"].includes(v) ? v : "home"; } catch { return "home"; }
+  });
   const [sessions, setSessions] = useState(loadSessions);
   const [activeSession, setActiveSession] = useState(null);
   const [bibleVersion, setBibleVersion] = useState(() => localStorage.getItem("selah_bible_version") || "NLT");
@@ -2200,6 +2204,7 @@ export default function App() {
 
   useEffect(() => { saveSessions(sessions); }, [sessions]);
   useEffect(() => { localStorage.setItem("selah_bible_version", bibleVersion); }, [bibleVersion]);
+  useEffect(() => { try { localStorage.setItem("selah_view", view); } catch {} }, [view]);
   useEffect(() => { localStorage.setItem("selah_gender", gender); }, [gender]);
   useEffect(() => { localStorage.setItem("selah_age", age); }, [age]);
   useEffect(() => { localStorage.setItem("selah_clock_fmt", clockFmt); }, [clockFmt]);
