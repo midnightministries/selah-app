@@ -25,3 +25,6 @@ dist-ssr
 
 # Design deliverables — kept outside the repo (in ../SELAH Assets) so pushes stay light
 PhysicalDeliverables/
+
+# Working memory / private guidance — never deploy this
+CLAUDE.md
