@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b115";
+const BUILD = "2026.05.22-b116";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -789,6 +789,7 @@ function ExportSheet({ session, onClose }) {
   const ptrs = useRef(new Map());
   const dragRef = useRef(null);
   const pinch = useRef(null);
+  const tapRef = useRef(null);   // tap-to-cycle through overlapping elements
 
   const DIMS = { square:[1080,1080], story:[1080,1920] };
   const [W,H] = DIMS[layout.aspect] || DIMS.square;
@@ -860,17 +861,31 @@ function ExportSheet({ session, onClose }) {
   }
   function stageMove(e){
     if(ptrs.current.has(e.pointerId)) ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(tapRef.current && (Math.abs(e.clientX-tapRef.current.x)>5 || Math.abs(e.clientY-tapRef.current.y)>5)) tapRef.current.moved=true;
     const r=stageRef.current?.getBoundingClientRect(); if(!r) return;
     if(pinch.current && ptrs.current.size>=2){ const v=[...ptrs.current.values()]; const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y); setPhoto({zoom:clamp(pinch.current.z*(d/pinch.current.d),minZoom,3)}); return; }
     const d=dragRef.current; if(!d) return;
     if(d.type==="photo"){ const slX=r.width*(bgWpct/100-1), slY=r.height*(bgHpct/100-1); let nx=layout.photo.x, ny=layout.photo.y; if(slX>1) nx=clamp(d.ox-(e.clientX-d.sx)/slX,0,1); if(slY>1) ny=clamp(d.oy-(e.clientY-d.sy)/slY,0,1); setPhoto({x:nx,y:ny}); }
     else if(d.type==="el"){ setEl(d.key,{ xf:clamp(d.ox+(e.clientX-d.sx)/r.width,0.02,0.98), yf:clamp(d.oy+(e.clientY-d.sy)/r.height,0.02,0.98) }); }
   }
-  function stageUp(e){ ptrs.current.delete(e.pointerId); if(ptrs.current.size<2) pinch.current=null; if(ptrs.current.size===0) dragRef.current=null; }
-  function elDown(e,key){ e.stopPropagation(); setSel(key); setTool("color"); setShareOpen(false);
+  function stageUp(e){ ptrs.current.delete(e.pointerId); if(ptrs.current.size<2) pinch.current=null; if(ptrs.current.size===0) dragRef.current=null;
+    const t=tapRef.current;
+    if(t && !t.moved && !t.fresh && t.stack.length>1){ const i=t.stack.indexOf(t.chosen); setSel(t.stack[(i+1)%t.stack.length]); }
+    if(ptrs.current.size===0) tapRef.current=null; }
+  function overlapStack(x,y){ const seen=new Set(), out=[]; try{ document.elementsFromPoint(x,y).forEach(n=>{ const k=n.getAttribute&&n.getAttribute("data-elkey"); if(k&&!seen.has(k)){ seen.add(k); out.push(k); } }); }catch{} return out; }
+  function elDown(e,key){ e.stopPropagation(); setTool("color"); setShareOpen(false);
+    // Tap-to-cycle: a clean tap selects the top element; tapping the same spot again
+    // steps to the next element underneath, so overlapping pieces are reachable
+    // without having to drag the front one out of the way. Dragging still moves
+    // whatever is currently selected.
+    const stack=overlapStack(e.clientX,e.clientY); const list=stack.length?stack:[key];
+    let chosen, fresh;
+    if(sel && list.includes(sel)){ chosen=sel; fresh=false; } else { chosen=list[0]||key; fresh=true; }
+    setSel(chosen);
+    tapRef.current={ x:e.clientX, y:e.clientY, stack:list, chosen, fresh, moved:false };
     // Midnight Ministries is locked in place — selectable for color/size, not draggable.
-    if(key==="mm") return;
-    dragRef.current={ type:"el", key, sx:e.clientX, sy:e.clientY, ox:layout.els[key].xf, oy:layout.els[key].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
+    if(chosen==="mm") return;
+    dragRef.current={ type:"el", key:chosen, sx:e.clientX, sy:e.clientY, ox:layout.els[chosen].xf, oy:layout.els[chosen].yf }; ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId); }
 
   const FONT_ORDER=["serif","cinzel","crimson","sans"], FONT_LABEL={serif:"Serif",cinzel:"Cinzel",crimson:"Crimson",sans:"Sans"};
   const CONTENT_ORDER=[["session","Passage"],...(hasRV?[["return","Verse"]]:[]),["anchor","RMR"]];
@@ -890,14 +905,14 @@ function ExportSheet({ session, onClose }) {
       // Real cross glow: a blurred, glow-colored copy of the cross shape behind it.
       // (drop-shadow on a CSS-masked element doesn't render reliably across browsers.)
       const mask={ position:"absolute", inset:0, WebkitMaskImage:`url("${CROSS_SRC}")`, maskImage:`url("${CROSS_SRC}")`, WebkitMaskRepeat:"no-repeat", maskRepeat:"no-repeat", WebkitMaskSize:"contain", maskSize:"contain", WebkitMaskPosition:"center", maskPosition:"center" };
-      return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%" }}>
+      return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%" }}>
         {el.glow ? <div style={{ ...mask, backgroundColor:gc, filter:`blur(${(el.glow*9).toFixed(1)}px)` }}/> : null}
         <div style={{ ...mask, backgroundColor:el.color }}/>
       </div>;
     }
     // text glow = text-shadow (true color, no drag trails).
     const ts = el.glow ? `0 0 ${(el.glow*7).toFixed(1)}px ${gc}, 0 0 ${(el.glow*14).toFixed(1)}px ${gc}` : "none";
-    return <div key={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
+    return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
   // Derive three distinct shades from the active palette accent so the circles
