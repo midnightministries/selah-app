@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b136";
+const BUILD = "2026.05.22-b137";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2490,6 +2490,12 @@ export default function App() {
               <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 13.5h6L9 22l9-12h-6l1-8z"/></svg>
             </button>
           )}
+          {view === "home" && !guidanceOff && (
+            <button onClick={()=>setHelpOpen(true)} aria-label="Help" style={{position:"absolute",right:66,top:"calc(env(safe-area-inset-top, 0px) + 28px)",background:"transparent",border:"none",color:"var(--m5)",cursor:"pointer",padding:8,transition:"color 0.2s"}}
+              onMouseOver={e=>e.currentTarget.style.color="var(--accent)"} onMouseOut={e=>e.currentTarget.style.color="var(--m5)"}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M9.1 9.2a3 3 0 0 1 5.8 1c0 2-2.9 2.5-2.9 4"/><circle cx="12" cy="17.6" r="0.7" fill="currentColor" stroke="none"/></svg>
+            </button>
+          )}
           <div style={{position:"absolute",left:(profiles[activeProfileId] && profiles[activeProfileId].kid)?10:6,top:"calc(env(safe-area-inset-top, 0px) + 34px)",cursor:view==="home"?"pointer":"default"}} onClick={()=>{ if(view==="home") setEggOpen("cross"); }}>
             {profiles[activeProfileId] && profiles[activeProfileId].kid
               ? <img src={(ICON_THEMES[profileIcon]||ICON_THEMES.default).thumb} alt="" width={40} height={40} style={{borderRadius:10,display:"block",border:"1px solid var(--border)"}}/>
@@ -2774,9 +2780,6 @@ export default function App() {
                 )}
                 <button className="btn-primary" style={{width:"100%",padding:"11px"}} onClick={()=>{ setHelpOpen(false); try{localStorage.setItem("selah_help_seen_"+activeProfileId,"1");}catch(_){} }}>Got it</button>
               </div>
-            )}
-            {!guidanceOff && !helpOpen && (
-              <button onClick={()=>setHelpOpen(true)} aria-label="Help" style={{position:"fixed",right:16,bottom:"calc(env(safe-area-inset-bottom,0px) + 70px)",zIndex:90,width:40,height:40,borderRadius:"50%",background:"rgba(var(--surface-rgb),0.6)",backdropFilter:"blur(9px) saturate(1.4)",WebkitBackdropFilter:"blur(9px) saturate(1.4)",border:"1.5px solid var(--accent)",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",padding:0}}>?</button>
             )}
             {isKidAge && (()=>{
               const d = getDepthLevel(visibleSessions, true);
