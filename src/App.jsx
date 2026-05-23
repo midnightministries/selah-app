@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b132";
+const BUILD = "2026.05.22-b133";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1800,6 +1800,9 @@ export default function App() {
   const [lockPrompt, setLockPrompt] = useState(null);
   const [lockEntry, setLockEntry] = useState("");
   const [lockErr, setLockErr] = useState("");
+  const [removeId, setRemoveId] = useState(null);   // kid profile pending passcode-gated removal
+  const [removeEntry, setRemoveEntry] = useState("");
+  const [removeErr, setRemoveErr] = useState("");
   const [pcDraft, setPcDraft] = useState("");
   const [clockFmt, setClockFmt] = useState(() => localStorage.getItem("selah_clock_fmt") || "12");
   const [timezone, setTimezone] = useState(() => localStorage.getItem("selah_timezone") || "device");
@@ -2684,7 +2687,7 @@ export default function App() {
                     {kidIds.map(id=>(
                       <div key={id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                         <span style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--text2)"}}>{profiles[id].name||"Child"}</span>
-                        <button onClick={()=>{ if(window.confirm(`Remove ${profiles[id].name||"this reader"} and all of their sessions? This cannot be undone.`)) deleteKidProfile(id); }}
+                        <button onClick={()=>{ if(passcode){ setRemoveId(id); setRemoveEntry(""); setRemoveErr(""); } else if(window.confirm(`Remove ${profiles[id].name||"this reader"} and all of their sessions? This cannot be undone.`)) deleteKidProfile(id); }}
                           style={{background:"transparent",border:"1px solid var(--border)",borderRadius:5,padding:"5px 10px",color:"var(--m3)",fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Remove</button>
                       </div>
                     ))}
@@ -3528,6 +3531,24 @@ export default function App() {
             <div style={{display:"flex",gap:8}}>
               <button className="btn-ghost" style={{flex:1,padding:"12px"}} onClick={()=>{ setLockPrompt(null); setLockEntry(""); setLockErr(""); }}>Cancel</button>
               <button className="btn-primary" style={{flex:1,padding:"12px"}} onClick={()=>{ if(lockEntry===passcode){ switchProfile(lockPrompt); setLockPrompt(null); setLockEntry(""); } else setLockErr("Incorrect code."); }}>Unlock</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {removeId && (
+        <div style={{position:"fixed",inset:0,zIndex:460,background:"rgba(6,5,2,0.93)",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{width:"100%",maxWidth:340,textAlign:"center"}}>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:14}}><CrossIcon size={30}/></div>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.1em",color:SELAH_CREAM,marginBottom:6}}>Enter Passcode</p>
+            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m3)",marginBottom:16}}>to remove {profiles[removeId]?.name || "this reader"} and all of their sessions</p>
+            <div style={{marginBottom:removeErr?8:16}}>
+              <PinBoxes value={removeEntry} autoFocus onChange={(v)=>{ setRemoveEntry(v); setRemoveErr(""); if(v.length===6){ if(v===passcode){ const rid=removeId; setRemoveId(null); setRemoveEntry(""); deleteKidProfile(rid); } else { setRemoveErr("Incorrect code."); setRemoveEntry(""); } } }}/>
+            </div>
+            {removeErr && <p style={{color:"#d98a8a",fontSize:14,marginBottom:12}}>{removeErr}</p>}
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn-ghost" style={{flex:1,padding:"12px"}} onClick={()=>{ setRemoveId(null); setRemoveEntry(""); setRemoveErr(""); }}>Cancel</button>
+              <button className="btn-danger" style={{flex:1,padding:"12px"}} onClick={()=>{ if(removeEntry===passcode){ const rid=removeId; setRemoveId(null); setRemoveEntry(""); deleteKidProfile(rid); } else setRemoveErr("Incorrect code."); }}>Remove</button>
             </div>
           </div>
         </div>
