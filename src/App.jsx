@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b120";
+const BUILD = "2026.05.22-b121";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1575,7 +1575,7 @@ function AboutScreen({ onBack, onFaith }) {
         <div>
           <div className="card" style={{textAlign:"center",paddingTop:24,paddingBottom:24}}>
             <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={36}/></div>
-            <h2 style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,letterSpacing:"0.1em",color:"var(--text)",marginBottom:6}}>MIDNIGHT MINISTRIES</h2>
+            <h2 style={{fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,letterSpacing:"0.1em",color:"var(--text)",textShadow:"0 1px 10px rgba(142,28,28,0.5), 0 0 2px rgba(142,28,28,0.65)",marginBottom:6}}>MIDNIGHT MINISTRIES</h2>
             <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m3)"}}>For all who read in the dark</p>
           </div>
 
@@ -1595,7 +1595,7 @@ function AboutScreen({ onBack, onFaith }) {
             <P>Selah appears 71 times in the Psalms and 3 times in Habakkuk, 74 occurrences in total. Scholars still debate its exact meaning. The most honest translation sits somewhere between pause and lift up. Both are true. You stop. You sit in what you just read. Then you carry it higher than where you found it.</P>
             <P>Why would a ministry built on the Psalms lean so hard on a man who never wrote one? Midnight Ministries holds the apostle Paul close. Not for his story. Not because he may be the most influential writer this world has seen. We hold him close for who handed it to him. He carried two names his whole life, Saul among the Hebrews and Paul among the Greeks. What changed on the road to Damascus was not the name but the man: the persecutor undone by Christ and remade, carrying out something that was never his own.</P>
             <P>Paul quotes the Psalms again and again throughout his letters. Selah does not appear in them; Paul wrote in Greek to Greek-speaking churches, and Selah is a Hebrew term rooted in the Psalter and temple worship. Yet the posture Selah names, the pause, the weight of the text, the return, all of it is present in everything Paul writes.</P>
-            <P mb={0}>Paul also made clear, as did Jesus in Matthew 7:21-23 and Paul himself in Ephesians 2:8-9, that works in Christ alone do not produce salvation. Faith does. Not performance. Not religious habit. Not how often you open the app. What you do with what you read when no one is watching. That is the practice Selah was built to support.</P>
+            <P mb={0}>Paul also made clear, as did Jesus in Matthew 7:21-23 and Paul himself in Ephesians 2:8-9, that works in Christ alone do not produce salvation. Faith does. Not performance. Not religious habit. Not how often you open the app. What you do with what you read when no one is watching. That is the practice SELAH was built to support.</P>
           </Section>
 
           <Section label="The Foundation">
@@ -3214,7 +3214,7 @@ export default function App() {
               {!isKidAge && bibleVersion==="NIV" && (
                 <div style={{marginTop:12,background:"rgba(var(--accent-rgb),0.05)",border:"1px solid rgba(var(--accent-rgb),0.18)",borderLeft:"3px solid var(--accent)",borderRadius:6,padding:"11px 14px"}}>
                   <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:5}}>A Note on the NIV</p>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m1)",lineHeight:1.6}}>SELAH follows the classic NIV wording. It is not calibrated to the 2011 revision and its gender-language changes.</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m1)",lineHeight:1.6}}><Selah /> follows the classic NIV wording. It is not calibrated to the 2011 revision and its gender-language changes.</p>
                 </div>
               )}
             </div>
@@ -3310,7 +3310,7 @@ export default function App() {
               </div>
               <div style={{background:"rgba(var(--accent-rgb),0.05)",border:"1px solid rgba(var(--accent-rgb),0.16)",borderRadius:6,padding:"11px 14px"}}>
                 <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m1)",lineHeight:1.6}}>
-                  On a computer the browser tab updates right away. On iPhone or iPad, pick your icon first, then add SELAH to your home screen and it carries that icon. Samsung and other Android phones currently only show the default icon. We are building the piece that lets the installed app override that, and it is coming.
+                  On a computer the browser tab updates right away. On iPhone or iPad, pick your icon first, then add <Selah /> to your home screen and it carries that icon. Samsung and other Android phones currently only show the default icon. We are building the piece that lets the installed app override that, and it is coming.
                 </p>
               </div>
 
@@ -3334,7 +3334,7 @@ export default function App() {
             <div className="card" style={{borderColor:"rgba(var(--accent-rgb),0.2)"}}>
               <p className="label">Support the Ministry</p>
               <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:14}}>
-                SELAH is free. It will stay free. If it has been useful to you and you want to invest in what is being built, this is how.
+                <Selah /> is free. It will stay free. If it has been useful to you and you want to invest in what is being built, this is how.
               </p>
               <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m3)",marginBottom:16,lineHeight:1.65,borderLeft:"2px solid var(--border2)",paddingLeft:12}}>
                 Sixty percent of every dollar given goes directly to the local church. Forty percent funds the tools this ministry was handed to build. When you give, you receive a receipt automatically. Every 30 days Midnight Ministries publishes what came in, what went out, and where it went. That is not a policy. That is a commitment.
@@ -3415,7 +3415,7 @@ export default function App() {
             <div className="card" style={{textAlign:"center",paddingTop:20,paddingBottom:20}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:10}}>Contact Midnight Ministries</p>
               <a href="mailto:midnightministries.co@gmail.com" style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--accent)",textDecoration:"none",letterSpacing:"0.04em"}}>midnightministries.co@gmail.com</a>
-              <p style={{fontSize:14,color:"var(--m3)",lineHeight:1.6,marginTop:14,overflowWrap:"break-word"}}>SELAH is new. If something looks broken, glitches, or does not work right, email us. We want to know. We would rather hear it from you now and fix it than let it stand. Tell us the device you are on and what happened.</p>
+              <p style={{fontSize:14,color:"var(--m3)",lineHeight:1.6,marginTop:14,overflowWrap:"break-word"}}><Selah /> is new. If something looks broken, glitches, or does not work right, email us. We want to know. We would rather hear it from you now and fix it than let it stand. Tell us the device you are on and what happened.</p>
             </div>
             <div style={{textAlign:"center",paddingTop:8}}>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--border2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Psalm 46:10</p>
@@ -3481,7 +3481,7 @@ export default function App() {
               <div style={{display:"flex",justifyContent:"center",marginBottom:10}}><CrossIcon size={34} glow={true}/></div>
               <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:"var(--text)",marginBottom:6}}>Set the Basics</h2>
               <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m2)",lineHeight:1.55,maxWidth:360,margin:"0 auto"}}>
-                A few quick things so SELAH meets you where you are. The model calibrates its language and questions to these. His Word does not change. You can adjust all of it anytime in Settings.
+                A few quick things so <Selah /> meets you where you are. The model calibrates its language and questions to these. His Word does not change. You can adjust all of it anytime in Settings.
               </p>
             </div>
 
