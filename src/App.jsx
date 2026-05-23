@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b106";
+const BUILD = "2026.05.22-b107";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1660,7 +1660,8 @@ function TimezoneDropdown({ timezone, setTimezone }) {
       {open && (
         <div style={{
           position:"absolute", top:"calc(100% + 4px)", left:0, right:0, zIndex:50,
-          background:"var(--input)", border:"1px solid var(--m5)", borderRadius:5,
+          background:"rgba(var(--surface-rgb),0.4)", backdropFilter:"blur(9px) saturate(1.4)", WebkitBackdropFilter:"blur(9px) saturate(1.4)",
+          border:"1px solid var(--m5)", borderRadius:5,
           maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.6)"
         }}>
           {TZ_OPTIONS.map(([val,label])=>(
@@ -1673,7 +1674,7 @@ function TimezoneDropdown({ timezone, setTimezone }) {
               }}
               onMouseOver={e=>e.currentTarget.style.background="rgba(var(--accent-rgb),0.07)"}
               onMouseOut={e=>e.currentTarget.style.background=timezone===val?"rgba(var(--accent-rgb),0.1)":"transparent"}>
-              <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:timezone===val?"var(--accent)":"var(--text)"}}>{label}</span>
+              <span style={{fontFamily:"'Crimson Text',serif",fontSize:16,color:timezone===val?"var(--accent)":"var(--text)",textShadow:"0 1px 2px rgba(0,0,0,0.5)"}}>{label}</span>
               {timezone===val && <span style={{float:"right",color:"var(--accent)",fontSize:12}}>✓</span>}
             </div>
           ))}
