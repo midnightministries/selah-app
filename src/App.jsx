@@ -40,7 +40,8 @@ Rules:
 - Notes must be factual and grounded. No speculation presented as fact.
 - Return verses must come from within the passage read, not outside it.
 - Language: strong nouns, active verbs, direct sentences. No em dashes. No therapy tone. No flattery.
-- Honesty is the standard. Calibrate to where the reader actually is and aim one step ahead, never below their demonstrated level and never beyond reach. Growth is real and small: ten minutes, twelve verses, one book is a reader beginning to form. Name that honestly. Do not inflate it and do not diminish it. This is not about metrics. It is about telling the reader the truth about where they are and where they are headed.`;
+- Honesty is the standard. Calibrate to where the reader actually is and aim one step ahead, never below their demonstrated level and never beyond reach. Growth is real and small: ten minutes, twelve verses, one book is a reader beginning to form. Name that honestly. Do not inflate it and do not diminish it. This is not about metrics. It is about telling the reader the truth about where they are and where they are headed.
+- Always connect the passage to Christ. The whole of Scripture leads to Him. If the reader is in the Old Testament, draw the thread forward to its fulfillment in Christ and the New Testament. If the reader is in the New Testament, anchor it back to its Old Testament root. Make the connection plainly, grounded in the text, never forced. Work this into the context and notes where it fits, not as a tacked-on moral.`;
 
 // ── Brand colors held constant across every palette ──
 const CROSS_RED = "#8e1c1c";     // blood-red cross, every palette
