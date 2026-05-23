@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b116";
+const BUILD = "2026.05.22-b117";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -996,16 +996,19 @@ function ExportSheet({ session, onClose }) {
 
       {/* background picker (when no photo showing and nothing selected) — no box, floating */}
       {!selEl && (!hasPhoto || !layout.photo.show) && (bgOpen ? (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:10,right:10,bottom:"calc(env(safe-area-inset-bottom,0px) + 64px)",display:"flex",flexWrap:"wrap",gap:9,justifyContent:"center",alignItems:"center",zIndex:4}}>
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:10,right:10,bottom:"calc(env(safe-area-inset-bottom,0px) + 64px)",display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
           {/* name + Done, centered above the colors */}
-          <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
             <span style={{fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)"}}>Background · {selectedBgLabel}</span>
             <button onClick={()=>setBgOpen(false)} style={{borderRadius:14,padding:"5px 13px",background:"rgba(var(--accent-rgb),0.85)",color:"var(--ink)",border:"none",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Done</button>
           </div>
-          {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; const on=(layout.bg||"ink")===id; return (
-            <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{width:40,height:40,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid #fff":"1.5px solid rgba(255,255,255,0.7)",boxShadow:on?"0 0 12px rgba(var(--accent-rgb),0.85)":"0 1px 6px rgba(0,0,0,0.7)",cursor:"pointer",padding:0}}/>
-          ); })}
-          <div style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginTop:2}}>
+          {/* horizontal scroll wheel of swatches — one row, swipe through them */}
+          <div className="no-sb" style={{display:"flex",flexWrap:"nowrap",gap:11,overflowX:"auto",width:"100%",padding:"3px 6px 6px",scrollSnapType:"x proximity",WebkitOverflowScrolling:"touch",touchAction:"pan-x"}}>
+            {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; const on=(layout.bg||"ink")===id; return (
+              <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{flex:"0 0 auto",width:44,height:44,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid #fff":"1.5px solid rgba(255,255,255,0.7)",boxShadow:on?"0 0 12px rgba(var(--accent-rgb),0.85)":"0 1px 6px rgba(0,0,0,0.7)",cursor:"pointer",padding:0,scrollSnapAlign:"center"}}/>
+            ); })}
+          </div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
             <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)"}}>Fade</span>
             <Slider value={layout.bgFade==null?0.5:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={150}/>
             <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 11px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid var(--accent2)",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
@@ -2444,6 +2447,8 @@ export default function App() {
         .geo-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(var(--accent-rgb),0.06);border:1px solid rgba(var(--accent-rgb),0.15);border-radius:20px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;color:var(--m1);letter-spacing:0.08em;text-transform:uppercase;}
         .photo-drop{border:1px dashed var(--m5);border-radius:6px;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.2s,background 0.2s;text-align:center;}
         .photo-drop:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.03);}
+        .no-sb{scrollbar-width:none;-ms-overflow-style:none;}
+        .no-sb::-webkit-scrollbar{display:none;}
         .photo-preview{width:100%;border-radius:6px;overflow:hidden;position:relative;}
         .photo-preview img{width:100%;display:block;max-height:260px;object-fit:cover;}
         .photo-remove{position:absolute;top:8px;right:8px;background:rgba(10,8,4,0.8);border:1px solid #3a1810;color:#a04030;border-radius:4px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;}
