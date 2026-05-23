@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b125";
+const BUILD = "2026.05.22-b126";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -665,12 +665,11 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
 // ── Midnight Ministries footer (always visible) ──
 function MMFooter({ onEggOpen, onHomeView }) {
   return (
-    <div className="mm-shell">
-     <div style={{
+    <div style={{
+      width:"100%",
       background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
-      paddingTop:9, paddingBottom:"calc(8px + env(safe-area-inset-bottom))",
-      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-      pointerEvents:"none"
+      paddingTop:12, paddingBottom:"calc(12px + env(safe-area-inset-bottom))",
+      display:"flex", alignItems:"center", justifyContent:"center", gap:8
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -697,7 +696,6 @@ function MMFooter({ onEggOpen, onHomeView }) {
       }}>
         MIDNIGHT MINISTRIES
       </span>
-     </div>
     </div>
   );
 }
@@ -2431,16 +2429,15 @@ export default function App() {
         .photo-drop:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.03);}
         .no-sb{scrollbar-width:none;-ms-overflow-style:none;}
         .no-sb::-webkit-scrollbar{display:none;}
-        .mm-shell{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;z-index:100;}
-        .app-root{min-height:100vh;min-height:100svh;}
+        .app-root{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;}
         .photo-preview{width:100%;border-radius:6px;overflow:hidden;position:relative;}
         .photo-preview img{width:100%;display:block;max-height:260px;object-fit:cover;}
         .photo-remove{position:absolute;top:8px;right:8px;background:rgba(10,8,4,0.8);border:1px solid #3a1810;color:#a04030;border-radius:4px;padding:4px 10px;font-family:'Cinzel',serif;font-size:9px;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;}
         .version-pill{background:transparent;border:1px solid var(--border2);border-radius:4px;padding:7px 12px;font-family:'Cinzel',serif;font-size:10px;color:var(--m3);letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
         .version-pill.active{background:rgba(var(--accent-rgb),0.12);border-color:var(--accent);color:var(--accent);}
         .version-pill:hover:not(.active){border-color:var(--m3);color:var(--m1);}
-        @media (min-width:600px){.app-container{padding:0 24px 80px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
-        @media (min-width:768px){.app-container{padding:0 32px 80px !important;max-width:600px !important;}h1{font-size:30px !important;}}
+        @media (min-width:600px){.app-container{padding:0 24px 24px !important;}.card{padding:22px !important;}input,select,textarea{font-size:17px !important;}.btn-primary{font-size:13px !important;padding:16px 28px !important;}}
+        @media (min-width:768px){.app-container{padding:0 32px 24px !important;max-width:600px !important;}h1{font-size:30px !important;}}
         @media (min-width:1024px){.app-container{max-width:640px !important;}}
       `}</style>
 
@@ -2449,7 +2446,7 @@ export default function App() {
       {/* Pulsing gold edge-glow vignette */}
       <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:3,boxShadow:`inset 0 0 ${glowGold}px rgba(var(--accent-rgb),0.17), inset 0 0 ${glowRed}px rgba(var(--blood-rgb),0.10)`,animation:"edgeGlow 6s ease-in-out infinite"}}/>
 
-      <div className="app-container" style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 16px 80px",overflowAnchor:"none"}}>
+      <div className="app-container" style={{position:"relative",zIndex:1,flex:1,width:"100%",maxWidth:480,margin:"0 auto",padding:"0 16px 24px",overflowAnchor:"none"}}>
 
         {/* HEADER */}
         <div style={{textAlign:"center",padding:"calc(env(safe-area-inset-top, 0px) + 28px) 0 18px",position:"relative"}}>
