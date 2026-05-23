@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.22-b126";
+const BUILD = "2026.05.22-b127";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -665,11 +665,13 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
 // ── Midnight Ministries footer (always visible) ──
 function MMFooter({ onEggOpen, onHomeView }) {
   return (
-    <div style={{
-      width:"100%",
-      background:"rgba(8,6,3,1)", borderTop:"1px solid var(--border)",
+    <div className="mm-shell">
+     <div style={{
+      background:"rgba(8,6,3,0.66)", backdropFilter:"blur(18px) saturate(1.2)", WebkitBackdropFilter:"blur(18px) saturate(1.2)",
+      borderTop:"1px solid rgba(255,255,255,0.06)",
       paddingTop:12, paddingBottom:"calc(12px + env(safe-area-inset-bottom))",
-      display:"flex", alignItems:"center", justifyContent:"center", gap:8
+      display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+      pointerEvents:"none"
     }}>
       <svg width="0" height="0" style={{position:"absolute"}}>
         <defs>
@@ -696,6 +698,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
       }}>
         MIDNIGHT MINISTRIES
       </span>
+     </div>
     </div>
   );
 }
@@ -2429,6 +2432,7 @@ export default function App() {
         .photo-drop:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.03);}
         .no-sb{scrollbar-width:none;-ms-overflow-style:none;}
         .no-sb::-webkit-scrollbar{display:none;}
+        .mm-shell{position:fixed;left:0;right:0;top:0;height:100vh;height:100dvh;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;z-index:100;}
         .app-root{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;}
         .photo-preview{width:100%;border-radius:6px;overflow:hidden;position:relative;}
         .photo-preview img{width:100%;display:block;max-height:260px;object-fit:cover;}
