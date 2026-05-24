@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b156";
+const BUILD = "2026.05.24-b158";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -637,12 +637,12 @@ const PALETTES = {
     "--ink":"#ffffff","--text":"#0e3049","--text2":"#214660","--text3":"#345a78","--text4":"#072036",
     "--m1":"#5a7d9e","--m1b":"#5a7d9e","--m2":"#466384","--m3":"#3a526e","--m3b":"#3a526e","--m4":"#2e4258","--m5":"#243648",
     "--accent-rgb":"47,126,201","--blood-rgb":"142,28,28","--surface-rgb":"217,232,245","--wm":"#0c3f70","--wm-glow":"0 0 13px rgba(12,63,112,0.55), 0 0 26px rgba(12,63,112,0.28)" } },
-  mint: { label: "Mint", swatch: ["#eef6ea","#549024","#8e1c1c"], vars: {
-    "--bg":"#eef6ea","--surface":"#dcecd4","--input":"#e8f3e2","--input2":"#d2e6c8",
-    "--border":"#a6cd94","--border2":"#92bd7e","--accent":"#549024","--accent2":"#3f6c12",
-    "--ink":"#ffffff","--text":"#1b380e","--text2":"#314e1e","--text3":"#445c32","--text4":"#122806",
-    "--m1":"#6c8a5a","--m1b":"#6c8a5a","--m2":"#527044","--m3":"#425c36","--m3b":"#425c36","--m4":"#344a2a","--m5":"#283a20",
-    "--accent-rgb":"84,144,36","--blood-rgb":"142,28,28","--surface-rgb":"220,236,212","--wm":"#2c5012","--wm-glow":"0 0 13px rgba(44,80,18,0.52), 0 0 26px rgba(44,80,18,0.27)" } },
+  mint: { label: "Mint", swatch: ["#eaf6f1","#2f9e7a","#8e1c1c"], vars: {
+    "--bg":"#eaf6f1","--surface":"#d8ece4","--input":"#e4f3ed","--input2":"#cee6dc",
+    "--border":"#aed4c6","--border2":"#98c8b6","--accent":"#2f9e7a","--accent2":"#20805f",
+    "--ink":"#ffffff","--text":"#0f3a2c","--text2":"#25503f","--text3":"#386354","--text4":"#082c20",
+    "--m1":"#5e9484","--m1b":"#5e9484","--m2":"#467768","--m3":"#3a6356","--m3b":"#3a6356","--m4":"#2e4f44","--m5":"#243e36",
+    "--accent-rgb":"47,158,122","--blood-rgb":"142,28,28","--surface-rgb":"216,236,228","--wm":"#0e4636","--wm-glow":"0 0 13px rgba(14,70,54,0.52), 0 0 26px rgba(14,70,54,0.27)" } },
 };
 function ageFromBirthday(bday) {
   if (!bday) return null;
@@ -2589,7 +2589,7 @@ export default function App() {
 
         {/* NAV */}
         {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && view !== "profiles" && view !== "profilepick" && (
-          <div style={{display:"flex",borderBottom:"1px solid var(--border)",marginBottom:20}}>
+          <div style={{display:"flex",borderBottom:"1px solid var(--border2)",marginBottom:20,background:"linear-gradient(180deg, transparent 45%, rgba(var(--accent-rgb),0.06))"}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
               Log {visibleSessions.length>0&&`(${visibleSessions.length})`}
