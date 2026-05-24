@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b163";
+const BUILD = "2026.05.24-b164";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -624,25 +624,25 @@ const PALETTES = {
     "--border":"#bfa873","--border2":"#ad9156","--accent":"#9a7720","--accent2":"#7c5e12",
     "--ink":"#2a2008","--text":"#332617","--text2":"#54442f","--text3":"#675636","--text4":"#241b0e",
     "--m1":"#8a7350","--m1b":"#8a7350","--m2":"#6e5a38","--m3":"#574629","--m3b":"#574629","--m4":"#463722","--m5":"#382c1a",
-    "--accent-rgb":"154,119,32","--blood-rgb":"142,28,28","--surface-rgb":"233,223,205","--wm":"#5a3a14","--wm-glow":"0 0 13px rgba(90,58,20,0.50), 0 0 26px rgba(90,58,20,0.26)" } },
+    "--accent-rgb":"154,119,32","--blood-rgb":"142,28,28","--surface-rgb":"233,223,205","--wm":"#5a3a14","--wm-glow":"0 2px 5px rgba(90,58,20,0.48), 0 1px 1px rgba(58,38,12,0.55)" } },
   blush: { label: "Blush", swatch: ["#fbeef2","#c43e6c","#8e1c1c"], vars: {
     "--bg":"#fbeef2","--surface":"#f3dde4","--input":"#f8e6ec","--input2":"#efd2dc",
     "--border":"#d8a0b6","--border2":"#c98ca4","--accent":"#c43e6c","--accent2":"#a32a55",
     "--ink":"#ffffff","--text":"#451324","--text2":"#62253b","--text3":"#76374e","--text4":"#36101c",
     "--m1":"#9a6075","--m1b":"#9a6075","--m2":"#7e4a5e","--m3":"#683c4e","--m3b":"#683c4e","--m4":"#54303f","--m5":"#442634",
-    "--accent-rgb":"196,62,108","--blood-rgb":"142,28,28","--surface-rgb":"243,221,228","--wm":"#7a2440","--wm-glow":"0 0 13px rgba(122,36,64,0.55), 0 0 26px rgba(122,36,64,0.30)" } },
+    "--accent-rgb":"196,62,108","--blood-rgb":"142,28,28","--surface-rgb":"243,221,228","--wm":"#7a2440","--wm-glow":"0 2px 5px rgba(122,36,64,0.48), 0 1px 1px rgba(80,20,40,0.55)" } },
   sky: { label: "Sky", swatch: ["#eaf3fb","#2f7ec9","#8e1c1c"], vars: {
     "--bg":"#eaf3fb","--surface":"#d9e8f5","--input":"#e4f0fa","--input2":"#cee0f0",
     "--border":"#a3c2e0","--border2":"#8db2d2","--accent":"#2f7ec9","--accent2":"#1d5e9e",
     "--ink":"#ffffff","--text":"#0e3049","--text2":"#214660","--text3":"#345a78","--text4":"#072036",
     "--m1":"#5a7d9e","--m1b":"#5a7d9e","--m2":"#466384","--m3":"#3a526e","--m3b":"#3a526e","--m4":"#2e4258","--m5":"#243648",
-    "--accent-rgb":"47,126,201","--blood-rgb":"142,28,28","--surface-rgb":"217,232,245","--wm":"#0c3f70","--wm-glow":"0 0 13px rgba(12,63,112,0.55), 0 0 26px rgba(12,63,112,0.28)" } },
+    "--accent-rgb":"47,126,201","--blood-rgb":"142,28,28","--surface-rgb":"217,232,245","--wm":"#0c3f70","--wm-glow":"0 2px 5px rgba(12,63,112,0.48), 0 1px 1px rgba(8,40,74,0.55)" } },
   mint: { label: "Mint", swatch: ["#eaf6f1","#2f9e7a","#8e1c1c"], vars: {
     "--bg":"#eaf6f1","--surface":"#d8ece4","--input":"#e4f3ed","--input2":"#cee6dc",
     "--border":"#aed4c6","--border2":"#98c8b6","--accent":"#2f9e7a","--accent2":"#20805f",
     "--ink":"#ffffff","--text":"#0f3a2c","--text2":"#25503f","--text3":"#386354","--text4":"#082c20",
     "--m1":"#5e9484","--m1b":"#5e9484","--m2":"#467768","--m3":"#3a6356","--m3b":"#3a6356","--m4":"#2e4f44","--m5":"#243e36",
-    "--accent-rgb":"47,158,122","--blood-rgb":"142,28,28","--surface-rgb":"216,236,228","--wm":"#0e4636","--wm-glow":"0 0 13px rgba(14,70,54,0.52), 0 0 26px rgba(14,70,54,0.27)" } },
+    "--accent-rgb":"47,158,122","--blood-rgb":"142,28,28","--surface-rgb":"216,236,228","--wm":"#0e4636","--wm-glow":"0 2px 5px rgba(14,70,54,0.48), 0 1px 1px rgba(8,46,36,0.55)" } },
 };
 function ageFromBirthday(bday) {
   if (!bday) return null;
@@ -1827,7 +1827,7 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
   const head = { fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.5)",backdropFilter:"blur(9px) saturate(1.02)",WebkitBackdropFilter:"blur(9px) saturate(1.02)",border:"1px solid var(--border2)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.82)",backdropFilter:"blur(6px) saturate(1.02)",WebkitBackdropFilter:"blur(6px) saturate(1.02)",border:"1px solid var(--border2)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
         <Slider value={b} min={0.85} max={1.45} step={0.01} onChange={changeB} onCommit={commit} width="100%"/>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",marginTop:8}}>
