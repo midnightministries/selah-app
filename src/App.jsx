@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b158";
+const BUILD = "2026.05.24-b159";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1643,7 +1643,7 @@ function AboutScreen({ onBack, onFaith }) {
       <button onClick={onBack} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:20,display:"flex",alignItems:"center",gap:6,padding:0}}>
         ← Back
       </button>
-      <div style={{display:"flex",borderBottom:"1px solid var(--border2)",marginBottom:20,background:"linear-gradient(180deg, transparent 45%, rgba(var(--accent-rgb),0.06))"}}>
+      <div style={{display:"flex",borderBottom:"1px solid var(--border2)",marginBottom:20,background:"linear-gradient(180deg, transparent 40%, rgba(var(--accent-rgb),0.10))",boxShadow:"0 4px 7px -3px rgba(0,0,0,0.22)"}}>
         <button className={`nav-tab ${tab==="ministry"?"active":""}`} onClick={()=>setTab("ministry")} style={{fontSize:"9px"}}>Midnight Ministries</button>
         <button className={`nav-tab ${tab==="howto"?"active":""}`} onClick={()=>setTab("howto")} style={{fontSize:"9px"}}>How to Use</button>
       </div>
@@ -2589,7 +2589,7 @@ export default function App() {
 
         {/* NAV */}
         {view !== "session" && view !== "settings" && view !== "about" && view !== "auth" && view !== "profiles" && view !== "profilepick" && (
-          <div style={{display:"flex",borderBottom:"1px solid var(--border2)",marginBottom:20,background:"linear-gradient(180deg, transparent 45%, rgba(var(--accent-rgb),0.06))"}}>
+          <div style={{display:"flex",borderBottom:"1px solid var(--border2)",marginBottom:20,background:"linear-gradient(180deg, transparent 40%, rgba(var(--accent-rgb),0.10))",boxShadow:"0 4px 7px -3px rgba(0,0,0,0.22)"}}>
             <button className={`nav-tab ${(view==="home"||view==="result")?"active":""}`} onClick={()=>{ resetForm(); setView("home"); }}>New Session</button>
             <button className={`nav-tab ${view==="history"?"active":""}`} onClick={()=>setView("history")}>
               Log {visibleSessions.length>0&&`(${visibleSessions.length})`}
