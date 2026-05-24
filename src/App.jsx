@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b169";
+const BUILD = "2026.05.24-b171";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -751,7 +751,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
             <feGaussianBlur in="displaced" stdDeviation="0.35" result="soft"/>
             <feComposite in="soft" in2="SourceGraphic" operator="in" result="clipped"/>
-            <feDropShadow dx="0" dy="0" stdDeviation="1.7" floodColor="var(--accent)" floodOpacity="0.28"/>
+            <feDropShadow dx="0" dy="0" stdDeviation="1.7" floodColor="#8e1c1c" floodOpacity="0.3"/>
           </filter>
         </defs>
       </svg>
@@ -761,7 +761,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
         letterSpacing:"0.22em",
         textTransform:"uppercase",
         color:CROSS_RED,
-        textShadow:"0 0 13px rgba(var(--accent-rgb),0.19), 0 0 32px rgba(var(--accent-rgb),0.07)",
+        textShadow:"0 1px 2px rgba(var(--blood-rgb),0.35), 0 0 14px rgba(var(--blood-rgb),0.18)",
         filter:"url(#chalk-mm)",
         paddingBottom:1,
         cursor:onHomeView?"pointer":"default",
@@ -2478,7 +2478,7 @@ export default function App() {
 
   const activeMins = activeSession ? Math.round((Date.now()-new Date(activeSession.startTime))/60000) : 0;
 
-  const STD_VERSIONS = ["NLT","ESV","KJV","NIV","NASB","CSB"];
+  const STD_VERSIONS = ["NLT","ESV","KJV","NKJV","NIV","NASB","CSB"];
   const KID_VERSIONS = ["NIrV","ICB","NLT"];
   const isKidAge = age.startsWith("Kids");
   const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
