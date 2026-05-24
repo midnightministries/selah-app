@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b174";
+const BUILD = "2026.05.24-b175";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -853,6 +853,9 @@ function ExportSheet({ session, onClose }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [tool, setTool] = useState("color");   // active control for the selected element
   const [bgOpen, setBgOpen] = useState(true);   // background picker visible (when no photo)
+  const [showChrome, setShowChrome] = useState(true);   // clean toggle: hide all controls to see the card
+  const [leftMode, setLeftMode] = useState("fade");     // left edge slider: fade | glow
+  const [rightMode, setRightMode] = useState("color");  // right edge slider: color | rotate
   const stageRef = useRef(null);
   const containerRef = useRef(null);
   const [stageDim, setStageDim] = useState(null);   // explicit px size so aspect never breaks on big screens
@@ -923,17 +926,16 @@ function ExportSheet({ session, onClose }) {
 
   function stageDown(e){
     ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId);
-    if(layout.photo.show && hasPhoto){
-      if(ptrs.current.size>=2){ const v=[...ptrs.current.values()]; pinch.current={ d:Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y), z:layout.photo.zoom||1 }; dragRef.current=null; }
-      else dragRef.current={ type:"photo", sx:e.clientX, sy:e.clientY, ox:layout.photo.x, oy:layout.photo.y };
-    }
+    if(ptrs.current.size>=2){ const v=[...ptrs.current.values()]; pinch.current={ d:Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y), base:(sel&&layout.els[sel])?layout.els[sel].size:(layout.photo.zoom||1), el:(sel&&layout.els[sel])?sel:null }; dragRef.current=null; return; }
+    if(layout.photo.show && hasPhoto) dragRef.current={ type:"photo", sx:e.clientX, sy:e.clientY, ox:layout.photo.x, oy:layout.photo.y };
     setSel(null);
   }
   function stageMove(e){
     if(ptrs.current.has(e.pointerId)) ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(tapRef.current && (Math.abs(e.clientX-tapRef.current.x)>5 || Math.abs(e.clientY-tapRef.current.y)>5)) tapRef.current.moved=true;
     const r=stageRef.current?.getBoundingClientRect(); if(!r) return;
-    if(pinch.current && ptrs.current.size>=2){ const v=[...ptrs.current.values()]; const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y); setPhoto({zoom:clamp(pinch.current.z*(d/pinch.current.d),minZoom,3)}); return; }
+    if(ptrs.current.size>=2 && !pinch.current){ const v=[...ptrs.current.values()]; pinch.current={ d:Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y), base:(sel&&layout.els[sel])?layout.els[sel].size:(layout.photo.zoom||1), el:(sel&&layout.els[sel])?sel:null }; }
+    if(pinch.current && ptrs.current.size>=2){ const v=[...ptrs.current.values()]; const d=Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y); const ratio=d/pinch.current.d; if(pinch.current.el) setEl(pinch.current.el,{size:clamp(pinch.current.base*ratio,0.02,0.3)}); else setPhoto({zoom:clamp(pinch.current.base*ratio,minZoom,3)}); return; }
     const d=dragRef.current; if(!d) return;
     if(d.type==="photo"){ const slX=r.width*(bgWpct/100-1), slY=r.height*(bgHpct/100-1); let nx=layout.photo.x, ny=layout.photo.y; if(slX>1) nx=clamp(d.ox-(e.clientX-d.sx)/slX,0,1); if(slY>1) ny=clamp(d.oy-(e.clientY-d.sy)/slY,0,1); setPhoto({x:nx,y:ny}); }
     else if(d.type==="el"){ setEl(d.key,{ xf:clamp(d.ox+(e.clientX-d.sx)/r.width,0.02,0.98), yf:clamp(d.oy+(e.clientY-d.sy)/r.height,0.02,0.98) }); }
@@ -970,7 +972,7 @@ function ExportSheet({ session, onClose }) {
   const elName={ cross:"Cross", selah:"SELAH", body:"Verse", mm:"Ministry" };
   const renderEl=(key)=>{ const el=layout.els[key]; if(!el.show) return null;
     const selected=sel===key;
-    const gc=el.glowColor||"#0e0c06";
+    const gc=el.glowColor||el.color||"#0e0c06";
     // selection = a crisp gold outline ring (NOT a glow), so it never mixes with
     // the element's own glow color; offset so it doesn't hug the letters.
     const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1.5px solid rgba(201,168,76,0.9)":"none", outlineOffset:"5px", zIndex:selected?5:1 };
@@ -995,6 +997,22 @@ function ExportSheet({ session, onClose }) {
   const circBorder = mixHex(accentHex, "#0e0c06", 0.62);   // clearly darker shade for the outline
   const circText   = mixHex(accentHex, "#ffffff", 0.34);   // clearly lighter shade for the letters
   const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.22)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
+  const chip = (extra)=>({ width:38,height:38,borderRadius:"50%",background:"rgba(14,10,6,0.22)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
+  const pillBtn = { borderRadius:16,padding:"7px 13px",background:"rgba(14,10,6,0.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer",textShadow:"0 1px 3px rgba(0,0,0,0.6)" };
+  // ── edge slider helpers ──
+  const hslHex=(h)=>{ const s=0.6,l=0.6,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
+  const hexHue=(hex)=>{ if(!hex||hex[0]!=="#"||hex.length<7) return 40; const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0; if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; } return h; };
+  const sdrag=useRef(null);
+  const sliderDown=(e,apply)=>{ e.stopPropagation(); const t=e.currentTarget; t.setPointerCapture?.(e.pointerId); sdrag.current={t,apply}; const r=t.getBoundingClientRect(); apply(clamp((e.clientY-r.top)/r.height,0,1)); };
+  const sliderMove=(e)=>{ const s=sdrag.current; if(!s)return; const r=s.t.getBoundingClientRect(); s.apply(clamp((e.clientY-r.top)/r.height,0,1)); };
+  const sliderUp=()=>{ sdrag.current=null; };
+  const applyLeft=(p)=>{ if(!sel)return; if(leftMode==="fade") setEl(sel,{opacity:clamp(0.15+(1-p)*0.85,0.15,1)}); else setEl(sel,{glow:clamp(1-p,0,1)}); };
+  const applyRight=(p)=>{ if(!sel)return; if(rightMode==="color") setEl(sel,{color:hslHex(p*360)}); else setEl(sel,{rot:Math.round((0.5-p)*60)}); };
+  const leftPos = selEl ? (leftMode==="fade" ? clamp(1-((selEl.opacity==null?1:selEl.opacity)-0.15)/0.85,0,1) : clamp(1-(selEl.glow||0),0,1)) : 0.5;
+  const rightPos = selEl ? (rightMode==="color" ? clamp(hexHue(selEl.color)/360,0,1) : clamp(0.5-(selEl.rot||0)/60,0,1)) : 0.5;
+  const edgeLabel = { fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.5)",textShadow:"0 1px 3px rgba(0,0,0,0.45)",marginBottom:7,cursor:"pointer",whiteSpace:"nowrap" };
+  const edgeKnob = (pos)=>({ position:"absolute",left:"50%",top:(pos*100)+"%",transform:"translate(-50%,-50%)",width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.5)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 1px 5px rgba(0,0,0,0.35)",pointerEvents:"none" });
+  const edgeTap = { position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:32,height:32,borderRadius:"50%",background:"radial-gradient(circle at 50% 50%,transparent 52%,rgba(247,244,238,0.16) 100%)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.5)",fontSize:14,textShadow:"0 1px 3px rgba(0,0,0,0.5)",cursor:"pointer" };
 
   return (
     <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none"}}>
@@ -1011,15 +1029,22 @@ function ExportSheet({ session, onClose }) {
       {/* TOP-LEFT: close X (glow, no circle) */}
       <button onClick={onClose} aria-label="Close" style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 6px)",left:18,background:"transparent",border:"none",cursor:"pointer",fontSize:52,lineHeight:1,color:"var(--accent)",textShadow:"0 0 14px rgba(var(--accent-rgb),0.85), 0 0 4px rgba(0,0,0,0.8)",padding:0,fontWeight:300,zIndex:4}}>×</button>
 
-      {/* TOP-RIGHT stack: Share, Verse/content, Font, Hide Photo, Format */}
-      <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:9,alignItems:"center",zIndex:4}}>
-        <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.5)",border:"1.5px solid "+circBorder,color:"var(--ink)",textShadow:"none"})}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        </button>
-        <button onClick={cycleContent} style={circle({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.04em",lineHeight:1.1,textAlign:"center",padding:4})}>{contentLabel}</button>
-        <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={circle({fontFamily:CARD_FONTS[layout.font],fontSize:18})}>Aa</button>
-        {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} style={circle({fontFamily:"'Cinzel',serif",fontSize:7,letterSpacing:"0.03em",textAlign:"center",lineHeight:1.1,padding:3})}>{layout.photo.show?"Hide Photo":"Show Photo"}</button>}
-        <button onClick={()=>switchAspect(layout.aspect==="square"?"story":"square")} style={circle({fontFamily:"'Cinzel',serif",fontSize:12,letterSpacing:"0.04em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
+      {/* TOP-RIGHT: two big (Share, Clean toggle) + chip row underneath */}
+      <div style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 8px)",right:14,display:"flex",flexDirection:"column",gap:8,alignItems:"flex-end",zIndex:4}}>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setShareOpen(o=>!o)} style={circle({background:"rgba(var(--accent-rgb),0.5)",border:"1.5px solid "+circBorder,color:"var(--ink)",textShadow:"none"})}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><polyline points="8 7 12 3 16 7"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </button>
+          <button onClick={()=>setShowChrome(s=>!s)} title="Hide controls" style={circle(showChrome?{fontSize:24}:{background:"rgba(var(--accent-rgb),0.5)",color:"var(--ink)",textShadow:"none",fontSize:24})}>◎</button>
+        </div>
+        {showChrome && (
+          <div style={{display:"flex",gap:7}}>
+            <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={chip({fontFamily:CARD_FONTS[layout.font],fontSize:15})}>Aa</button>
+            <button onClick={cycleContent} style={chip({fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.02em",lineHeight:1.05,textAlign:"center",padding:3})}>{contentLabel}</button>
+            {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} style={chip({fontFamily:"'Cinzel',serif",fontSize:6,letterSpacing:"0.02em",textAlign:"center",lineHeight:1.05,padding:2})}>{layout.photo.show?"Hide":"Show"}</button>}
+            <button onClick={()=>switchAspect(layout.aspect==="square"?"story":"square")} style={chip({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.02em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
+          </div>
+        )}
       </div>
 
       {/* Share menu — centered so it's visible in any format */}
@@ -1030,48 +1055,39 @@ function ExportSheet({ session, onClose }) {
         </div>
       )}
 
-      {/* SELECTED ELEMENT — floating bubbles at the very bottom, no box */}
-      {selEl && (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 54px)",display:"flex",flexDirection:"column",alignItems:"center",gap:10,zIndex:4}}>
-          <div style={{maxWidth:"94%",display:"flex",justifyContent:"center"}}>
-            {tool==="color" && (
-              <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
-                {CARD_COLORS.map(([hex,lbl])=>(<button key={hex} title={lbl} onClick={()=>setEl(sel,{color:hex})} style={{width:30,height:30,borderRadius:"50%",background:hex,border:selEl.color===hex?"2px solid #fff":"1px solid rgba(255,255,255,0.4)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>))}
-              </div>
-            )}
-            {tool==="glow" && (
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-                <div style={{display:"flex",flexWrap:"wrap",gap:9,justifyContent:"center"}}>
-                  {[["#0e0c06","Dark"],...CARD_COLORS.slice(0,7)].map(([hex,lbl])=>(<button key={hex} title={lbl} onClick={()=>setEl(sel,{glowColor:hex})} style={{width:26,height:26,borderRadius:"50%",background:hex,border:(selEl.glowColor||"#0e0c06")===hex?"2px solid #fff":"1px solid rgba(255,255,255,0.4)",boxShadow:"0 1px 6px rgba(0,0,0,0.6)",cursor:"pointer",padding:0}}/>))}
-                </div>
-                <Slider value={selEl.glow||0} min={0} max={1} step={0.02} onChange={v=>setEl(sel,{glow:v})} width={210}/>
-              </div>
-            )}
-            {tool==="size" && <Slider value={selEl.size} min={0.02} max={0.16} step={0.002} onChange={v=>setEl(sel,{size:v})}/>}
-            {tool==="rotate" && <Slider value={selEl.rot||0} min={-45} max={45} step={1} onChange={v=>setEl(sel,{rot:v})}/>}
-            {tool==="opacity" && <Slider value={selEl.opacity==null?1:selEl.opacity} min={0.1} max={1} step={0.02} onChange={v=>setEl(sel,{opacity:v})}/>}
+      {/* SELECTED ELEMENT — edge sliders: left fade/glow, right color/rotate */}
+      {selEl && showChrome && (
+        <>
+          <div style={{position:"absolute",left:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
+            <div onClick={()=>setLeftMode(m=>m==="fade"?"glow":"fade")} style={edgeLabel}>{leftMode==="fade"?"Fade":"Glow"}</div>
+            <div onPointerDown={e=>sliderDown(e,applyLeft)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
+              <div style={edgeKnob(leftPos)}/>
+              <div onPointerDown={e=>e.stopPropagation()} onClick={()=>setLeftMode(m=>m==="fade"?"glow":"fade")} style={edgeTap}>⇄</div>
+            </div>
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.45)",backdropFilter:"blur(8px) saturate(1.3)",WebkitBackdropFilter:"blur(8px) saturate(1.3)",borderRadius:24,padding:"6px 8px"}}>
-            {[["color","Color"],["size","Size"],["rotate","Turn"],["opacity","Fade"],["glow","Glow"]].map(([id,lbl])=>(
-              <button key={id} onClick={()=>setTool(id)} style={{borderRadius:16,padding:"7px 11px",background:tool===id?"var(--accent)":"transparent",color:tool===id?"var(--ink)":"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>
-            ))}
-            {["cross","selah","body","mm"].filter(k=>layout.els[k]&&layout.els[k].show).length>1 && (
-              <button onClick={cycleSel} title="Step to the next piece" style={{borderRadius:16,padding:"7px 11px",background:"transparent",color:"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>Layer</button>
-            )}
-            <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{borderRadius:16,padding:"7px 11px",background:"transparent",color:"var(--text2)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>Hide</button>
+          <div style={{position:"absolute",right:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
+            <div onClick={()=>setRightMode(m=>m==="color"?"rotate":"color")} style={edgeLabel}>{rightMode==="color"?"Color":"Rotate"}</div>
+            <div onPointerDown={e=>sliderDown(e,applyRight)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:rightMode==="color"?"linear-gradient(180deg,#ec5b5b,#ecc14e,#7bd17b,#54bcd6,#7b78e0,#d36fb0,#ec5b5b)":"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
+              <div style={edgeKnob(rightPos)}/>
+              <div onPointerDown={e=>e.stopPropagation()} onClick={()=>setRightMode(m=>m==="color"?"rotate":"color")} style={edgeTap}>⇄</div>
+            </div>
           </div>
-        </div>
+          <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",display:"flex",justifyContent:"center",gap:8,zIndex:4}}>
+            {["cross","selah","body","mm"].filter(k=>layout.els[k]&&layout.els[k].show).length>1 && <button onClick={cycleSel} style={pillBtn}>Layer</button>}
+            <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{...pillBtn,color:"var(--text2)"}}>Hide</button>
+          </div>
+        </>
       )}
 
       {/* restore hidden pieces (when nothing selected) */}
-      {!selEl && Object.keys(layout.els).some(k=>!layout.els[k].show) && (
+      {!selEl && showChrome && Object.keys(layout.els).some(k=>!layout.els[k].show) && (
         <div style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 14px)",display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",zIndex:4}}>
           {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(<button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); setTool("color"); }} style={{background:"rgba(14,10,6,0.95)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",borderRadius:20,padding:"9px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.06em",cursor:"pointer"}}>+ {elName[k]}</button>))}
         </div>
       )}
 
       {/* background picker (when no photo showing and nothing selected) — no box, floating */}
-      {!selEl && (!hasPhoto || !layout.photo.show) && (bgOpen ? (
+      {!selEl && showChrome && (!hasPhoto || !layout.photo.show) && (bgOpen ? (
         <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 8px)",display:"flex",flexDirection:"column",alignItems:"center",gap:7,zIndex:4}}>
           {/* small Fade + Flip row, frosted so the card shows through */}
           <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(14,10,6,0.4)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",borderRadius:16,padding:"5px 11px"}}>
