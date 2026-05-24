@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b151";
+const BUILD = "2026.05.24-b152";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1012,7 +1012,7 @@ function ExportSheet({ session, onClose }) {
 
       {/* Share menu — centered so it's visible in any format */}
       {shareOpen && (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 70px)",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",gap:8,width:240,maxWidth:"86vw",background:"rgba(14,10,6,0.92)",border:"1px solid var(--border)",borderRadius:12,padding:12,boxShadow:"0 6px 24px rgba(0,0,0,0.6)",zIndex:5}}>
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 70px)",left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",gap:8,width:240,maxWidth:"86vw",background:"rgba(14,10,6,0.55)",backdropFilter:"blur(10px) saturate(1.3)",WebkitBackdropFilter:"blur(10px) saturate(1.3)",border:"1px solid var(--border)",borderRadius:12,padding:12,boxShadow:"0 6px 24px rgba(0,0,0,0.6)",zIndex:5}}>
           <button onClick={()=>{ handleShareImage(); }} disabled={!shareFile} className="btn-primary" style={{padding:"12px",opacity:shareFile?1:0.5}}>Share Image</button>
           <button onClick={()=>{ shareAsNote(session); }} className="btn-ghost" style={{padding:"11px"}}>Save text to Notes / Files</button>
         </div>
@@ -1039,7 +1039,7 @@ function ExportSheet({ session, onClose }) {
             {tool==="rotate" && <Slider value={selEl.rot||0} min={-45} max={45} step={1} onChange={v=>setEl(sel,{rot:v})}/>}
             {tool==="opacity" && <Slider value={selEl.opacity==null?1:selEl.opacity} min={0.1} max={1} step={0.02} onChange={v=>setEl(sel,{opacity:v})}/>}
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.72)",borderRadius:24,padding:"6px 8px"}}>
+          <div style={{display:"flex",gap:6,alignItems:"center",background:"rgba(14,10,6,0.45)",backdropFilter:"blur(8px) saturate(1.3)",WebkitBackdropFilter:"blur(8px) saturate(1.3)",borderRadius:24,padding:"6px 8px"}}>
             {[["color","Color"],["size","Size"],["rotate","Turn"],["opacity","Fade"],["glow","Glow"]].map(([id,lbl])=>(
               <button key={id} onClick={()=>setTool(id)} style={{borderRadius:16,padding:"7px 11px",background:tool===id?"var(--accent)":"transparent",color:tool===id?"var(--ink)":"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",cursor:"pointer"}}>{lbl}</button>
             ))}
@@ -1060,25 +1060,25 @@ function ExportSheet({ session, onClose }) {
 
       {/* background picker (when no photo showing and nothing selected) — no box, floating */}
       {!selEl && (!hasPhoto || !layout.photo.show) && (bgOpen ? (
-        <>
-          {/* LEFT vertical swatch strip — slim and translucent so the card stays visible */}
-          <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:8,zIndex:4,maxHeight:"72vh"}}>
-            <button onClick={()=>setBgOpen(false)} title="Done" style={{flex:"0 0 auto",width:34,height:34,borderRadius:"50%",background:"rgba(var(--accent-rgb),0.85)",color:"var(--ink)",border:"none",fontFamily:"'Cinzel',serif",fontSize:16,lineHeight:1,fontWeight:300,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
-            <div className="no-sb" style={{display:"flex",flexDirection:"column",gap:10,overflowY:"auto",padding:"4px 5px 6px",scrollSnapType:"y proximity",WebkitOverflowScrolling:"touch",touchAction:"pan-y"}}>
-              {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; const on=(layout.bg||"ink")===id; return (
-                <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{flex:"0 0 auto",width:42,height:42,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid #fff":"1.5px solid rgba(255,255,255,0.7)",boxShadow:on?"0 0 12px rgba(var(--accent-rgb),0.85)":"0 1px 6px rgba(0,0,0,0.7)",cursor:"pointer",padding:0,scrollSnapAlign:"center"}}/>
-              ); })}
-            </div>
-          </div>
-          {/* Fade + Flip — compact cluster tucked bottom-left, off the card face */}
-          <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:8,bottom:"calc(env(safe-area-inset-bottom,0px) + 14px)",display:"flex",alignItems:"center",gap:8,background:"rgba(14,10,6,0.55)",borderRadius:18,padding:"6px 10px",zIndex:4}}>
+        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 8px)",display:"flex",flexDirection:"column",alignItems:"center",gap:7,zIndex:4}}>
+          {/* small Fade + Flip row, frosted so the card shows through */}
+          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(14,10,6,0.4)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",borderRadius:16,padding:"5px 11px"}}>
             <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--accent)",letterSpacing:"0.08em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)"}}>Fade</span>
-            <Slider value={layout.bgFade==null?0.5:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={110}/>
+            <Slider value={layout.bgFade==null?0.5:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={120}/>
             <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 10px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid var(--accent2)",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
           </div>
-        </>
+          {/* swatch wheel pinned to the very bottom + Share-sized close */}
+          <div style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"0 12px"}}>
+            <div className="no-sb" style={{flex:1,display:"flex",flexWrap:"nowrap",gap:11,overflowX:"auto",padding:"4px 4px 6px",scrollSnapType:"x proximity",WebkitOverflowScrolling:"touch",touchAction:"pan-x"}}>
+              {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; const on=(layout.bg||"ink")===id; return (
+                <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{flex:"0 0 auto",width:44,height:44,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid #fff":"1.5px solid rgba(255,255,255,0.7)",boxShadow:on?"0 0 12px rgba(var(--accent-rgb),0.85)":"0 1px 6px rgba(0,0,0,0.7)",cursor:"pointer",padding:0,scrollSnapAlign:"center"}}/>
+              ); })}
+            </div>
+            <button onClick={()=>setBgOpen(false)} title="Done" style={circle({flex:"0 0 auto",fontSize:30,fontWeight:300,lineHeight:1})}>×</button>
+          </div>
+        </div>
       ) : (
-        <button onClick={()=>setBgOpen(true)} title={"Background · "+selectedBgLabel} style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",width:46,height:46,borderRadius:"50%",background:bgTop===bgBot?bgTop:`linear-gradient(180deg,${bgTop},${bgBot})`,border:"2px solid rgba(255,255,255,0.85)",boxShadow:"0 0 12px rgba(0,0,0,0.6)",cursor:"pointer",padding:0,zIndex:4}}/>
+        <button onClick={()=>setBgOpen(true)} title={"Background · "+selectedBgLabel} style={{position:"absolute",right:16,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",width:46,height:46,borderRadius:"50%",background:bgTop===bgBot?bgTop:`linear-gradient(180deg,${bgTop},${bgBot})`,border:"2px solid rgba(255,255,255,0.85)",boxShadow:"0 0 12px rgba(0,0,0,0.6)",cursor:"pointer",padding:0,zIndex:4}}/>
       ))}
     </div>
   );
