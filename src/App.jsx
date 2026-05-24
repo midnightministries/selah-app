@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b160";
+const BUILD = "2026.05.24-b161";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1822,12 +1822,12 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
     debT.current = setTimeout(() => applyZoom(v), 100); // guarantee final value lands
   }
   function commit() { if (debT.current) clearTimeout(debT.current); applyFilter(b); applyZoom(t); onCommit(b, t); }
-  const pill = { background:"transparent",border:"1px solid var(--border)",borderRadius:4,padding:"4px 10px",color:"var(--text2)",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",textShadow:"0 1px 2px rgba(0,0,0,0.55)" };
-  const cap = { fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,color:"var(--m1)",letterSpacing:"0.08em",textShadow:"0 1px 2px rgba(0,0,0,0.55)" };
-  const head = { fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",textShadow:"0 1px 2px rgba(0,0,0,0.5)" };
+  const pill = { background:"transparent",border:"1px solid var(--border2)",borderRadius:4,padding:"4px 10px",color:"var(--text2)",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
+  const cap = { fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,color:"var(--text2)",letterSpacing:"0.08em",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
+  const head = { fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.25)",backdropFilter:"blur(9px) saturate(1.4)",WebkitBackdropFilter:"blur(9px) saturate(1.4)",border:"1px solid var(--border)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.62)",backdropFilter:"blur(16px) saturate(1.05)",WebkitBackdropFilter:"blur(16px) saturate(1.05)",border:"1px solid var(--border2)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
         <Slider value={b} min={0.85} max={1.45} step={0.01} onChange={changeB} onCommit={commit} width="100%"/>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",marginTop:8}}>
@@ -1838,9 +1838,9 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
         <p style={{...head,margin:"16px 0 10px"}}>Text Size</p>
         <Slider value={t} min={0.9} max={1.3} step={0.01} onChange={changeT} onCommit={commit} width="100%"/>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",marginTop:8}}>
-          <span style={{fontFamily:"'Cinzel',serif",fontSize:14,fontWeight:700,color:"var(--m1)",textShadow:"0 1px 2px rgba(0,0,0,0.6)",textAlign:"left"}}>A</span>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:14,fontWeight:700,color:"var(--text2)",textShadow:"0 1px 1px rgba(0,0,0,0.4)",textAlign:"left"}}>A</span>
           <button onClick={()=>{ setT(1); applyZoom(1); onCommit(b,1); }} style={pill}>Reset</button>
-          <span style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,color:"var(--m1)",textShadow:"0 1px 2px rgba(0,0,0,0.6)",textAlign:"right"}}>A</span>
+          <span style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,color:"var(--text2)",textShadow:"0 1px 1px rgba(0,0,0,0.4)",textAlign:"right"}}>A</span>
         </div>
       </div>
     </div>
@@ -3352,7 +3352,7 @@ export default function App() {
               <div style={{display:"flex",justifyContent:"center",marginBottom:14}}>
                 <CrossIcon size={32} glow={false}/>
               </div>
-              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,marginBottom:6}}>SELAH</h2>
+              <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,textShadow:"var(--wm-glow)",marginBottom:6}}>SELAH</h2>
               <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",color:"var(--m4)",fontSize:14,marginBottom:14}}>Read. Mark. Return.</p>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(var(--accent-rgb),0.5)",letterSpacing:"0.2em",textTransform:"uppercase"}}>MIDNIGHT MINISTRIES</p>
             </div>
