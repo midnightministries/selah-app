@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b164";
+const BUILD = "2026.05.24-b165";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1824,7 +1824,7 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
   function commit() { if (debT.current) clearTimeout(debT.current); applyFilter(b); applyZoom(t); onCommit(b, t); }
   const pill = { background:"transparent",border:"1px solid var(--border2)",borderRadius:4,padding:"4px 10px",color:"var(--text2)",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
   const cap = { fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,color:"var(--text2)",letterSpacing:"0.08em",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
-  const head = { fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
+  const head = { fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",textShadow:"0 1px 1px rgba(0,0,0,0.22)" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
       <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.82)",backdropFilter:"blur(6px) saturate(1.02)",WebkitBackdropFilter:"blur(6px) saturate(1.02)",border:"1px solid var(--border2)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
