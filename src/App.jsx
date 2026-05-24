@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b165";
+const BUILD = "2026.05.24-b166";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2526,7 +2526,7 @@ export default function App() {
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes edgeGlow{0%,100%{opacity:0.4}50%{opacity:0.95}}
-        .nav-tab{background:transparent;border:none;color:var(--m5);font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;padding:10px 10px;border-bottom:2px solid transparent;transition:all 0.2s;flex:1;}
+        .nav-tab{background:transparent;border:none;color:var(--m2);font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;padding:10px 10px;border-bottom:2px solid transparent;transition:all 0.2s;flex:1;}
         .nav-tab.active{color:var(--accent);border-bottom-color:rgba(var(--accent-rgb),0.22);box-shadow:0 6px 9px -5px rgba(0,0,0,0.42);}
         .nav-tab:hover:not(.active){color:var(--m1);}
         .section-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 0;user-select:none;}
