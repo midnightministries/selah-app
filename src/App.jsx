@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b173";
+const BUILD = "2026.05.24-b174";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -761,7 +761,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
         letterSpacing:"0.22em",
         textTransform:"uppercase",
         color:CROSS_RED,
-        textShadow:"0 1px 2px rgba(142,28,28,0.35), 0 0 14px rgba(142,28,28,0.18)",
+        textShadow:"0 1px 2px rgba(142,28,28,0.4), 0 0 13px rgba(142,28,28,0.42)",
         filter:"url(#chalk-mm)",
         paddingBottom:1,
         cursor:onHomeView?"pointer":"default",
@@ -2709,7 +2709,7 @@ export default function App() {
                     <p style={{fontSize:16,lineHeight:1.7,color:"var(--m2)",marginBottom:14}}>
                       What you carry, they will carry. Read like they are watching, because they are.
                     </p>
-                    <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(142,28,28,0.82)",letterSpacing:"0.14em",textTransform:"uppercase",textAlign:"right"}}>Midnight Ministries</p>
+                    <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(142,28,28,0.82)",textShadow:"0 0 12px rgba(142,28,28,0.42)",letterSpacing:"0.14em",textTransform:"uppercase",textAlign:"right"}}>Midnight Ministries</p>
                   </div>
                 )}
               </div>
@@ -3354,7 +3354,7 @@ export default function App() {
               </div>
               <h2 style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,textShadow:"var(--wm-glow)",marginBottom:6}}>SELAH</h2>
               <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",color:"var(--m4)",fontSize:14,marginBottom:14}}>Read. Mark. Return.</p>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(142,28,28,0.82)",letterSpacing:"0.2em",textTransform:"uppercase"}}>MIDNIGHT MINISTRIES</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"rgba(142,28,28,0.82)",textShadow:"0 0 12px rgba(142,28,28,0.42)",letterSpacing:"0.2em",textTransform:"uppercase"}}>MIDNIGHT MINISTRIES</p>
             </div>
 
             {/* Account */}
