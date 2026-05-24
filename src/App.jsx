@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b167";
+const BUILD = "2026.05.24-b169";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1839,7 +1839,7 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
         <Slider value={t} min={0.9} max={1.3} step={0.01} onChange={changeT} onCommit={commit} width="100%"/>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",marginTop:8}}>
           <span style={{fontFamily:"'Cinzel',serif",fontSize:14,fontWeight:700,color:"var(--text2)",textShadow:"0 1px 1px rgba(0,0,0,0.4)",textAlign:"left"}}>A</span>
-          <button onClick={()=>{ setT(1); applyZoom(1); onCommit(b,1); }} style={pill}>Reset</button>
+          <button onClick={()=>{ setT(1.1); applyZoom(1.1); onCommit(b,1.1); }} style={pill}>Reset</button>
           <span style={{fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,color:"var(--text2)",textShadow:"0 1px 1px rgba(0,0,0,0.4)",textAlign:"right"}}>A</span>
         </div>
       </div>
@@ -1895,7 +1895,7 @@ export default function App() {
   const [photoView, setPhotoView] = useState(null);
   const [lightItem, setLightItem] = useState(null);
   const [brightness, setBrightness] = useState(() => { const v = parseFloat(localStorage.getItem("selah_brightness")); return (v >= 0.85 && v <= 1.45) ? v : 1.30; });
-  const [textScale, setTextScale] = useState(() => { const v = parseFloat(localStorage.getItem("selah_textscale")); return (v >= 0.9 && v <= 1.3) ? v : 1; });
+  const [textScale, setTextScale] = useState(() => { const v = parseFloat(localStorage.getItem("selah_textscale")); return (v >= 0.9 && v <= 1.3) ? v : 1.1; });
   // Tablets (iPad mini/Air/Pro, Android tablets) start a touch bigger than phones.
   // The text-size slider still has its full range; this just raises the baseline.
   const tabletScale = useRef((()=>{ try { return (navigator.maxTouchPoints>1 && Math.min(window.screen.width,window.screen.height)>=700) ? 1.14 : 1; } catch { return 1; } })()).current;
