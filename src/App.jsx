@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b153";
+const BUILD = "2026.05.24-b154";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -594,55 +594,55 @@ const PALETTES = {
     "--border":"#36241c","--border2":"#2e2408","--accent":"#c9a84c","--accent2":"#a8832a",
     "--ink":"#0e0c06","--text":"#e4dcc8","--text2":"#c8bfa0","--text3":"#c0b898","--text4":"#d4ccb8",
     "--m1":"#8a7a4a","--m1b":"#8a7a5a","--m2":"#6a5a30","--m3":"#5a4a20","--m3b":"#5a4a2a","--m4":"#4a3e1a","--m5":"#3a3010",
-    "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28","--surface-rgb":"32,19,15","--wm":"#ece0c6" } },
+    "--accent-rgb":"201,168,76","--blood-rgb":"110,28,28","--surface-rgb":"32,19,15","--wm":"#ece0c6","--wm-glow":"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)" } },
   warm: { label: "Warm Amber", swatch: ["#241108","#f5894a","#a4734e"], vars: {
     "--bg":"#241108","--surface":"#311a0e","--input":"#3a2012","--input2":"#2a1409",
     "--border":"#4a2e1c","--border2":"#3e2616","--accent":"#f5894a","--accent2":"#d2632a",
     "--ink":"#1a0d05","--text":"#f7e7d6","--text2":"#ecccb4","--text3":"#e2c0a6","--text4":"#f5e6d6",
     "--m1":"#c79874","--m1b":"#c79874","--m2":"#a4734e","--m3":"#875b3c","--m3b":"#875b3c","--m4":"#6a4630","--m5":"#523524",
-    "--accent-rgb":"245,137,74","--blood-rgb":"150,40,40","--surface-rgb":"49,26,14","--wm":"#ece0c6" } },
+    "--accent-rgb":"245,137,74","--blood-rgb":"150,40,40","--surface-rgb":"49,26,14","--wm":"#ece0c6","--wm-glow":"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)" } },
   rose: { label: "Rose", swatch: ["#26101c","#f08fb5","#a86883"], vars: {
     "--bg":"#26101c","--surface":"#341624","--input":"#3c1a2b","--input2":"#2a1320",
     "--border":"#4e2840","--border2":"#432234","--accent":"#f08fb5","--accent2":"#cc6090",
     "--ink":"#1c0c14","--text":"#f8e7ee","--text2":"#edccd8","--text3":"#e2c0cf","--text4":"#f3dde8",
     "--m1":"#c98ba2","--m1b":"#c98ba2","--m2":"#a86883","--m3":"#8a536c","--m3b":"#8a536c","--m4":"#6c3f53","--m5":"#543141",
-    "--accent-rgb":"240,143,181","--blood-rgb":"160,50,90","--surface-rgb":"52,22,36","--wm":"#ece0c6" } },
+    "--accent-rgb":"240,143,181","--blood-rgb":"160,50,90","--surface-rgb":"52,22,36","--wm":"#ece0c6","--wm-glow":"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)" } },
   blossom: { label: "Blossom", swatch: ["#1d1336","#cf9bff","#8772aa"], vars: {
     "--bg":"#1d1336","--surface":"#271a45","--input":"#2d1e4f","--input2":"#211541",
     "--border":"#3c2c63","--border2":"#322455","--accent":"#cf9bff","--accent2":"#a86fe0",
     "--ink":"#150c28","--text":"#f0e8fb","--text2":"#d8ccef","--text3":"#cdc0e6","--text4":"#e6dcf6",
     "--m1":"#a995c9","--m1b":"#a995c9","--m2":"#8772aa","--m3":"#6f5b90","--m3b":"#6f5b90","--m4":"#564574","--m5":"#43355c",
-    "--accent-rgb":"207,155,255","--blood-rgb":"170,70,120","--surface-rgb":"39,26,69","--wm":"#ece0c6" } },
+    "--accent-rgb":"207,155,255","--blood-rgb":"170,70,120","--surface-rgb":"39,26,69","--wm":"#ece0c6","--wm-glow":"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)" } },
   steel: { label: "Steel", swatch: ["#14181d","#93b6cf","#6a7c8a"], vars: {
     "--bg":"#14181d","--surface":"#1d232a","--input":"#212831","--input2":"#161b21",
     "--border":"#333c46","--border2":"#2a323b","--accent":"#93b6cf","--accent2":"#5f87a4",
     "--ink":"#0c1116","--text":"#e8edf2","--text2":"#cdd8e0","--text3":"#c2cfd8","--text4":"#dde6ed",
     "--m1":"#8a9aa8","--m1b":"#8a9aa8","--m2":"#6a7c8a","--m3":"#586774","--m3b":"#586774","--m4":"#45525d","--m5":"#364049",
-    "--accent-rgb":"147,182,207","--blood-rgb":"100,120,150","--surface-rgb":"29,35,42","--wm":"#ece0c6" } },
-  linen: { label: "Linen", swatch: ["#f4efe4","#a8832a","#8e1c1c"], vars: {
+    "--accent-rgb":"147,182,207","--blood-rgb":"100,120,150","--surface-rgb":"29,35,42","--wm":"#ece0c6","--wm-glow":"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)" } },
+  linen: { label: "Linen", swatch: ["#f4efe4","#9a7720","#8e1c1c"], vars: {
     "--bg":"#f4efe4","--surface":"#e9dfcd","--input":"#efe6d6","--input2":"#e2d6c0",
-    "--border":"#d6c8ac","--border2":"#cabd9f","--accent":"#a8832a","--accent2":"#876616",
-    "--ink":"#2a2008","--text":"#36291a","--text2":"#574734","--text3":"#6a5a44","--text4":"#2a2014",
-    "--m1":"#9a8868","--m1b":"#9a8868","--m2":"#7c6c4e","--m3":"#61543a","--m3b":"#61543a","--m4":"#4c3f28","--m5":"#3a2f1c",
-    "--accent-rgb":"168,131,42","--blood-rgb":"142,28,28","--surface-rgb":"233,223,205","--wm":"#5a3a14" } },
-  blush: { label: "Blush", swatch: ["#fbeef2","#d4537e","#8e1c1c"], vars: {
+    "--border":"#bfa873","--border2":"#ad9156","--accent":"#9a7720","--accent2":"#7c5e12",
+    "--ink":"#2a2008","--text":"#332617","--text2":"#54442f","--text3":"#675636","--text4":"#241b0e",
+    "--m1":"#8a7350","--m1b":"#8a7350","--m2":"#6e5a38","--m3":"#574629","--m3b":"#574629","--m4":"#463722","--m5":"#382c1a",
+    "--accent-rgb":"154,119,32","--blood-rgb":"142,28,28","--surface-rgb":"233,223,205","--wm":"#5a3a14","--wm-glow":"0 0 15px rgba(90,58,20,0.28)" } },
+  blush: { label: "Blush", swatch: ["#fbeef2","#c43e6c","#8e1c1c"], vars: {
     "--bg":"#fbeef2","--surface":"#f3dde4","--input":"#f8e6ec","--input2":"#efd2dc",
-    "--border":"#e8c2d0","--border2":"#ddb2c2","--accent":"#d4537e","--accent2":"#b03960",
-    "--ink":"#ffffff","--text":"#4b1528","--text2":"#6a2840","--text3":"#7e3a52","--text4":"#3a0f1e",
-    "--m1":"#b07f92","--m1b":"#b07f92","--m2":"#936076","--m3":"#79495d","--m3b":"#79495d","--m4":"#5e3646","--m5":"#4a2838",
-    "--accent-rgb":"212,83,126","--blood-rgb":"142,28,28","--surface-rgb":"243,221,228","--wm":"#7a2440" } },
-  sky: { label: "Sky", swatch: ["#eaf3fb","#378add","#8e1c1c"], vars: {
+    "--border":"#d8a0b6","--border2":"#c98ca4","--accent":"#c43e6c","--accent2":"#a32a55",
+    "--ink":"#ffffff","--text":"#451324","--text2":"#62253b","--text3":"#76374e","--text4":"#36101c",
+    "--m1":"#9a6075","--m1b":"#9a6075","--m2":"#7e4a5e","--m3":"#683c4e","--m3b":"#683c4e","--m4":"#54303f","--m5":"#442634",
+    "--accent-rgb":"196,62,108","--blood-rgb":"142,28,28","--surface-rgb":"243,221,228","--wm":"#7a2440","--wm-glow":"0 0 15px rgba(122,36,64,0.38)" } },
+  sky: { label: "Sky", swatch: ["#eaf3fb","#2f7ec9","#8e1c1c"], vars: {
     "--bg":"#eaf3fb","--surface":"#d9e8f5","--input":"#e4f0fa","--input2":"#cee0f0",
-    "--border":"#c0d6ec","--border2":"#aec8e4","--accent":"#378add","--accent2":"#1f63a8",
-    "--ink":"#ffffff","--text":"#10324f","--text2":"#234a68","--text3":"#355f80","--text4":"#08243f",
-    "--m1":"#6e90b2","--m1b":"#6e90b2","--m2":"#547596","--m3":"#435f7c","--m3b":"#435f7c","--m4":"#344d68","--m5":"#283d54",
-    "--accent-rgb":"55,138,221","--blood-rgb":"142,28,28","--surface-rgb":"217,232,245","--wm":"#0c447c" } },
-  mint: { label: "Mint", swatch: ["#eef6ea","#5f9a2b","#8e1c1c"], vars: {
+    "--border":"#a3c2e0","--border2":"#8db2d2","--accent":"#2f7ec9","--accent2":"#1d5e9e",
+    "--ink":"#ffffff","--text":"#0e3049","--text2":"#214660","--text3":"#345a78","--text4":"#072036",
+    "--m1":"#5a7d9e","--m1b":"#5a7d9e","--m2":"#466384","--m3":"#3a526e","--m3b":"#3a526e","--m4":"#2e4258","--m5":"#243648",
+    "--accent-rgb":"47,126,201","--blood-rgb":"142,28,28","--surface-rgb":"217,232,245","--wm":"#0c3f70","--wm-glow":"0 0 15px rgba(12,63,112,0.32)" } },
+  mint: { label: "Mint", swatch: ["#eef6ea","#549024","#8e1c1c"], vars: {
     "--bg":"#eef6ea","--surface":"#dcecd4","--input":"#e8f3e2","--input2":"#d2e6c8",
-    "--border":"#c4dcb6","--border2":"#b4d0a2","--accent":"#5f9a2b","--accent2":"#477415",
-    "--ink":"#ffffff","--text":"#1d3a10","--text2":"#335020","--text3":"#466034","--text4":"#142c08",
-    "--m1":"#7e9a6e","--m1b":"#7e9a6e","--m2":"#5f7d4e","--m3":"#4c6a3a","--m3b":"#4c6a3a","--m4":"#3c5430","--m5":"#2e4222",
-    "--accent-rgb":"95,154,43","--blood-rgb":"142,28,28","--surface-rgb":"220,236,212","--wm":"#2c5012" } },
+    "--border":"#a6cd94","--border2":"#92bd7e","--accent":"#549024","--accent2":"#3f6c12",
+    "--ink":"#ffffff","--text":"#1b380e","--text2":"#314e1e","--text3":"#445c32","--text4":"#122806",
+    "--m1":"#6c8a5a","--m1b":"#6c8a5a","--m2":"#527044","--m3":"#425c36","--m3b":"#425c36","--m4":"#344a2a","--m5":"#283a20",
+    "--accent-rgb":"84,144,36","--blood-rgb":"142,28,28","--surface-rgb":"220,236,212","--wm":"#2c5012","--wm-glow":"0 0 15px rgba(44,80,18,0.30)" } },
 };
 function ageFromBirthday(bday) {
   if (!bday) return null;
@@ -696,7 +696,7 @@ function AuthScreen({ initialMode, intro, onAuthed, onSkip, onBack }) {
       {intro && (
         <div style={{textAlign:"center",marginBottom:18}}>
           <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><CrossIcon size={40} glow={true}/></div>
-          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:24,fontWeight:700,letterSpacing:"0.12em",color:SELAH_CREAM,textShadow:"0 0 22px rgba(var(--accent-rgb),0.3)",marginBottom:6}}>SELAH</h2>
+          <h2 style={{fontFamily:"'Cinzel',serif",fontSize:24,fontWeight:700,letterSpacing:"0.12em",color:SELAH_CREAM,textShadow:"var(--wm-glow)",marginBottom:6}}>SELAH</h2>
           <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:16,color:"var(--m3)",lineHeight:1.5,marginBottom:4}}>Read. Mark. Return.</p>
           <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m4)",lineHeight:1.55,maxWidth:330,margin:"0 auto"}}>
             Make an account to carry your log and settings across every device. Or step straight in. Your reading stays yours.
@@ -2580,7 +2580,7 @@ export default function App() {
               ? <img src={(ICON_THEMES[profileIcon]||ICON_THEMES.default).thumb} alt="" width={40} height={40} style={{borderRadius:10,display:"block",border:"1px solid var(--border)"}}/>
               : <CrossIcon size={30} glow={false}/>}
           </div>
-          <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",cursor:"pointer"}}>SELAH</h1>
+          <h1 onClick={()=>{ resetForm(); setView("home"); }} style={{fontFamily:"'Cinzel',serif",fontSize:26,fontWeight:700,letterSpacing:"0.1em",color:SELAH_CREAM,textShadow:"var(--wm-glow)",cursor:"pointer"}}>SELAH</h1>
           <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:13,color:"var(--m4)",marginTop:3}}>Read. Mark. Return.</p>
         </div>
 
