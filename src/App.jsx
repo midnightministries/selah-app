@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b161";
+const BUILD = "2026.05.24-b163";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -83,7 +83,7 @@ const SELAH_CREAM = "var(--wm, #ece0c6)";   // cream on dark palettes; deep tone
 // Inline SELAH wordmark: cream with a hint of palette hue and a thin outline,
 // scaled to whatever text it sits in. Use anywhere "SELAH" appears in prose.
 function Selah() {
-  return <span style={{ fontFamily:"'Cinzel',serif", fontWeight:600, fontSize:"0.92em", color:SELAH_CREAM, letterSpacing:"0.04em", WebkitTextStroke:"0.4px rgba(var(--accent-rgb),0.45)" }}>SELAH</span>;
+  return <span style={{ fontFamily:"'Cinzel',serif", fontWeight:600, fontSize:"0.92em", color:SELAH_CREAM, letterSpacing:"0.04em", WebkitTextStroke:"0.4px rgba(var(--accent-rgb),0.45)", textShadow:"none" }}>SELAH</span>;
 }
 // Walk prose children and swap the bare word "SELAH" for the wordmark component.
 function withSelah(children) {
@@ -1629,7 +1629,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
 function AboutScreen({ onBack, onFaith }) {
   const [tab, setTab] = useState("ministry");
   const P = ({children, mb=14}) => (
-    <p style={{fontSize:17,lineHeight:1.78,color:"var(--m1b)",marginBottom:mb}}>{withSelah(children)}</p>
+    <p style={{fontSize:17,lineHeight:1.78,color:"var(--m1b)",textShadow:"0 1px 2px rgba(0,0,0,0.38)",marginBottom:mb}}>{withSelah(children)}</p>
   );
   const Section = ({label, children}) => (
     <div className="card">
@@ -1827,7 +1827,7 @@ function DisplayControls({ layerRef, brightness, textScale, baseScale=1, onCommi
   const head = { fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,color:"var(--accent)",letterSpacing:"0.12em",textTransform:"uppercase",textShadow:"0 1px 1px rgba(0,0,0,0.4)" };
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:290}}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.62)",backdropFilter:"blur(16px) saturate(1.05)",WebkitBackdropFilter:"blur(16px) saturate(1.05)",border:"1px solid var(--border2)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"fixed",top:"calc(env(safe-area-inset-top, 0px) + 62px)",right:"max(12px, calc(50vw - 320px))",zIndex:300,background:"rgba(var(--surface-rgb),0.5)",backdropFilter:"blur(9px) saturate(1.02)",WebkitBackdropFilter:"blur(9px) saturate(1.02)",border:"1px solid var(--border2)",borderRadius:8,padding:"14px 16px",width:236,boxShadow:"0 10px 34px rgba(0,0,0,0.6)"}}>
         <p style={{...head,marginBottom:10}}>Brightness</p>
         <Slider value={b} min={0.85} max={1.45} step={0.01} onChange={changeB} onCommit={commit} width="100%"/>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",marginTop:8}}>
