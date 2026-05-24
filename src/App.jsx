@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b154";
+const BUILD = "2026.05.24-b156";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -624,25 +624,25 @@ const PALETTES = {
     "--border":"#bfa873","--border2":"#ad9156","--accent":"#9a7720","--accent2":"#7c5e12",
     "--ink":"#2a2008","--text":"#332617","--text2":"#54442f","--text3":"#675636","--text4":"#241b0e",
     "--m1":"#8a7350","--m1b":"#8a7350","--m2":"#6e5a38","--m3":"#574629","--m3b":"#574629","--m4":"#463722","--m5":"#382c1a",
-    "--accent-rgb":"154,119,32","--blood-rgb":"142,28,28","--surface-rgb":"233,223,205","--wm":"#5a3a14","--wm-glow":"0 0 15px rgba(90,58,20,0.28)" } },
+    "--accent-rgb":"154,119,32","--blood-rgb":"142,28,28","--surface-rgb":"233,223,205","--wm":"#5a3a14","--wm-glow":"0 0 13px rgba(90,58,20,0.50), 0 0 26px rgba(90,58,20,0.26)" } },
   blush: { label: "Blush", swatch: ["#fbeef2","#c43e6c","#8e1c1c"], vars: {
     "--bg":"#fbeef2","--surface":"#f3dde4","--input":"#f8e6ec","--input2":"#efd2dc",
     "--border":"#d8a0b6","--border2":"#c98ca4","--accent":"#c43e6c","--accent2":"#a32a55",
     "--ink":"#ffffff","--text":"#451324","--text2":"#62253b","--text3":"#76374e","--text4":"#36101c",
     "--m1":"#9a6075","--m1b":"#9a6075","--m2":"#7e4a5e","--m3":"#683c4e","--m3b":"#683c4e","--m4":"#54303f","--m5":"#442634",
-    "--accent-rgb":"196,62,108","--blood-rgb":"142,28,28","--surface-rgb":"243,221,228","--wm":"#7a2440","--wm-glow":"0 0 15px rgba(122,36,64,0.38)" } },
+    "--accent-rgb":"196,62,108","--blood-rgb":"142,28,28","--surface-rgb":"243,221,228","--wm":"#7a2440","--wm-glow":"0 0 13px rgba(122,36,64,0.55), 0 0 26px rgba(122,36,64,0.30)" } },
   sky: { label: "Sky", swatch: ["#eaf3fb","#2f7ec9","#8e1c1c"], vars: {
     "--bg":"#eaf3fb","--surface":"#d9e8f5","--input":"#e4f0fa","--input2":"#cee0f0",
     "--border":"#a3c2e0","--border2":"#8db2d2","--accent":"#2f7ec9","--accent2":"#1d5e9e",
     "--ink":"#ffffff","--text":"#0e3049","--text2":"#214660","--text3":"#345a78","--text4":"#072036",
     "--m1":"#5a7d9e","--m1b":"#5a7d9e","--m2":"#466384","--m3":"#3a526e","--m3b":"#3a526e","--m4":"#2e4258","--m5":"#243648",
-    "--accent-rgb":"47,126,201","--blood-rgb":"142,28,28","--surface-rgb":"217,232,245","--wm":"#0c3f70","--wm-glow":"0 0 15px rgba(12,63,112,0.32)" } },
+    "--accent-rgb":"47,126,201","--blood-rgb":"142,28,28","--surface-rgb":"217,232,245","--wm":"#0c3f70","--wm-glow":"0 0 13px rgba(12,63,112,0.55), 0 0 26px rgba(12,63,112,0.28)" } },
   mint: { label: "Mint", swatch: ["#eef6ea","#549024","#8e1c1c"], vars: {
     "--bg":"#eef6ea","--surface":"#dcecd4","--input":"#e8f3e2","--input2":"#d2e6c8",
     "--border":"#a6cd94","--border2":"#92bd7e","--accent":"#549024","--accent2":"#3f6c12",
     "--ink":"#ffffff","--text":"#1b380e","--text2":"#314e1e","--text3":"#445c32","--text4":"#122806",
     "--m1":"#6c8a5a","--m1b":"#6c8a5a","--m2":"#527044","--m3":"#425c36","--m3b":"#425c36","--m4":"#344a2a","--m5":"#283a20",
-    "--accent-rgb":"84,144,36","--blood-rgb":"142,28,28","--surface-rgb":"220,236,212","--wm":"#2c5012","--wm-glow":"0 0 15px rgba(44,80,18,0.30)" } },
+    "--accent-rgb":"84,144,36","--blood-rgb":"142,28,28","--surface-rgb":"220,236,212","--wm":"#2c5012","--wm-glow":"0 0 13px rgba(44,80,18,0.52), 0 0 26px rgba(44,80,18,0.27)" } },
 };
 function ageFromBirthday(bday) {
   if (!bday) return null;
@@ -751,7 +751,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
             <feGaussianBlur in="displaced" stdDeviation="0.35" result="soft"/>
             <feComposite in="soft" in2="SourceGraphic" operator="in" result="clipped"/>
-            <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="var(--accent)" floodOpacity="0.45"/>
+            <feDropShadow dx="0" dy="0" stdDeviation="1.7" floodColor="var(--accent)" floodOpacity="0.28"/>
           </filter>
         </defs>
       </svg>
@@ -761,7 +761,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
         letterSpacing:"0.22em",
         textTransform:"uppercase",
         color:CROSS_RED,
-        textShadow:"0 0 22px rgba(var(--accent-rgb),0.32), 0 0 55px rgba(var(--accent-rgb),0.14)",
+        textShadow:"0 0 13px rgba(var(--accent-rgb),0.19), 0 0 32px rgba(var(--accent-rgb),0.07)",
         filter:"url(#chalk-mm)",
         paddingBottom:1,
         cursor:onHomeView?"pointer":"default",
@@ -1643,7 +1643,7 @@ function AboutScreen({ onBack, onFaith }) {
       <button onClick={onBack} style={{background:"transparent",border:"none",color:"var(--m2)",fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",marginBottom:20,display:"flex",alignItems:"center",gap:6,padding:0}}>
         ← Back
       </button>
-      <div style={{display:"flex",borderBottom:"1px solid var(--border)",marginBottom:20}}>
+      <div style={{display:"flex",borderBottom:"1px solid var(--border2)",marginBottom:20,background:"linear-gradient(180deg, transparent 45%, rgba(var(--accent-rgb),0.06))"}}>
         <button className={`nav-tab ${tab==="ministry"?"active":""}`} onClick={()=>setTab("ministry")} style={{fontSize:"9px"}}>Midnight Ministries</button>
         <button className={`nav-tab ${tab==="howto"?"active":""}`} onClick={()=>setTab("howto")} style={{fontSize:"9px"}}>How to Use</button>
       </div>
