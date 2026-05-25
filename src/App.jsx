@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b179";
+const BUILD = "2026.05.24-b180";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -976,7 +976,7 @@ function ExportSheet({ session, onClose }) {
     const gc=el.glowColor||el.color||"#0e0c06";
     // selection = a crisp gold outline ring (NOT a glow), so it never mixes with
     // the element's own glow color; offset so it doesn't hug the letters.
-    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1.5px solid rgba(201,168,76,0.9)":"none", outlineOffset:"5px", zIndex:selected?5:1 };
+    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1px solid rgba(201,168,76,0.5)":"none", outlineOffset:"2px", zIndex:selected?5:1 };
     const xBadge = selected ? <div onPointerDown={e=>{ e.stopPropagation(); setEl(key,{show:false}); setSel(null); }} style={{position:"absolute",top:-13,right:-13,width:24,height:24,borderRadius:"50%",background:"rgba(14,10,6,0.8)",border:"1px solid rgba(255,255,255,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,lineHeight:1,cursor:"pointer",transform:`rotate(${-(el.rot||0)}deg)`,zIndex:6}}>×</div> : null;
     if(el.kind==="cross"){
       // Real cross glow: a blurred, glow-colored copy of the cross shape behind it.
@@ -990,7 +990,7 @@ function ExportSheet({ session, onClose }) {
     }
     // text glow = text-shadow (true color, no drag trails).
     const ts = el.glow ? `0 0 ${(el.glow*7).toFixed(1)}px ${gc}, 0 0 ${(el.glow*14).toFixed(1)}px ${gc}` : "none";
-    return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}{xBadge}</div>;
+    return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, display:"inline-block", maxWidth:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}{xBadge}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
   // Derive three distinct shades from the active palette accent so the circles
