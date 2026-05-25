@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b199";
+const BUILD = "2026.05.24-b200";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1163,7 +1163,7 @@ const LEVEL_COPY = {
   ],
 };
 function LevelIcon({ track, i, size, lit, current }) {
-  const glow = lit ? `drop-shadow(0 0 6px ${track==="kids"?"rgba(245,137,74,0.9)":"rgba(168,131,42,0.85)"})` : "none";
+  const glow = lit ? `drop-shadow(0 0 6px ${track==="kids"?"rgba(245,137,74,0.9)":"rgba(var(--accent-rgb),0.7)"})` : "none";
   if (track === "kids") {
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" style={{filter:glow}}>
@@ -1171,7 +1171,7 @@ function LevelIcon({ track, i, size, lit, current }) {
       </svg>
     );
   }
-  const col = current ? "#d8b25a" : (lit ? "#a8832a" : "var(--m5)");
+  const col = current ? "var(--accent)" : (lit ? "var(--accent2)" : "var(--m4)");
   let shapes;
   if (i===0) shapes = <><line x1="5" y1="19" x2="19" y2="19"/><path d="M12 17 C 9 15 9 10 12 8 C 15 10 15 15 12 17 Z"/></>;
   else if (i===1) shapes = <><line x1="12" y1="14" x2="12" y2="6"/><path d="M12 9 C 13 6 16 5 17 4"/><path d="M12 14 C 11 17 9 18 8 20"/><path d="M12 14 C 13 17 15 18 16 20"/><line x1="12" y1="14" x2="12" y2="20"/></>;
@@ -2004,6 +2004,9 @@ export default function App() {
   const eggScrollRef = useRef(null);
   const logScrollY = useRef(0);   // remembers your scroll position in the Log
   const viewRef = useRef("home");
+  // The view that was live before this load. Captured at render, BEFORE the
+  // view-persist effect overwrites selah_view, so reload-restore can see it.
+  const bootView = useRef((()=>{ try { return localStorage.getItem("selah_view") || ""; } catch { return ""; } })()).current;
   useEffect(() => { viewRef.current = view; }, [view]);
   useEffect(() => { localStorage.setItem("selah_brightness", String(brightness)); }, [brightness]);
   useEffect(() => {
@@ -2460,8 +2463,7 @@ export default function App() {
       snap = { ...snap, activeSession: { ...snap.activeSession, readingClosedAt: snap.activeSession.pausedAt, pausedAt: null } };
     }
     setResumeSnap(snap);
-    let lastView = ""; try { lastView = localStorage.getItem("selah_view") || ""; } catch {}
-    if (lastView === "session" || lastView === "result") applySnap(snap);
+    if (bootView === "session" || bootView === "result") applySnap(snap);
   }, []);   // eslint-disable-line react-hooks/exhaustive-deps
 
   function clearSnap() {

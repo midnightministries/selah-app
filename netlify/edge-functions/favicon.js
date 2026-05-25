@@ -10,11 +10,19 @@ export default async (request, context) => {
   const ctype = res.headers.get("content-type") || "";
   if (!ctype.includes("text/html")) return res;
 
+  const headers = new Headers(res.headers);
+  // Always force the HTML shell to revalidate so a fresh deploy's bundle is
+  // picked up immediately, instead of a stale cached index pointing at an old
+  // hashed bundle. The bundles themselves are content-hashed and cached long.
+  headers.set("Cache-Control", "no-cache");
+
   const cookie = request.headers.get("cookie") || "";
   const m = cookie.match(/(?:^|;\s*)selah_icon=([^;]+)/);
   let theme = m ? decodeURIComponent(m[1]) : "";
   // "default" (or anything not whitelisted) keeps the HTML's built-in icon
-  if (!theme || theme === "default" || !ALLOWED.includes(theme)) return res;
+  if (!theme || theme === "default" || !ALLOWED.includes(theme)) {
+    return new Response(res.body, { status: res.status, headers });
+  }
 
   const base = "/icons/" + theme;
   let html = await res.text();
@@ -24,9 +32,6 @@ export default async (request, context) => {
     .replace('href="/favicon-16.png"', `href="${base}/favicon-16.png"`)
     .replace('href="/apple-touch-icon.png"', `href="${base}/apple-touch-icon.png"`);
 
-  const headers = new Headers(res.headers);
-  // per-user response — never let a shared cache serve one reader's icon to another
-  headers.set("Cache-Control", "private, max-age=0, must-revalidate");
   return new Response(html, { status: res.status, headers });
 };
 

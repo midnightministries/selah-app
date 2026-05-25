@@ -9,3 +9,10 @@
 [[edge_functions]]
   path = "/"
   function = "favicon"
+
+# Content-hashed bundles never change, so cache them hard. The HTML shell is
+# kept no-cache by the favicon edge function so new deploys are picked up.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
