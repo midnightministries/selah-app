@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b180";
+const BUILD = "2026.05.24-b182";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -977,7 +977,8 @@ function ExportSheet({ session, onClose }) {
     // selection = a crisp gold outline ring (NOT a glow), so it never mixes with
     // the element's own glow color; offset so it doesn't hug the letters.
     const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1px solid rgba(201,168,76,0.5)":"none", outlineOffset:"2px", zIndex:selected?5:1 };
-    const xBadge = selected ? <div onPointerDown={e=>{ e.stopPropagation(); setEl(key,{show:false}); setSel(null); }} style={{position:"absolute",top:-13,right:-13,width:24,height:24,borderRadius:"50%",background:"rgba(14,10,6,0.8)",border:"1px solid rgba(255,255,255,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,lineHeight:1,cursor:"pointer",transform:`rotate(${-(el.rot||0)}deg)`,zIndex:6}}>×</div> : null;
+    const xBadge = (selected && key!=="mm") ? <div onPointerDown={e=>{ e.stopPropagation(); setEl(key,{show:false}); setSel(null); }} style={{position:"absolute",top:-13,left:-13,width:24,height:24,borderRadius:"50%",background:"rgba(14,10,6,0.8)",border:"1px solid rgba(255,255,255,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,lineHeight:1,cursor:"pointer",transform:`rotate(${-(el.rot||0)}deg)`,zIndex:6}}>×</div> : null;
+    const sizeHandle = (selected && key!=="mm") ? <div onPointerDown={e=>resizeDown(e,key)} onPointerMove={resizeMove} onPointerUp={resizeUp} onPointerCancel={resizeUp} style={{position:"absolute",top:-13,right:-13,width:24,height:24,borderRadius:"50%",background:"rgba(14,10,6,0.8)",border:"1px solid rgba(255,255,255,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,lineHeight:1,cursor:"nwse-resize",touchAction:"none",transform:`rotate(${-(el.rot||0)}deg)`,zIndex:6}}>⤢</div> : null;
     if(el.kind==="cross"){
       // Real cross glow: a blurred, glow-colored copy of the cross shape behind it.
       // (drop-shadow on a CSS-masked element doesn't render reliably across browsers.)
@@ -985,12 +986,12 @@ function ExportSheet({ session, onClose }) {
       return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%" }}>
         {el.glow ? <div style={{ ...mask, backgroundColor:gc, filter:`blur(${(el.glow*9).toFixed(1)}px)` }}/> : null}
         <div style={{ ...mask, backgroundColor:el.color }}/>
-        {xBadge}
+        {xBadge}{sizeHandle}
       </div>;
     }
     // text glow = text-shadow (true color, no drag trails).
     const ts = el.glow ? `0 0 ${(el.glow*7).toFixed(1)}px ${gc}, 0 0 ${(el.glow*14).toFixed(1)}px ${gc}` : "none";
-    return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, display:"inline-block", maxWidth:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}{xBadge}</div>;
+    return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, display:"inline-block", maxWidth:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}{xBadge}{sizeHandle}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
   // Derive three distinct shades from the active palette accent so the circles
@@ -1009,6 +1010,10 @@ function ExportSheet({ session, onClose }) {
   const sliderDown=(e,apply)=>{ e.stopPropagation(); const t=e.currentTarget; t.setPointerCapture?.(e.pointerId); sdrag.current={t,apply}; const r=t.getBoundingClientRect(); apply(clamp((e.clientY-r.top)/r.height,0,1)); };
   const sliderMove=(e)=>{ const s=sdrag.current; if(!s)return; const r=s.t.getBoundingClientRect(); s.apply(clamp((e.clientY-r.top)/r.height,0,1)); };
   const sliderUp=()=>{ sdrag.current=null; };
+  const rsize=useRef(null);
+  const resizeDown=(e,key)=>{ e.stopPropagation(); e.currentTarget.setPointerCapture?.(e.pointerId); const r=stageRef.current?.getBoundingClientRect(); if(!r)return; const cx=r.left+layout.els[key].xf*r.width, cy=r.top+layout.els[key].yf*r.height; const d0=Math.hypot(e.clientX-cx,e.clientY-cy)||1; rsize.current={key,cx,cy,d0,base:layout.els[key].size}; };
+  const resizeMove=(e)=>{ const s=rsize.current; if(!s)return; const d=Math.hypot(e.clientX-s.cx,e.clientY-s.cy); setEl(s.key,{size:clamp(s.base*(d/s.d0),0.02,0.4)}); };
+  const resizeUp=()=>{ rsize.current=null; };
   const applyLeft=(p)=>{ if(!sel)return; if(leftMode==="fade") setEl(sel,{opacity:clamp(0.15+(1-p)*0.85,0.15,1)}); else setEl(sel,{glow:clamp(1-p,0,1)}); };
   const applyRight=(p)=>{ if(!sel)return; if(rightMode==="color") setEl(sel,{color:hslHex(p*320)}); else setEl(sel,{rot:Math.round((0.5-p)*60)}); };
   const leftPos = selEl ? (leftMode==="fade" ? clamp(1-((selEl.opacity==null?1:selEl.opacity)-0.15)/0.85,0,1) : clamp(1-(selEl.glow||0),0,1)) : 0.5;
