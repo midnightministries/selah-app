@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b193";
+const BUILD = "2026.05.24-b194";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -263,12 +263,20 @@ function formatDate(d) {
   if (tz !== "device") opts.timeZone = tz;
   return new Date(d).toLocaleDateString([], opts);
 }
-function elapsed(start, end) {
-  const mins = Math.round((new Date(end) - new Date(start)) / 60000);
+function elapsed(start, end, pausedMs = 0) {
+  const mins = Math.round(((new Date(end) - new Date(start)) - (pausedMs || 0)) / 60000);
   if (mins < 1) return "<1m";
   if (mins < 60) return `${mins}m`;
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
+
+// ── Resume / session-life thresholds ────────────────────────────────────────
+// A paused reading is "stepped away" — short leash. An open (un-ended) reading
+// can't be told apart from off-screen reading, so it gets a long cap. Once the
+// reading turns into questions, the page can sit while the reader works.
+const PAUSE_LIMIT_MS = 10 * 60 * 1000;        // paused > 10 min → reading ends
+const READ_IDLE_MS   = 3 * 60 * 60 * 1000;    // open reading > 3 hr → reading ends
+const RESULT_IDLE_MS = 30 * 60 * 1000;        // questions page idle > 30 min → home
 
 async function reverseGeocode(lat, lng) {
   try {
@@ -464,7 +472,7 @@ function generateNoteText(session) {
   txt += `LOCATION\n${session.locationType !== "Other" ? session.locationType : session.otherLocation}`;
   if (session.geoLabel) txt += ` — ${session.geoLabel}`;
   txt += `\n\n`;
-  txt += `TIME IN THE WORD\n${elapsed(session.startTime, session.endTime)}\n\n`;
+  txt += `TIME IN THE WORD\n${elapsed(session.startTime, session.endTime, session.pausedMs)}\n\n`;
   txt += `${line}\n\n`;
 
   if (session.aiResult?.summary) {
@@ -1350,7 +1358,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
               <p style={{fontFamily:"'Crimson Text',serif",fontSize:17,color:"var(--accent)",marginBottom:6}}>{session.passage}</p>
               <div style={{display:"flex",gap:12,alignItems:"center",color:"var(--m4)",fontSize:12}}>
                 <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatTime(session.startTime)}</span>
-                <span>{elapsed(session.startTime,session.endTime)}</span>
+                <span>{elapsed(session.startTime,session.endTime,session.pausedMs)}</span>
                 {session.locationType && <span>{session.locationType}</span>}
               </div>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m5)",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:8}}>Tap to open session</p>
@@ -1878,6 +1886,8 @@ export default function App() {
   });
   const [sessions, setSessions] = useState(loadSessions);
   const [activeSession, setActiveSession] = useState(null);
+  const [resumeSnap, setResumeSnap] = useState(null);   // saved in-progress session for the homepage Resume button
+  const resultActiveAt = useRef(Date.now());            // last interaction on the questions page
   const [bibleVersion, setBibleVersion] = useState(() => localStorage.getItem("selah_bible_version") || "NLT");
   const [gender, setGender] = useState(() => localStorage.getItem("selah_gender") || "Prefer not to say");
   const [age, setAge] = useState(() => localStorage.getItem("selah_age") || "Prefer not to say");
@@ -2303,10 +2313,105 @@ export default function App() {
   const timerRef = useRef(null);
   const photoInputRef = useRef(null);
 
+  const activeSessionRef = useRef(null);
+  useEffect(() => { activeSessionRef.current = activeSession; }, [activeSession]);
+
+  // Live clock + auto-end watchdog. Runs while a session is open or on the
+  // questions page. A paused reading that sits past the limit, or an open
+  // reading past the 3-hour cap, ends itself (frozen, resumable to questions);
+  // an idle questions page slips back to home with everything held.
   useEffect(() => {
-    if (view==="session") { timerRef.current=setInterval(()=>setTicker(t=>t+1),15000); }
+    if (view!=="session" && view!=="result") return;
+    timerRef.current = setInterval(() => {
+      setTicker(t=>t+1);
+      const now = Date.now();
+      if (view==="session") {
+        const s = activeSessionRef.current;
+        if (!s || s.readingClosedAt) return;
+        const start = new Date(s.startTime).getTime();
+        let closedAt = null;
+        if (s.pausedAt && now - s.pausedAt > PAUSE_LIMIT_MS) closedAt = s.pausedAt || now;
+        else if (!s.pausedAt && (now - start - (s.pausedMs||0)) > READ_IDLE_MS) closedAt = start + READ_IDLE_MS + (s.pausedMs||0);
+        if (closedAt != null) {
+          setActiveSession(cur => cur ? { ...cur, readingClosedAt: closedAt, pausedAt: null } : cur);
+          // The persist effect won't fire once we're on home, so patch the saved
+          // snapshot here so the Resume button shows the frozen reading.
+          try {
+            const prev = JSON.parse(localStorage.getItem("selah_active_snap") || "null");
+            if (prev && prev.activeSession) {
+              const next = { ...prev, savedAt: now, activeSession: { ...prev.activeSession, readingClosedAt: closedAt, pausedAt: null } };
+              localStorage.setItem("selah_active_snap", JSON.stringify(next));
+              setResumeSnap(next);
+            }
+          } catch {}
+          setView("home");
+        }
+      } else if (view==="result") {
+        if (now - resultActiveAt.current > RESULT_IDLE_MS) setView("home");
+      }
+    }, 15000);
     return () => clearInterval(timerRef.current);
   }, [view]);
+
+  // Persist the in-progress session so an accidental back / close / reload never
+  // loses it. Written continuously while live; cleared only on Abandon, Close, or
+  // a fresh start. The 15s ticker flushes the timing refs into the snapshot too.
+  useEffect(() => {
+    if ((view==="session" || view==="result") && activeSession) {
+      const snap = {
+        v:1, savedAt:Date.now(), profileId:activeProfileId, view,
+        activeSession, form, sessionPhoto, photoAspect, result,
+        questionAnswers, answerFeedback, feedbackSubmitted,
+        firstAnswerAt:firstAnswerAt.current,
+        questionStamps:questionStamps.current,
+        resultActiveAt:resultActiveAt.current,
+      };
+      try { localStorage.setItem("selah_active_snap", JSON.stringify(snap)); }
+      catch { try { localStorage.setItem("selah_active_snap", JSON.stringify({ ...snap, sessionPhoto:null })); } catch {} }
+      setResumeSnap(snap);
+    }
+  }, [view, activeSession, form, sessionPhoto, photoAspect, result, questionAnswers, answerFeedback, feedbackSubmitted, ticker, activeProfileId]);
+
+  // On first load, surface any saved session for the Resume button. If a paused
+  // reading sat past the limit while the app was closed, freeze the reading.
+  useEffect(() => {
+    let snap;
+    try { snap = JSON.parse(localStorage.getItem("selah_active_snap") || "null"); } catch { snap = null; }
+    if (!snap || !snap.activeSession) return;
+    if (snap.view==="session" && snap.activeSession.pausedAt && !snap.activeSession.readingClosedAt
+        && Date.now() - snap.activeSession.pausedAt > PAUSE_LIMIT_MS) {
+      snap = { ...snap, activeSession: { ...snap.activeSession, readingClosedAt: snap.activeSession.pausedAt, pausedAt: null } };
+    }
+    setResumeSnap(snap);
+  }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+
+  function clearSnap() {
+    try { localStorage.removeItem("selah_active_snap"); } catch {}
+    setResumeSnap(null);
+  }
+  function pauseReading() {
+    setActiveSession(s => (s && !s.pausedAt && !s.readingClosedAt) ? { ...s, pausedAt: Date.now() } : s);
+  }
+  function resumeReadingClock() {
+    setActiveSession(s => (s && s.pausedAt) ? { ...s, pausedMs:(s.pausedMs||0)+(Date.now()-s.pausedAt), pausedAt:null } : s);
+  }
+  function resumeSession() {
+    const snap = resumeSnap;
+    if (!snap || !snap.activeSession) return;
+    setActiveSession(snap.activeSession);
+    if (snap.form) setForm(snap.form);
+    setSessionPhoto(snap.sessionPhoto || null);
+    setPhotoAspect(snap.photoAspect || "square");
+    setResult(snap.result || null);
+    setQuestionAnswers(snap.questionAnswers || {});
+    setAnswerFeedback(snap.answerFeedback || []);
+    setFeedbackSubmitted(!!snap.feedbackSubmitted);
+    firstAnswerAt.current = snap.firstAnswerAt || null;
+    questionStamps.current = Array.isArray(snap.questionStamps) ? snap.questionStamps : [];
+    resultActiveAt.current = Date.now();
+    setError("");
+    setView(snap.result ? "result" : "session");
+  }
 
   useEffect(() => { saveSessions(sessions); }, [sessions]);
   useEffect(() => { localStorage.setItem("selah_bible_version", bibleVersion); }, [bibleVersion]);
@@ -2369,6 +2474,11 @@ export default function App() {
     if (!form.endChapter) { setError("Log where you finished."); return; }
     setError(""); setLoading(true);
     const endTime = new Date().toISOString();
+    // Reading clock stops at the freeze point if the session was auto-ended or is
+    // currently paused; otherwise now. Paused time never counts as reading.
+    const _rcMs = activeSession?.readingClosedAt ? activeSession.readingClosedAt : (activeSession?.pausedAt ? activeSession.pausedAt : Date.now());
+    const readingEndIso = new Date(_rcMs).toISOString();
+    const sessionPausedMs = activeSession?.pausedMs || 0;
     const passage = `${activeSession.startBook} ${activeSession.startChapter}${activeSession.startVerse?":"+activeSession.startVerse:""} through ${form.endBook} ${form.endChapter}${form.endVerse?":"+form.endVerse:""}`;
     const isKid = age.startsWith("Kids");
     const depth = getDepthLevel(visibleSessions, isKid);
@@ -2405,9 +2515,9 @@ export default function App() {
       const data = await resp.json();
       const raw = data.content?.find(b=>b.type==="text")?.text||"";
       const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
-      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:endTime, passage, aiResult:parsed, photoData:sessionPhoto, photoAspect, bibleVersion, gender, profileId:activeProfileId };
+      const completed = { ...activeSession, endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse, personalNotes:form.notes, endTime, readingEndTime:readingEndIso, pausedMs:sessionPausedMs, pausedAt:null, readingClosedAt:null, passage, aiResult:parsed, photoData:sessionPhoto, photoAspect, bibleVersion, gender, profileId:activeProfileId };
       try { localStorage.setItem('selah_last_position', JSON.stringify({ endBook:form.endBook, endChapter:form.endChapter, endVerse:form.endVerse })); } catch {}
-      firstAnswerAt.current = null; questionStamps.current = [];
+      firstAnswerAt.current = null; questionStamps.current = []; resultActiveAt.current = Date.now();
       setSessions(prev=>[completed,...prev]);
       setResult(parsed); setActiveSession(completed); setView("result");
       // Advance the reading plan when this session was the plan's current reading.
@@ -2433,9 +2543,10 @@ export default function App() {
     const _fa = firstAnswerAt.current;
     const _now = Date.now();
     const stamps = questionStamps.current.slice();   // sparse: index -> ms
-    const readingMin = (_start && _readEnd) ? Math.max(0, Math.round((_readEnd-_start)/60000)) : null;
+    const _pausedMs = activeSession?.pausedMs || 0;
+    const readingMin = (_start && _readEnd) ? Math.max(0, Math.round((_readEnd-_start-_pausedMs)/60000)) : null;
     const gapSec = (_readEnd && _fa) ? Math.max(0, Math.round((_fa-_readEnd)/1000)) : null;
-    const totalMin = _start ? Math.max(0, Math.round((_now-_start)/60000)) : null;
+    const totalMin = _start ? Math.max(0, Math.round((_now-_start-_pausedMs)/60000)) : null;
     const answeringSec = (_fa) ? Math.max(0, Math.round((_now-_fa)/1000)) : null;
     // Per-question dwell: order the touched questions by time; each runs until
     // the next question is touched (last runs until submit).
@@ -2499,7 +2610,8 @@ export default function App() {
     if (expandedSession===id) setExpandedSession(null);
   }
 
-  const activeMins = activeSession ? Math.round((Date.now()-new Date(activeSession.startTime))/60000) : 0;
+  const _readEndMs = activeSession ? (activeSession.readingClosedAt ? activeSession.readingClosedAt : (activeSession.pausedAt ? activeSession.pausedAt : Date.now())) : 0;
+  const activeMins = activeSession ? Math.max(0, Math.round((_readEndMs - new Date(activeSession.startTime) - (activeSession.pausedMs||0))/60000)) : 0;
 
   const STD_VERSIONS = ["NLT","NLV","ESV","KJV","NKJV","NIV","NASB","CSB"];
   const KID_VERSIONS = ["NIrV","ICB","NLV","NLT"];
@@ -2869,6 +2981,27 @@ export default function App() {
         {/* ══ HOME ══ */}
         {view === "home" && (
           <div className="fade-in">
+            {resumeSnap && resumeSnap.activeSession && (resumeSnap.profileId||"owner")===activeProfileId && (()=>{
+              const rs = resumeSnap.activeSession;
+              const hasQ = !!resumeSnap.result;
+              const passLabel = `${rs.startBook||""} ${rs.startChapter||""}${rs.startVerse?":"+rs.startVerse:""}`.trim();
+              const title = hasQ ? "Resume questions from last reading" : (rs.readingClosedAt ? "Finish your last reading" : "Resume your reading");
+              const sub = hasQ
+                ? "Your questions, ground, and notes are right where you left them."
+                : (rs.readingClosedAt
+                    ? "Your reading was closed after you stepped away. Pick up where you finished and get your questions."
+                    : `You have a reading open${passLabel?" in "+passLabel:""}. Pick it back up.`);
+              return (
+                <div className="card" style={{border:"1px solid rgba(var(--accent-rgb),0.4)"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <p className="label" style={{margin:0,color:"var(--accent)"}}>Pick up where you left off</p>
+                    <button onClick={clearSnap} aria-label="Discard" style={{background:"transparent",border:"none",color:"var(--m3)",fontSize:20,lineHeight:1,cursor:"pointer",padding:0}}>×</button>
+                  </div>
+                  <p style={{fontSize:15,color:"var(--m1b)",lineHeight:1.6,marginBottom:12}}>{sub}</p>
+                  <button className="btn-primary" style={{width:"100%",padding:"11px"}} onClick={resumeSession}>{title}</button>
+                </div>
+              );
+            })()}
             {helpOpen && (
               <div className="card" style={{border:"1px solid rgba(var(--accent-rgb),0.35)"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
@@ -2979,8 +3112,14 @@ export default function App() {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:activeSession.geoLabel?10:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,color:"var(--m2)",fontSize:13}}>
                   <ClockIcon/><span>{formatTime(activeSession.startTime)}</span>
-                  <span className="pulse" style={{color:"var(--accent)",fontSize:10}}>●</span>
-                  <span style={{color:"var(--m1)"}}>{activeMins}m in His Word</span>
+                  {activeSession.readingClosedAt ? (
+                    <span style={{color:"var(--m4)",fontSize:10}}>■</span>
+                  ) : activeSession.pausedAt ? (
+                    <span style={{color:"#c89a3a",fontSize:10}}>❚❚</span>
+                  ) : (
+                    <span className="pulse" style={{color:"var(--accent)",fontSize:10}}>●</span>
+                  )}
+                  <span style={{color:"var(--m1)"}}>{activeMins}m in His Word{activeSession.pausedAt?" · paused":activeSession.readingClosedAt?" · closed":""}</span>
                 </div>
                 <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{activeSession.locationType}</span>
               </div>
@@ -3044,8 +3183,18 @@ export default function App() {
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                <button className="btn-primary" onClick={endSession}>End Reading</button>
-                <button className="btn-ghost" onClick={()=>{ resetForm(); setView("home"); }}>Abandon</button>
+                {activeSession.readingClosedAt ? (
+                  <p style={{fontSize:14,color:"var(--m2)",fontStyle:"italic",lineHeight:1.55,marginBottom:2,textAlign:"center"}}>This reading was closed after you stepped away. Log where you finished, then get your questions.</p>
+                ) : activeSession.pausedAt ? (
+                  <>
+                    <p style={{fontSize:14,color:"#c89a3a",fontStyle:"italic",lineHeight:1.55,marginBottom:2,textAlign:"center"}}>Reading paused — the clock is stopped. Pick back up within 10 minutes, or the reading ends and you'll continue at the questions.</p>
+                    <button className="btn-primary" onClick={resumeReadingClock}>Resume reading</button>
+                  </>
+                ) : (
+                  <button className="btn-ghost" onClick={pauseReading}>Pause</button>
+                )}
+                <button className={activeSession.pausedAt ? "btn-ghost" : "btn-primary"} onClick={endSession}>End Reading</button>
+                <button className="btn-ghost" onClick={()=>{ clearSnap(); resetForm(); setView("home"); }}>Abandon</button>
               </div>
             )}
           </div>
@@ -3063,7 +3212,7 @@ export default function App() {
                   <div style={{display:"flex",flexWrap:"wrap",gap:"6px 12px",alignItems:"center"}}>
                     {activeSession.geoLabel && <div className="geo-badge"><PinIcon/>{activeSession.geoLabel}</div>}
                     <span style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m3b)",letterSpacing:"0.08em"}}>
-                      {elapsed(activeSession.startTime,activeSession.endTime)} · {activeSession.locationType}
+                      {elapsed(activeSession.startTime,activeSession.endTime,activeSession.pausedMs)} · {activeSession.locationType}
                     </span>
                   </div>
                 </div>
@@ -3076,7 +3225,7 @@ export default function App() {
                     <p style={{fontFamily:"'Crimson Text',serif",fontSize:20,color:"var(--accent)",lineHeight:1.3}}>{activeSession.passage}</p>
                   </div>
                   <div style={{textAlign:"right",fontSize:12,color:"var(--m4)",flexShrink:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",marginBottom:5}}><ClockIcon/>{elapsed(activeSession.startTime,activeSession.readingEndTime||activeSession.endTime)} reading</div>
+                    <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end",marginBottom:5}}><ClockIcon/>{elapsed(activeSession.startTime,activeSession.readingEndTime||activeSession.endTime,activeSession.pausedMs)} reading</div>
                     <div style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.08em",textTransform:"uppercase"}}>{activeSession.locationType}</div>
                   </div>
                 </div>
@@ -3131,8 +3280,8 @@ export default function App() {
                       </div>
                       <AnswerInput
                         value={questionAnswers[i]||""}
-                        onTouch={()=>{ const t=Date.now(); if(questionStamps.current[i]==null) questionStamps.current[i]=t; if(firstAnswerAt.current==null) firstAnswerAt.current=t; }}
-                        onChange={val=>{ if(firstAnswerAt.current==null && val && val.trim()) firstAnswerAt.current = Date.now(); setQuestionAnswers(prev=>({...prev,[i]:val})); }}
+                        onTouch={()=>{ const t=Date.now(); resultActiveAt.current=t; if(questionStamps.current[i]==null) questionStamps.current[i]=t; if(firstAnswerAt.current==null) firstAnswerAt.current=t; }}
+                        onChange={val=>{ resultActiveAt.current=Date.now(); if(firstAnswerAt.current==null && val && val.trim()) firstAnswerAt.current = Date.now(); setQuestionAnswers(prev=>({...prev,[i]:val})); }}
                         feedback={answerFeedback[i]}
                       />
                     </div>
@@ -3196,7 +3345,7 @@ export default function App() {
               </div>
             )}
 
-            <button className="btn-primary" onClick={()=>{ resetForm(); setView("home"); }}>Close Session</button>
+            <button className="btn-primary" onClick={()=>{ clearSnap(); resetForm(); setView("home"); }}>Close Session</button>
           </div>
         )}
 
@@ -3280,7 +3429,7 @@ export default function App() {
                         <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"var(--accent)",marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.passage}</p>
                         <div style={{display:"flex",flexWrap:"wrap",gap:"6px 14px",color:"var(--m4)",fontSize:12,alignItems:"center"}}>
                           <span style={{display:"flex",alignItems:"center",gap:3}}><ClockIcon/>{formatDate(s.startTime)}</span>
-                          <span>{elapsed(s.startTime,s.readingEndTime||s.endTime)} reading</span>
+                          <span>{elapsed(s.startTime,s.readingEndTime||s.endTime,s.pausedMs)} reading</span>
                           {s.geoLabel && <span style={{display:"flex",alignItems:"center",gap:3}}><PinIcon/>{s.geoLabel}</span>}
                           {s.bibleVersion && <span style={{fontFamily:"'Cinzel',serif",fontSize:8,color:"var(--m5)",letterSpacing:"0.08em"}}>{s.bibleVersion}</span>}
                         </div>
