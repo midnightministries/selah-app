@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b184";
+const BUILD = "2026.05.24-b185";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1102,7 +1102,7 @@ function ExportSheet({ session, onClose }) {
             </div>
             {leftCfg.tap && <div onClick={leftCfg.tap} style={edgeTapBtn}>{leftCfg.tapIcon}</div>}
           </div>
-          <div style={{position:"absolute",right:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
+          <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",height:"76%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
             <div onClick={rightCfg.tap||undefined} style={edgeLabel}>{rightCfg.lbl}</div>
             <div onPointerDown={e=>sliderDown(e,rightCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:13,borderRadius:7,background:rightCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
               <div style={edgeKnob(rightCfg.pos)}/>
