@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b198";
+const BUILD = "2026.05.24-b199";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2448,7 +2448,9 @@ export default function App() {
   }, [view, activeSession, form, sessionPhoto, photoAspect, result, questionAnswers, answerFeedback, feedbackSubmitted, ticker, activeProfileId]);
 
   // On first load, surface any saved session for the Resume button. If a paused
-  // reading sat past the limit while the app was closed, freeze the reading.
+  // reading sat past the limit while the app was closed, freeze the reading. And
+  // if the reader reloaded while ON a reading or the questions page, drop them
+  // right back onto it (a pull-to-refresh should not throw away their place).
   useEffect(() => {
     let snap;
     try { snap = JSON.parse(localStorage.getItem("selah_active_snap") || "null"); } catch { snap = null; }
@@ -2458,6 +2460,8 @@ export default function App() {
       snap = { ...snap, activeSession: { ...snap.activeSession, readingClosedAt: snap.activeSession.pausedAt, pausedAt: null } };
     }
     setResumeSnap(snap);
+    let lastView = ""; try { lastView = localStorage.getItem("selah_view") || ""; } catch {}
+    if (lastView === "session" || lastView === "result") applySnap(snap);
   }, []);   // eslint-disable-line react-hooks/exhaustive-deps
 
   function clearSnap() {
@@ -2470,8 +2474,7 @@ export default function App() {
   function resumeReadingClock() {
     setActiveSession(s => (s && s.pausedAt) ? { ...s, pausedMs:(s.pausedMs||0)+(Date.now()-s.pausedAt), pausedAt:null } : s);
   }
-  function resumeSession() {
-    const snap = resumeSnap;
+  function applySnap(snap) {
     if (!snap || !snap.activeSession) return;
     setActiveSession(snap.activeSession);
     if (snap.form) setForm(snap.form);
@@ -2487,6 +2490,7 @@ export default function App() {
     setError("");
     setView(snap.result ? "result" : "session");
   }
+  function resumeSession() { applySnap(resumeSnap); }
 
   useEffect(() => { saveSessions(sessions); }, [sessions]);
   useEffect(() => { localStorage.setItem("selah_bible_version", bibleVersion); }, [bibleVersion]);
