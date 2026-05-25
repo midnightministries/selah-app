@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b194";
+const BUILD = "2026.05.24-b195";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2018,7 +2018,14 @@ export default function App() {
   // First-run guidance: auto-show the orientation card once per profile (unless turned off).
   // (Placed after activeProfileId is declared to avoid a temporal-dead-zone crash.)
   useEffect(() => {
-    if (view === "home" && !guidanceOff && !needsSetup && localStorage.getItem("selah_help_seen_" + activeProfileId) !== "1") setHelpOpen(true);
+    const seen = localStorage.getItem("selah_help_seen_" + activeProfileId) === "1";
+    // Reflect the real condition so the card CLOSES when a profile has already
+    // seen it (it used to only ever open, so it stuck on across profile switches).
+    const shouldShow = view === "home" && !guidanceOff && !needsSetup && !seen;
+    setHelpOpen(shouldShow);
+    // Mark it seen the instant it shows, so it's truly once per profile — even if
+    // the reader starts a session or leaves before tapping Got it.
+    if (shouldShow) { try { localStorage.setItem("selah_help_seen_" + activeProfileId, "1"); } catch {} }
   }, [view, guidanceOff, needsSetup, activeProfileId]);
 
   const visibleSessions = sessions.filter(s => (s.profileId || "owner") === activeProfileId);
