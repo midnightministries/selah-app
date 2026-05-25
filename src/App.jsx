@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b187";
+const BUILD = "2026.05.24-b188";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -743,7 +743,7 @@ function MMFooter({ onEggOpen, onHomeView }) {
   return (
     <div className="mm-shell">
      <div style={{
-      background:"rgba(8,6,3,0.46)", backdropFilter:"blur(18px)", WebkitBackdropFilter:"blur(18px)",
+      background:"rgba(var(--surface-rgb),0.58)", backdropFilter:"blur(18px)", WebkitBackdropFilter:"blur(18px)",
       borderTop:"1px solid rgba(255,255,255,0.05)",
       paddingTop:12, paddingBottom:"calc(56px + env(safe-area-inset-bottom))", marginBottom:"calc(-40px - env(safe-area-inset-bottom))",
       display:"flex", alignItems:"center", justifyContent:"center", gap:8,
