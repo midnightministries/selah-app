@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b188";
+const BUILD = "2026.05.24-b190";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -83,7 +83,7 @@ const SELAH_CREAM = "var(--wm, #ece0c6)";   // cream on dark palettes; deep tone
 // Inline SELAH wordmark: cream with a hint of palette hue and a thin outline,
 // scaled to whatever text it sits in. Use anywhere "SELAH" appears in prose.
 function Selah() {
-  return <span style={{ fontFamily:"'Cinzel',serif", fontWeight:600, fontSize:"0.92em", color:SELAH_CREAM, letterSpacing:"0.04em", WebkitTextStroke:"0.4px rgba(var(--accent-rgb),0.45)", textShadow:"none" }}>SELAH</span>;
+  return <span style={{ fontFamily:"'Cinzel',serif", fontWeight:600, fontSize:"0.92em", color:SELAH_CREAM, letterSpacing:"0.04em", WebkitTextStroke:"0.4px rgba(var(--accent-rgb),0.45)", textShadow:"0 1px 2px rgba(0,0,0,0.38)" }}>SELAH</span>;
 }
 // Walk prose children and swap the bare word "SELAH" for the wordmark component.
 function withSelah(children) {
@@ -1651,7 +1651,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
 function AboutScreen({ onBack, onFaith }) {
   const [tab, setTab] = useState("ministry");
   const P = ({children, mb=14}) => (
-    <p style={{fontSize:17,lineHeight:1.78,color:"var(--m1b)",textShadow:"0 1px 2px rgba(0,0,0,0.38)",marginBottom:mb}}>{withSelah(children)}</p>
+    <p style={{fontSize:17,lineHeight:1.78,color:"var(--m1b)",marginBottom:mb}}>{withSelah(children)}</p>
   );
   const Section = ({label, children}) => (
     <div className="card">
