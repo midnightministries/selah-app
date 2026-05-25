@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b177";
+const BUILD = "2026.05.24-b178";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -389,11 +389,11 @@ function composeCard(session, layout) {
     function paintBg(){
       const c = layout.bgColor || "#14100a";
       const fade = layout.bgFade==null?0.5:layout.bgFade;
-      const far = mixHex(c, "#000000", fade*0.8);   // fade=0 -> flat, fade=1 -> deep gradient
       const dir = layout.bgDir||0;
-      if(c===far){ ctx.fillStyle=c; ctx.fillRect(0,0,W,H); return; }
+      if(fade<0.02){ ctx.fillStyle=c; ctx.fillRect(0,0,W,H); return; }
+      const lite=mixHex(c,"#ffffff",fade*0.32), dark=mixHex(c,"#000000",fade*0.6);
       let g; if(dir===1) g=ctx.createLinearGradient(0,H,0,0); else if(dir===2) g=ctx.createLinearGradient(0,0,W,0); else if(dir===3) g=ctx.createLinearGradient(W,0,0,0); else g=ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0,c); g.addColorStop(1,far); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      g.addColorStop(0,lite); g.addColorStop(1,dark); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
     }
     function drawText(el){
       if(!el.show || !el.text) return;
@@ -920,8 +920,10 @@ function ExportSheet({ session, onClose }) {
   const bgWpct=(nat.w*baseRatio*z)/W*100, bgHpct=(nat.h*baseRatio*z)/H*100;
   const bgColor = layout.bgColor || "#14100a";
   const BG_CSS_DIRS = ["180deg","0deg","90deg","270deg"];
-  const bgFar = mixHex(bgColor, "#000000", (layout.bgFade==null?0.5:layout.bgFade)*0.8);
-  const stageBg = bgColor===bgFar ? bgColor : `linear-gradient(${BG_CSS_DIRS[layout.bgDir||0]},${bgColor},${bgFar})`;
+  const _bgFade = layout.bgFade==null?0.5:layout.bgFade;
+  const bgLite = mixHex(bgColor, "#ffffff", _bgFade*0.32);
+  const bgDark = mixHex(bgColor, "#000000", _bgFade*0.6);
+  const stageBg = _bgFade<0.02 ? bgColor : `linear-gradient(${BG_CSS_DIRS[layout.bgDir||0]},${bgLite},${bgDark})`;
 
   function stageDown(e){
     ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId);
@@ -996,7 +998,7 @@ function ExportSheet({ session, onClose }) {
   const circBorder = mixHex(accentHex, "#0e0c06", 0.62);   // clearly darker shade for the outline
   const circText   = mixHex(accentHex, "#ffffff", 0.34);   // clearly lighter shade for the letters
   const circle = (extra)=>({ width:52,height:52,borderRadius:"50%",background:"rgba(14,10,6,0.22)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
-  const chip = (extra)=>({ width:38,height:38,borderRadius:"50%",background:"rgba(14,10,6,0.22)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.45)",textShadow:"0 1px 4px rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
+  const chip = (extra)=>({ width:38,height:38,borderRadius:"50%",background:"rgba(14,10,6,0.46)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.5)",textShadow:"0 1px 4px rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
   const pillBtn = { borderRadius:16,padding:"7px 13px",background:"rgba(14,10,6,0.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer",textShadow:"0 1px 3px rgba(0,0,0,0.6)" };
   // ── edge slider helpers ──
   const hslHex=(h)=>{ const s=0.6,l=0.6,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
@@ -1055,8 +1057,8 @@ function ExportSheet({ session, onClose }) {
         {showChrome && (
           <div style={{display:"flex",gap:7}}>
             <button onClick={()=>setLayout(L=>({...L,font:FONT_ORDER[(FONT_ORDER.indexOf(L.font)+1)%FONT_ORDER.length]}))} style={chip({fontFamily:CARD_FONTS[layout.font],fontSize:15})}>Aa</button>
-            <button onClick={cycleContent} style={chip({fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.02em",lineHeight:1.05,textAlign:"center",padding:3})}>{contentLabel}</button>
-            {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} style={chip({fontFamily:"'Cinzel',serif",fontSize:6,letterSpacing:"0.02em",textAlign:"center",lineHeight:1.05,padding:2})}>{layout.photo.show?"Hide":"Show"}</button>}
+            <button onClick={cycleContent} title={contentLabel} style={chip({})}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="7" x2="19" y2="7"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="5" y1="17" x2="13" y2="17"/></svg></button>
+            {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} title={layout.photo.show?"Hide photo":"Show photo"} style={chip({})}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5L6 20"/>{!layout.photo.show && <line x1="3" y1="21" x2="21" y2="3"/>}</svg></button>}
             <button onClick={()=>switchAspect(layout.aspect==="square"?"story":"square")} style={chip({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.02em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
             <button onClick={()=>{ setSel(null); if(hasPhoto && layout.photo.show) setPhoto({show:false}); }} title="Background" style={chip({background:stageBg,border:"1.5px solid rgba(255,255,255,0.65)"})}/>
           </div>
