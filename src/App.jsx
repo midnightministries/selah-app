@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b182";
+const BUILD = "2026.05.24-b183";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -384,7 +384,7 @@ function composeCard(session, layout) {
   const fam = CARD_FONTS[layout.font] || layout.fam || "Georgia, serif";
   return new Promise((resolve) => {
     const cv = document.createElement("canvas"); cv.width=W; cv.height=H; const ctx=cv.getContext("2d");
-    const crossEl = document.querySelector('img[src^="data:image/png;base64,iVBOR"]');
+    const crossImg = new Image();
     const els = layout.els;
     function paintBg(){
       const c = layout.bgColor || "#14100a";
@@ -402,7 +402,7 @@ function composeCard(session, layout) {
       ctx.globalAlpha = (el.opacity==null?1:el.opacity);
       ctx.textAlign="center"; ctx.textBaseline="middle";
       ctx.font = `${el.weight||""} ${el.italic?"italic ":""}${fpx}px ${fam}`;
-      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*fpx*0.3; }
+      if(el.glow){ ctx.shadowColor = el.glowColor||el.color||"#0e0c06"; ctx.shadowBlur = el.glow*fpx*0.3; }
       ctx.fillStyle = el.color;
       const lines = wrapText(ctx, el.text, W*0.86);
       let y = -(lines.length-1)*fpx*0.6;
@@ -412,14 +412,14 @@ function composeCard(session, layout) {
       ctx.restore();
     }
     function drawCross(el){
-      if(!el.show || !crossEl || !crossEl.naturalWidth) return;
-      const ch=el.size*W*1.5, cw=ch*(crossEl.naturalWidth/crossEl.naturalHeight);
+      if(!el.show || !crossImg.naturalWidth) return;
+      const ch=el.size*W*1.5, cw=ch*(crossImg.naturalWidth/crossImg.naturalHeight);
       const tmp=document.createElement("canvas"); tmp.width=Math.max(1,Math.round(cw)); tmp.height=Math.max(1,Math.round(ch));
-      const t2=tmp.getContext("2d"); t2.drawImage(crossEl,0,0,tmp.width,tmp.height);
+      const t2=tmp.getContext("2d"); t2.drawImage(crossImg,0,0,tmp.width,tmp.height);
       t2.globalCompositeOperation="source-atop"; t2.fillStyle=el.color; t2.fillRect(0,0,tmp.width,tmp.height);
       ctx.save(); ctx.translate(el.xf*W, el.yf*H); ctx.rotate((el.rot||0)*Math.PI/180);
       ctx.globalAlpha = (el.opacity==null?1:el.opacity);
-      if(el.glow){ ctx.shadowColor = el.glowColor||"#0e0c06"; ctx.shadowBlur = el.glow*ch*0.2; }
+      if(el.glow){ ctx.shadowColor = el.glowColor||el.color||"#0e0c06"; ctx.shadowBlur = el.glow*ch*0.2; }
       ctx.drawImage(tmp,-cw/2,-ch/2,cw,ch); ctx.restore();
     }
     function finish(){
@@ -431,20 +431,25 @@ function composeCard(session, layout) {
       drawCross(els.cross); drawText(els.selah); drawText(els.body); drawText(els.mm);
       cv.toBlob(b=>resolve(b),"image/png");
     }
-    if (layout.photo.show && session.photoData){
-      const img=new Image();
-      img.onload=()=>{
+    function run(){
+      if (layout.photo.show && session.photoData){
+        const img=new Image();
+        img.onload=()=>{
+          paintBg();
+          const z=layout.photo.zoom||1;
+          const r=Math.max(W/img.width,H/img.height), dw=img.width*r*z, dh=img.height*r*z;
+          ctx.drawImage(img,(W-dw)*layout.photo.x,(H-dh)*layout.photo.y,dw,dh);
+          finish();
+        };
+        img.src=session.photoData;
+      } else {
         paintBg();
-        const z=layout.photo.zoom||1;
-        const r=Math.max(W/img.width,H/img.height), dw=img.width*r*z, dh=img.height*r*z;
-        ctx.drawImage(img,(W-dw)*layout.photo.x,(H-dh)*layout.photo.y,dw,dh);
         finish();
-      };
-      img.src=session.photoData;
-    } else {
-      paintBg();
-      finish();
+      }
     }
+    if(crossImg.complete && crossImg.naturalWidth) run();
+    else { crossImg.onload=run; crossImg.onerror=run; }
+    crossImg.src = CROSS_SRC;
   });
 }
 
@@ -976,7 +981,7 @@ function ExportSheet({ session, onClose }) {
     const gc=el.glowColor||el.color||"#0e0c06";
     // selection = a crisp gold outline ring (NOT a glow), so it never mixes with
     // the element's own glow color; offset so it doesn't hug the letters.
-    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1px solid rgba(201,168,76,0.5)":"none", outlineOffset:"2px", zIndex:selected?5:1 };
+    const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1px solid rgba(201,168,76,0.5)":"none", outlineOffset:"2px", borderRadius:"7px", zIndex:selected?5:1 };
     const xBadge = (selected && key!=="mm") ? <div onPointerDown={e=>{ e.stopPropagation(); setEl(key,{show:false}); setSel(null); }} style={{position:"absolute",top:-13,left:-13,width:24,height:24,borderRadius:"50%",background:"rgba(14,10,6,0.8)",border:"1px solid rgba(255,255,255,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,lineHeight:1,cursor:"pointer",transform:`rotate(${-(el.rot||0)}deg)`,zIndex:6}}>×</div> : null;
     const sizeHandle = (selected && key!=="mm") ? <div onPointerDown={e=>resizeDown(e,key)} onPointerMove={resizeMove} onPointerUp={resizeUp} onPointerCancel={resizeUp} style={{position:"absolute",top:-13,right:-13,width:24,height:24,borderRadius:"50%",background:"rgba(14,10,6,0.8)",border:"1px solid rgba(255,255,255,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,lineHeight:1,cursor:"nwse-resize",touchAction:"none",transform:`rotate(${-(el.rot||0)}deg)`,zIndex:6}}>⤢</div> : null;
     if(el.kind==="cross"){
@@ -1004,7 +1009,7 @@ function ExportSheet({ session, onClose }) {
   const chip = (extra)=>({ width:38,height:38,borderRadius:"50%",background:"rgba(14,10,6,0.46)",border:"1.5px solid "+circBorder,boxShadow:"0 1px 6px rgba(0,0,0,0.5)",textShadow:"0 1px 4px rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",color:circText,fontWeight:700,...extra });
   const pillBtn = { borderRadius:16,padding:"7px 13px",background:"rgba(14,10,6,0.4)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:"var(--accent)",border:"none",fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer",textShadow:"0 1px 3px rgba(0,0,0,0.6)" };
   // ── edge slider helpers ──
-  const hslHex=(h)=>{ const s=0.6,l=0.6,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
+  const hslHex=(h)=>{ const s=0.82,l=0.55,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
   const hexHue=(hex)=>{ if(!hex||hex[0]!=="#"||hex.length<7) return 40; const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0; if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; } return h; };
   const sdrag=useRef(null);
   const sliderDown=(e,apply)=>{ e.stopPropagation(); const t=e.currentTarget; t.setPointerCapture?.(e.pointerId); sdrag.current={t,apply}; const r=t.getBoundingClientRect(); apply(clamp((e.clientY-r.top)/r.height,0,1)); };
@@ -1020,7 +1025,7 @@ function ExportSheet({ session, onClose }) {
   const rightPos = selEl ? (rightMode==="color" ? clamp(hexHue(selEl.color)/320,0,1) : clamp(0.5-(selEl.rot||0)/60,0,1)) : 0.5;
   const edgeLabel = { fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.6)",textShadow:"0 1px 4px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.7)",marginBottom:7,cursor:"pointer",whiteSpace:"nowrap" };
   const edgeKnob = (pos)=>({ position:"absolute",left:"50%",top:(pos*100)+"%",transform:"translate(-50%,-50%)",width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.5)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 1px 5px rgba(0,0,0,0.35)",pointerEvents:"none" });
-  const edgeTap = { position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:32,height:32,borderRadius:"50%",background:"radial-gradient(circle at 50% 50%,transparent 52%,rgba(247,244,238,0.16) 100%)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.5)",fontSize:14,textShadow:"0 1px 3px rgba(0,0,0,0.5)",cursor:"pointer" };
+  const edgeTapBtn = { width:30,height:30,borderRadius:"50%",marginTop:9,flex:"0 0 auto",background:"radial-gradient(circle at 50% 50%,transparent 48%,rgba(247,244,238,0.2) 100%)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.62)",fontSize:14,textShadow:"0 1px 3px rgba(0,0,0,0.6)",cursor:"pointer" };
   // background-mode slider helpers (when no element is selected)
   const hslHexBg=(h)=>{ const s=0.5,l=0.32,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
   const applyLeftBg=(p)=>setLayout(L=>({...L,bgFade:clamp(1-p,0,1)}));
@@ -1094,15 +1099,15 @@ function ExportSheet({ session, onClose }) {
             <div onClick={leftCfg.tap} style={edgeLabel}>{leftCfg.lbl}</div>
             <div onPointerDown={e=>sliderDown(e,leftCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:13,borderRadius:7,background:leftCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
               <div style={edgeKnob(leftCfg.pos)}/>
-              {leftCfg.tap && <div onPointerDown={e=>e.stopPropagation()} onClick={leftCfg.tap} style={edgeTap}>{leftCfg.tapIcon}</div>}
             </div>
+            {leftCfg.tap && <div onClick={leftCfg.tap} style={edgeTapBtn}>{leftCfg.tapIcon}</div>}
           </div>
           <div style={{position:"absolute",right:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
             <div onClick={rightCfg.tap||undefined} style={edgeLabel}>{rightCfg.lbl}</div>
             <div onPointerDown={e=>sliderDown(e,rightCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:13,borderRadius:7,background:rightCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
               <div style={edgeKnob(rightCfg.pos)}/>
-              {rightCfg.tap && <div onPointerDown={e=>e.stopPropagation()} onClick={rightCfg.tap} style={edgeTap}>{rightCfg.tapIcon}</div>}
             </div>
+            {rightCfg.tap && <div onClick={rightCfg.tap} style={edgeTapBtn}>{rightCfg.tapIcon}</div>}
           </div>
         </>
       )}
