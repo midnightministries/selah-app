@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b200";
+const BUILD = "2026.05.24-b201";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1197,6 +1197,14 @@ function LevelReveal({ track, index }) {
   );
 }
 
+// ── What's New (bump WHATS_NEW_VERSION when there is a new release to announce) ──
+const WHATS_NEW_VERSION = "2026.05.24";
+const WHATS_NEW = [
+  { name:"Pause & Resume", body:"Reading and need to step away? Tap Pause. The clock stops, so your time stays honest. Come back within ten minutes and pick up right where you stopped. Stay gone longer and the reading closes on its own and sends you straight to the questions. Nothing is lost." },
+  { name:"Never Lose Your Place", body:"Leave the app, reload the page, or press back, and your reading is held for you. A Resume card waits on the home screen to drop you back exactly where you were. Back now keeps you inside SELAH instead of leaving it." },
+  { name:"The Share Editor", body:"Turn a reading into something you can share. Open the editor to move, resize, and recolor the words and the cross over your photo. Slide the edges to set the color and the depth, then save it or send it." },
+];
+
 const FEEDBACK_PROMPT = `You are reviewing a reader's written answers to Scripture questions. For each answer respond with 1 to 3 sentences only.
 
 If the answer is theologically sound: briefly affirm it and add one observation that goes one layer deeper.
@@ -1953,6 +1961,10 @@ export default function App() {
   const [askProfile, setAskProfile] = useState(() => localStorage.getItem("selah_ask_profile") !== "0");
   const [guidanceOff, setGuidanceOff] = useState(() => localStorage.getItem("selah_guidance_off") === "1");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [wnExpanded, setWnExpanded] = useState(null);   // which What's New feature is expanded
+  const [wnPending, setWnPending] = useState(false);    // queued to auto-show once home is reached
+  const [wnDismissed, setWnDismissed] = useState(() => { try { return localStorage.getItem("selah_wn_dismissed") === WHATS_NEW_VERSION; } catch { return false; } });
   const [readingPlan, setReadingPlan] = useState(() => localStorage.getItem("selah_reading_plan") || "");
   const [planIndex, setPlanIndex] = useState(() => { const n = parseInt(localStorage.getItem("selah_plan_index") || "0", 10); return isNaN(n) ? 0 : n; });
   const [passcode, setPasscode] = useState(() => localStorage.getItem("selah_passcode") || "");
@@ -2027,6 +2039,32 @@ export default function App() {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+  // What's New: on the first open after an update, queue the box to pop. It stays
+  // reachable in Settings for 24 hours and can be closed there.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("selah_wn_dismissed") === WHATS_NEW_VERSION) return;
+      if (localStorage.getItem("selah_wn_ver") !== WHATS_NEW_VERSION) {
+        localStorage.setItem("selah_wn_ver", WHATS_NEW_VERSION);
+        localStorage.setItem("selah_wn_first", String(Date.now()));
+        setWnPending(true);
+      }
+    } catch {}
+  }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+  // Pop it only once the reader is on home and past setup, and not while the
+  // first-run getting-started card is showing.
+  useEffect(() => {
+    if (wnPending && view === "home" && !needsSetup && !helpOpen) {
+      setWhatsNewOpen(true);
+      setWnPending(false);
+    }
+  }, [wnPending, view, needsSetup, helpOpen]);
+  function closeWhatsNew() { setWhatsNewOpen(false); setWnExpanded(null); }
+  function dismissWhatsNew() {
+    try { localStorage.setItem("selah_wn_dismissed", WHATS_NEW_VERSION); } catch {}
+    setWnDismissed(true); setWhatsNewOpen(false); setWnExpanded(null);
+  }
+  const wnWithin24h = (() => { try { const f = parseInt(localStorage.getItem("selah_wn_first") || "0", 10); return f > 0 && (Date.now() - f) < 24*60*60*1000; } catch { return false; } })();
   // Quick jump back to the Log, restoring where you were (not the top).
   const gotoLog = () => { setView("history"); setTimeout(() => window.scrollTo({ top: logScrollY.current || 0, behavior: "auto" }), 60); };
   const [sessionPhoto, setSessionPhoto] = useState(null);
@@ -3075,7 +3113,7 @@ export default function App() {
               return (
                 <div className="card" style={{border:"1px solid rgba(var(--accent-rgb),0.4)"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                    <p className="label" style={{margin:0,color:"var(--accent)"}}>Pick up where you left off</p>
+                    <p className="label" style={{margin:0,color:"var(--accent)",display:"flex",alignItems:"center"}}>Pick up where you left off<HelpDot show={!guidanceOff} text="Leave, reload, or press back and your reading is held right here. Tap to jump back into your session or questions. Back now keeps you in SELAH instead of leaving it." /></p>
                     <button onClick={clearSnap} aria-label="Discard" style={{background:"transparent",border:"none",color:"var(--m3)",fontSize:20,lineHeight:1,cursor:"pointer",padding:0}}>×</button>
                   </div>
                   <p style={{fontSize:15,color:"var(--m1b)",lineHeight:1.6,marginBottom:12}}>{sub}</p>
@@ -3271,7 +3309,10 @@ export default function App() {
                     <button className="btn-primary" onClick={resumeReadingClock}>Resume reading</button>
                   </>
                 ) : (
-                  <button className="btn-ghost" onClick={pauseReading}>Pause</button>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <button className="btn-ghost" style={{flex:1}} onClick={pauseReading}>Pause</button>
+                    <HelpDot show={!guidanceOff} text="Stepping away? Pause stops the clock so your time stays honest. Come back within 10 minutes or the reading closes and you continue at the questions." />
+                  </div>
                 )}
                 <button className={activeSession.pausedAt ? "btn-ghost" : "btn-primary"} onClick={endSession}>End Reading</button>
                 <button className="btn-ghost" onClick={()=>{ clearSnap(); resetForm(); setView("home"); }}>Abandon</button>
@@ -3600,6 +3641,18 @@ export default function App() {
             <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m5)",textAlign:"center",marginBottom:16,lineHeight:1.5}}>
               Set these once. Come back when something changes.
             </p>
+            {!wnDismissed && wnWithin24h && (
+              <div className="card" style={{border:"1px solid rgba(var(--accent-rgb),0.3)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                <div>
+                  <p className="label" style={{margin:0,color:"var(--accent)"}}>What's New</p>
+                  <p style={{fontSize:14,color:"var(--m2)",marginTop:4}}>See the latest additions.</p>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                  <button className="btn-ghost" style={{padding:"9px 16px"}} onClick={()=>setWhatsNewOpen(true)}>View</button>
+                  <button onClick={dismissWhatsNew} aria-label="Close What's New" style={{background:"transparent",border:"none",color:"var(--m4)",fontSize:20,lineHeight:1,cursor:"pointer",padding:"0 2px"}}>×</button>
+                </div>
+              </div>
+            )}
             <div className="card" style={{textAlign:"center",paddingTop:28,paddingBottom:28}}>
               <div style={{display:"flex",justifyContent:"center",marginBottom:14}}>
                 <CrossIcon size={32} glow={false}/>
@@ -4075,6 +4128,35 @@ export default function App() {
           <button onClick={()=>faithScrollRef.current?.scrollTo({top:0,behavior:"smooth"})} aria-label="Back to top" style={{position:"fixed",right:14,bottom:"calc(env(safe-area-inset-bottom, 0px) + 18px)",zIndex:430,background:"rgba(var(--surface-rgb),0.45)",backdropFilter:"blur(9px) saturate(1.4)",WebkitBackdropFilter:"blur(9px) saturate(1.4)",border:"1.5px solid var(--accent)",borderRadius:"50%",width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent)",cursor:"pointer",boxShadow:"0 4px 16px rgba(0,0,0,0.5)",opacity:0.85,padding:0}}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
+        </div>
+      )}
+
+      {whatsNewOpen && (
+        <div style={{position:"fixed",inset:0,zIndex:440,background:"rgba(6,5,2,0.88)",backdropFilter:"blur(3px)",WebkitBackdropFilter:"blur(3px)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"calc(env(safe-area-inset-top,0px) + 34px) 16px calc(env(safe-area-inset-bottom,0px) + 34px)",overflowY:"auto",WebkitOverflowScrolling:"touch"}} onClick={closeWhatsNew}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:440,background:"var(--surface)",border:"1px solid rgba(var(--accent-rgb),0.35)",borderRadius:16,padding:"24px 20px 20px"}}>
+            <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.2em",textTransform:"uppercase",color:"var(--accent)",textAlign:"center",margin:0}}>Midnight Ministries</p>
+            <p style={{fontFamily:"'Cinzel',serif",fontWeight:700,fontSize:26,letterSpacing:"0.06em",color:"var(--cream)",textAlign:"center",margin:"8px 0 4px"}}>What's New</p>
+            <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,color:"var(--m2)",textAlign:"center",marginBottom:20,lineHeight:1.5}}>A few things were added. Tap any one to see how it works.</p>
+            {WHATS_NEW.map((f,i)=>(
+              <div key={f.name}>
+                <button onClick={()=>setWnExpanded(o=>o===i?null:i)} style={{width:"100%",textAlign:"left",background:wnExpanded===i?"rgba(244,239,228,0.06)":"rgba(244,239,228,0.04)",border:`1px solid rgba(var(--accent-rgb),${wnExpanded===i?0.5:0.18})`,borderRadius:11,padding:"15px 16px",marginBottom:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+                  <span style={{fontFamily:"'Cinzel',serif",fontSize:14,letterSpacing:"0.04em",color:"var(--cream)"}}>{f.name}<span style={{fontSize:8,letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--accent)",border:"1px solid rgba(var(--accent-rgb),0.4)",borderRadius:5,padding:"2px 6px",marginLeft:8,verticalAlign:"middle"}}>New</span></span>
+                  <span style={{color:"var(--accent)",opacity:0.7,fontSize:14,transform:wnExpanded===i?"rotate(45deg)":"none",transition:"transform .2s",display:"inline-block"}}>+</span>
+                </button>
+                {wnExpanded===i && (
+                  <div style={{position:"relative",background:"rgba(244,239,228,0.025)",border:"1px solid rgba(var(--accent-rgb),0.22)",borderRadius:11,padding:"16px 38px 16px 16px",margin:"-2px 0 12px"}}>
+                    <button onClick={()=>setWnExpanded(null)} aria-label="Close" style={{position:"absolute",top:9,right:10,width:24,height:24,border:"none",background:"transparent",color:"var(--m4)",fontSize:19,lineHeight:1,cursor:"pointer"}}>×</button>
+                    <p style={{fontFamily:"'Crimson Text',serif",fontSize:16,lineHeight:1.62,color:"var(--m1b)"}}>{f.body}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+            <div style={{margin:"16px 2px 4px"}}>
+              <div style={{width:46,height:1,background:"linear-gradient(90deg, transparent, rgba(var(--accent-rgb),0.7), transparent)",margin:"0 auto 14px"}}/>
+              <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:15,lineHeight:1.6,color:"var(--m2)",textAlign:"center"}}>Every one of these began as a message from someone using <Selah/>. Thank you for the ideas, the notes, the things you catch. They are why this exists, and why it grew without ever loosening the standard. Keep them coming.</p>
+            </div>
+            <button onClick={closeWhatsNew} style={{width:"100%",marginTop:10,padding:14,borderRadius:10,background:"rgba(244,239,228,0.04)",border:"1px solid rgba(var(--accent-rgb),0.4)",color:"var(--m1b)",fontFamily:"'Cinzel',serif",fontWeight:600,fontSize:12,letterSpacing:"0.12em",textTransform:"uppercase",cursor:"pointer"}}>Got it</button>
+          </div>
         </div>
       )}
 
