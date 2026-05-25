@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b190";
+const BUILD = "2026.05.24-b191";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2500,8 +2500,8 @@ export default function App() {
 
   const activeMins = activeSession ? Math.round((Date.now()-new Date(activeSession.startTime))/60000) : 0;
 
-  const STD_VERSIONS = ["NLT","ESV","KJV","NKJV","NIV","NASB","CSB"];
-  const KID_VERSIONS = ["NIrV","ICB","NLT"];
+  const STD_VERSIONS = ["NLT","NLV","ESV","KJV","NKJV","NIV","NASB","CSB"];
+  const KID_VERSIONS = ["NIrV","ICB","NLV","NLT"];
   const isKidAge = age.startsWith("Kids");
   const BIBLE_VERSIONS = isKidAge ? KID_VERSIONS : STD_VERSIONS;
   // Edge-glow spread scales with screen width so it hugs the edges on phones
@@ -2663,7 +2663,7 @@ export default function App() {
           const kidIds = Object.keys(profiles).filter(k=>profiles[k].kid);
           const canAddKid = ownerAge!==null && ownerAge>=18 && kidIds.length<3;
           const isKidActive = !!(profiles[activeProfileId] && profiles[activeProfileId].kid);
-          const KIDV = ["NIrV","ICB","NLT"];
+          const KIDV = ["NIrV","ICB","NLV","NLT"];
           const dateStyle = {width:"100%",maxWidth:"100%",minWidth:0,display:"block",boxSizing:"border-box",background:"var(--input)",border:"1px solid var(--border)",borderRadius:6,padding:"11px 14px",color:"var(--text)",fontFamily:"'Crimson Text',serif",fontSize:16,outline:"none",colorScheme:"dark",WebkitAppearance:"none",appearance:"none"};
           const tileThumb = (id) => (ICON_THEMES[(id===activeProfileId ? profileIcon : ((profileSnaps.current[id]||{}).profileIcon)) || "default"]||ICON_THEMES.default).thumb;
           return (
@@ -3484,7 +3484,7 @@ export default function App() {
                   <button key={a} className={`version-pill ${age===a?"active":""}`}
                     onClick={()=>{
                       setAge(a);
-                      if (a.startsWith("Kids") && !["NIrV","ICB","NLT"].includes(bibleVersion)) setBibleVersion("NIrV");
+                      if (a.startsWith("Kids") && !["NIrV","ICB","NLV","NLT"].includes(bibleVersion)) setBibleVersion("NIrV");
                     }}>{a}</button>
                 ))}
               </div>
@@ -3770,7 +3770,7 @@ export default function App() {
               <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>
                 {["Kids (5-12)","Teen (13-17)","Adult (18+)","Prefer not to say"].map(a=>(
                   <button key={a} className={`version-pill ${age===a?"active":""}`}
-                    onClick={()=>{ setAge(a); if (a.startsWith("Kids") && !["NIrV","ICB","NLT"].includes(bibleVersion)) setBibleVersion("NIrV"); }}>{a}</button>
+                    onClick={()=>{ setAge(a); if (a.startsWith("Kids") && !["NIrV","ICB","NLV","NLT"].includes(bibleVersion)) setBibleVersion("NIrV"); }}>{a}</button>
                 ))}
               </div>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Birthday</p>
