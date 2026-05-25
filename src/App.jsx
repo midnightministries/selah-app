@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b183";
+const BUILD = "2026.05.24-b184";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -1020,24 +1020,24 @@ function ExportSheet({ session, onClose }) {
   const resizeMove=(e)=>{ const s=rsize.current; if(!s)return; const d=Math.hypot(e.clientX-s.cx,e.clientY-s.cy); setEl(s.key,{size:clamp(s.base*(d/s.d0),0.02,0.4)}); };
   const resizeUp=()=>{ rsize.current=null; };
   const applyLeft=(p)=>{ if(!sel)return; if(leftMode==="fade") setEl(sel,{opacity:clamp(0.15+(1-p)*0.85,0.15,1)}); else setEl(sel,{glow:clamp(1-p,0,1)}); };
-  const applyRight=(p)=>{ if(!sel)return; if(rightMode==="color") setEl(sel,{color:hslHex(p*320)}); else setEl(sel,{rot:Math.round((0.5-p)*60)}); };
+  const applyRight=(p)=>{ if(!sel)return; if(rightMode==="color") setEl(sel,{color:hslHex(p*340)}); else setEl(sel,{rot:Math.round((0.5-p)*60)}); };
   const leftPos = selEl ? (leftMode==="fade" ? clamp(1-((selEl.opacity==null?1:selEl.opacity)-0.15)/0.85,0,1) : clamp(1-(selEl.glow||0),0,1)) : 0.5;
-  const rightPos = selEl ? (rightMode==="color" ? clamp(hexHue(selEl.color)/320,0,1) : clamp(0.5-(selEl.rot||0)/60,0,1)) : 0.5;
+  const rightPos = selEl ? (rightMode==="color" ? clamp(hexHue(selEl.color)/340,0,1) : clamp(0.5-(selEl.rot||0)/60,0,1)) : 0.5;
   const edgeLabel = { fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.6)",textShadow:"0 1px 4px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.7)",marginBottom:7,cursor:"pointer",whiteSpace:"nowrap" };
-  const edgeKnob = (pos)=>({ position:"absolute",left:"50%",top:(pos*100)+"%",transform:"translate(-50%,-50%)",width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.5)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 1px 5px rgba(0,0,0,0.35)",pointerEvents:"none" });
+  const edgeKnob = (pos)=>({ position:"absolute",left:"50%",top:(5+pos*90)+"%",transform:"translate(-50%,-50%)",width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.5)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 1px 5px rgba(0,0,0,0.35)",pointerEvents:"none" });
   const edgeTapBtn = { width:30,height:30,borderRadius:"50%",marginTop:9,flex:"0 0 auto",background:"radial-gradient(circle at 50% 50%,transparent 48%,rgba(247,244,238,0.2) 100%)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.62)",fontSize:14,textShadow:"0 1px 3px rgba(0,0,0,0.6)",cursor:"pointer" };
   // background-mode slider helpers (when no element is selected)
   const hslHexBg=(h)=>{ const s=0.5,l=0.32,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
   const applyLeftBg=(p)=>setLayout(L=>({...L,bgFade:clamp(1-p,0,1)}));
-  const applyRightBg=(p)=>setLayout(L=>({...L,bgColor:hslHexBg(p*320)}));
-  const SPEC="linear-gradient(180deg,#e85b5b,#e8a24e,#d9cf4e,#6fc96f,#54c4c4,#5a7de0,#9a5ad0,#d36fb0)";
+  const applyRightBg=(p)=>setLayout(L=>({...L,bgColor:hslHexBg(p*340)}));
+  const SPEC="linear-gradient(180deg,#ef5350,#f08c3a,#e6c64a,#8ad24f,#3fbf8e,#3aa6d6,#5a6fe0,#9a52d0,#d35fb0,#e0518f)";
   const DIRICON=["↓","↑","→","←"];
   const leftCfg = selEl
     ? { lbl:leftMode==="fade"?"Fade":"Glow", pos:leftPos, apply:applyLeft, tap:()=>setLeftMode(m=>m==="fade"?"glow":"fade"), tapIcon:"⇄", spectrum:false }
     : { lbl:"Fade", pos:clamp(1-(layout.bgFade==null?0.5:layout.bgFade),0,1), apply:applyLeftBg, tap:()=>setLayout(L=>({...L,bgDir:((L.bgDir||0)+1)%4})), tapIcon:DIRICON[layout.bgDir||0], spectrum:false };
   const rightCfg = selEl
     ? { lbl:rightMode==="color"?"Color":"Rotate", pos:rightPos, apply:applyRight, tap:()=>setRightMode(m=>m==="color"?"rotate":"color"), tapIcon:"⇄", spectrum:rightMode==="color" }
-    : { lbl:"Color", pos:clamp(hexHue(layout.bgColor||"#14100a")/320,0,1), apply:applyRightBg, tap:null, tapIcon:"", spectrum:true };
+    : { lbl:"Color", pos:clamp(hexHue(layout.bgColor||"#14100a")/340,0,1), apply:applyRightBg, tap:null, tapIcon:"", spectrum:true };
 
   return (
     <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"}}>
