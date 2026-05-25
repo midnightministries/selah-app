@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b197";
+const BUILD = "2026.05.24-b198";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -2011,6 +2011,18 @@ export default function App() {
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  // Back button / swipe-back: keep the reader inside SELAH and send them to home
+  // instead of letting the gesture leave the app. Anything in progress is held by
+  // the resume snapshot, so landing on home loses nothing.
+  useEffect(() => {
+    const onPop = () => {
+      if (viewRef.current !== "home") setView("home");
+      try { window.history.pushState(null, ""); } catch {}
+    };
+    try { window.history.pushState(null, ""); } catch {}
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
   // Quick jump back to the Log, restoring where you were (not the top).
   const gotoLog = () => { setView("history"); setTimeout(() => window.scrollTo({ top: logScrollY.current || 0, behavior: "auto" }), 60); };
