@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b178";
+const BUILD = "2026.05.24-b179";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -977,6 +977,7 @@ function ExportSheet({ session, onClose }) {
     // selection = a crisp gold outline ring (NOT a glow), so it never mixes with
     // the element's own glow color; offset so it doesn't hug the letters.
     const base={ position:"absolute", left:el.xf*100+"%", top:el.yf*100+"%", transform:`translate(-50%,-50%) rotate(${el.rot||0}deg)`, touchAction:"none", cursor:"grab", opacity:(el.opacity==null?1:el.opacity), outline:selected?"1.5px solid rgba(201,168,76,0.9)":"none", outlineOffset:"5px", zIndex:selected?5:1 };
+    const xBadge = selected ? <div onPointerDown={e=>{ e.stopPropagation(); setEl(key,{show:false}); setSel(null); }} style={{position:"absolute",top:-13,right:-13,width:24,height:24,borderRadius:"50%",background:"rgba(14,10,6,0.8)",border:"1px solid rgba(255,255,255,0.55)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,lineHeight:1,cursor:"pointer",transform:`rotate(${-(el.rot||0)}deg)`,zIndex:6}}>×</div> : null;
     if(el.kind==="cross"){
       // Real cross glow: a blurred, glow-colored copy of the cross shape behind it.
       // (drop-shadow on a CSS-masked element doesn't render reliably across browsers.)
@@ -984,11 +985,12 @@ function ExportSheet({ session, onClose }) {
       return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:el.size*100+"%", height:el.size*1.5*100+"%" }}>
         {el.glow ? <div style={{ ...mask, backgroundColor:gc, filter:`blur(${(el.glow*9).toFixed(1)}px)` }}/> : null}
         <div style={{ ...mask, backgroundColor:el.color }}/>
+        {xBadge}
       </div>;
     }
     // text glow = text-shadow (true color, no drag trails).
     const ts = el.glow ? `0 0 ${(el.glow*7).toFixed(1)}px ${gc}, 0 0 ${(el.glow*14).toFixed(1)}px ${gc}` : "none";
-    return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}</div>;
+    return <div key={key} data-elkey={key} onPointerDown={e=>elDown(e,key)} style={{ ...base, width:"86%", textAlign:"center", color:el.color, textShadow:ts, fontFamily:CARD_FONTS[layout.font], fontWeight:el.weight==="bold"?700:400, fontStyle:el.italic?"italic":"normal", fontSize:`calc(${el.size} * var(--stagew,320px))`, lineHeight:1.2, letterSpacing:key==="mm"?"0.16em":(key==="selah"?"0.08em":"0"), textTransform:key==="mm"?"uppercase":"none", whiteSpace:key==="selah"?"nowrap":"normal" }}>{el.text}{xBadge}</div>;
   };
   const selEl = sel ? layout.els[sel] : null;
   // Derive three distinct shades from the active palette accent so the circles
@@ -1008,27 +1010,27 @@ function ExportSheet({ session, onClose }) {
   const sliderMove=(e)=>{ const s=sdrag.current; if(!s)return; const r=s.t.getBoundingClientRect(); s.apply(clamp((e.clientY-r.top)/r.height,0,1)); };
   const sliderUp=()=>{ sdrag.current=null; };
   const applyLeft=(p)=>{ if(!sel)return; if(leftMode==="fade") setEl(sel,{opacity:clamp(0.15+(1-p)*0.85,0.15,1)}); else setEl(sel,{glow:clamp(1-p,0,1)}); };
-  const applyRight=(p)=>{ if(!sel)return; if(rightMode==="color") setEl(sel,{color:hslHex(p*360)}); else setEl(sel,{rot:Math.round((0.5-p)*60)}); };
+  const applyRight=(p)=>{ if(!sel)return; if(rightMode==="color") setEl(sel,{color:hslHex(p*320)}); else setEl(sel,{rot:Math.round((0.5-p)*60)}); };
   const leftPos = selEl ? (leftMode==="fade" ? clamp(1-((selEl.opacity==null?1:selEl.opacity)-0.15)/0.85,0,1) : clamp(1-(selEl.glow||0),0,1)) : 0.5;
-  const rightPos = selEl ? (rightMode==="color" ? clamp(hexHue(selEl.color)/360,0,1) : clamp(0.5-(selEl.rot||0)/60,0,1)) : 0.5;
+  const rightPos = selEl ? (rightMode==="color" ? clamp(hexHue(selEl.color)/320,0,1) : clamp(0.5-(selEl.rot||0)/60,0,1)) : 0.5;
   const edgeLabel = { fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.6)",textShadow:"0 1px 4px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.7)",marginBottom:7,cursor:"pointer",whiteSpace:"nowrap" };
   const edgeKnob = (pos)=>({ position:"absolute",left:"50%",top:(pos*100)+"%",transform:"translate(-50%,-50%)",width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.5)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 1px 5px rgba(0,0,0,0.35)",pointerEvents:"none" });
   const edgeTap = { position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:32,height:32,borderRadius:"50%",background:"radial-gradient(circle at 50% 50%,transparent 52%,rgba(247,244,238,0.16) 100%)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.5)",fontSize:14,textShadow:"0 1px 3px rgba(0,0,0,0.5)",cursor:"pointer" };
   // background-mode slider helpers (when no element is selected)
   const hslHexBg=(h)=>{ const s=0.5,l=0.32,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
   const applyLeftBg=(p)=>setLayout(L=>({...L,bgFade:clamp(1-p,0,1)}));
-  const applyRightBg=(p)=>setLayout(L=>({...L,bgColor:hslHexBg(p*360)}));
-  const SPEC="linear-gradient(180deg,#ec5b5b,#ecc14e,#7bd17b,#54bcd6,#7b78e0,#d36fb0,#ec5b5b)";
+  const applyRightBg=(p)=>setLayout(L=>({...L,bgColor:hslHexBg(p*320)}));
+  const SPEC="linear-gradient(180deg,#e85b5b,#e8a24e,#d9cf4e,#6fc96f,#54c4c4,#5a7de0,#9a5ad0,#d36fb0)";
   const DIRICON=["↓","↑","→","←"];
   const leftCfg = selEl
     ? { lbl:leftMode==="fade"?"Fade":"Glow", pos:leftPos, apply:applyLeft, tap:()=>setLeftMode(m=>m==="fade"?"glow":"fade"), tapIcon:"⇄", spectrum:false }
     : { lbl:"Fade", pos:clamp(1-(layout.bgFade==null?0.5:layout.bgFade),0,1), apply:applyLeftBg, tap:()=>setLayout(L=>({...L,bgDir:((L.bgDir||0)+1)%4})), tapIcon:DIRICON[layout.bgDir||0], spectrum:false };
   const rightCfg = selEl
     ? { lbl:rightMode==="color"?"Color":"Rotate", pos:rightPos, apply:applyRight, tap:()=>setRightMode(m=>m==="color"?"rotate":"color"), tapIcon:"⇄", spectrum:rightMode==="color" }
-    : { lbl:"Color", pos:clamp(hexHue(layout.bgColor||"#14100a")/360,0,1), apply:applyRightBg, tap:null, tapIcon:"", spectrum:true };
+    : { lbl:"Color", pos:clamp(hexHue(layout.bgColor||"#14100a")/320,0,1), apply:applyRightBg, tap:null, tapIcon:"", spectrum:true };
 
   return (
-    <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none"}}>
+    <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"}}>
       {/* stage sized to fit any screen while keeping its true aspect ratio */}
       <div ref={stageRef}
         onPointerDown={stageDown} onPointerMove={stageMove} onPointerUp={stageUp} onPointerCancel={stageUp}
@@ -1063,6 +1065,13 @@ function ExportSheet({ session, onClose }) {
             <button onClick={()=>{ setSel(null); if(hasPhoto && layout.photo.show) setPhoto({show:false}); }} title="Background" style={chip({background:stageBg,border:"1.5px solid rgba(255,255,255,0.65)"})}/>
           </div>
         )}
+        {showChrome && ["cross","selah","body","mm"].some(k=>layout.els[k]&&!layout.els[k].show) && (
+          <div style={{display:"flex",gap:6}}>
+            {["cross","selah","body","mm"].filter(k=>layout.els[k]&&!layout.els[k].show).map(k=>(
+              <button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); }} title={"Show "+elName[k]} style={chip({width:30,height:30,fontSize:12,fontFamily:"'Cinzel',serif",background:"rgba(14,10,6,0.6)"})}>{elName[k][0]}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Share menu — centered so it's visible in any format */}
@@ -1078,33 +1087,21 @@ function ExportSheet({ session, onClose }) {
         <>
           <div style={{position:"absolute",left:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
             <div onClick={leftCfg.tap} style={edgeLabel}>{leftCfg.lbl}</div>
-            <div onPointerDown={e=>sliderDown(e,leftCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:leftCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
+            <div onPointerDown={e=>sliderDown(e,leftCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:13,borderRadius:7,background:leftCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
               <div style={edgeKnob(leftCfg.pos)}/>
               {leftCfg.tap && <div onPointerDown={e=>e.stopPropagation()} onClick={leftCfg.tap} style={edgeTap}>{leftCfg.tapIcon}</div>}
             </div>
           </div>
           <div style={{position:"absolute",right:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
             <div onClick={rightCfg.tap||undefined} style={edgeLabel}>{rightCfg.lbl}</div>
-            <div onPointerDown={e=>sliderDown(e,rightCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:rightCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
+            <div onPointerDown={e=>sliderDown(e,rightCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:13,borderRadius:7,background:rightCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
               <div style={edgeKnob(rightCfg.pos)}/>
               {rightCfg.tap && <div onPointerDown={e=>e.stopPropagation()} onClick={rightCfg.tap} style={edgeTap}>{rightCfg.tapIcon}</div>}
             </div>
           </div>
-          {selEl && (
-            <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",display:"flex",justifyContent:"center",gap:8,zIndex:4}}>
-              {["cross","selah","body","mm"].filter(k=>layout.els[k]&&layout.els[k].show).length>1 && <button onClick={cycleSel} style={pillBtn}>Layer</button>}
-              <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{...pillBtn,color:"var(--text2)"}}>Hide</button>
-            </div>
-          )}
         </>
       )}
 
-      {/* restore hidden pieces (when nothing selected) */}
-      {!selEl && showChrome && Object.keys(layout.els).some(k=>!layout.els[k].show) && (
-        <div style={{position:"absolute",left:14,right:14,bottom:"calc(env(safe-area-inset-bottom,0px) + 14px)",display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",zIndex:4}}>
-          {Object.keys(layout.els).filter(k=>!layout.els[k].show).map(k=>(<button key={k} onClick={()=>{ setEl(k,{show:true}); setSel(k); setTool("color"); }} style={{background:"rgba(14,10,6,0.95)",backdropFilter:"blur(4px)",border:"1px solid rgba(201,168,76,0.65)",boxShadow:"0 2px 10px rgba(0,0,0,0.45)",borderRadius:20,padding:"9px 16px",color:"var(--accent)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:"0.06em",cursor:"pointer"}}>+ {elName[k]}</button>))}
-        </div>
-      )}
 
       {/* background is now edited via the edge sliders (right = color, left = fade + direction) when nothing is selected */}
     </div>
