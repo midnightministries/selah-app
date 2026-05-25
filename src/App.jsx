@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b195";
+const BUILD = "2026.05.24-b197";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -39,7 +39,7 @@ Rules:
 - Questions must be specific to this exact passage. Never generic.
 - Notes must be factual and grounded. No speculation presented as fact.
 - Return verses must come from within the passage read, not outside it.
-- Language: strong nouns, active verbs, direct sentences. No em dashes. No therapy tone. No flattery.
+- Language: strong nouns, active verbs, direct sentences. Never use em dashes or en dashes anywhere; use a comma or a period instead. No therapy tone. No flattery.
 - Honesty is the standard. Calibrate to where the reader actually is and aim one step ahead, never below their demonstrated level and never beyond reach. Growth is real and small: ten minutes, twelve verses, one book is a reader beginning to form. Name that honestly. Do not inflate it and do not diminish it. This is not about metrics. It is about telling the reader the truth about where they are and where they are headed.
 - Always connect the passage to Christ. The whole of Scripture leads to Him. If the reader is in the Old Testament, draw the thread forward to its fulfillment in Christ and the New Testament. If the reader is in the New Testament, anchor it back to its Old Testament root. Make the connection plainly, grounded in the text, never forced. Work this into the context and notes where it fits, not as a tacked-on moral.`;
 
@@ -470,7 +470,7 @@ function generateNoteText(session) {
   txt += `PASSAGE\n${session.passage}\n\n`;
   txt += `DATE\n${formatDate(session.startTime)}\n\n`;
   txt += `LOCATION\n${session.locationType !== "Other" ? session.locationType : session.otherLocation}`;
-  if (session.geoLabel) txt += ` — ${session.geoLabel}`;
+  if (session.geoLabel) txt += `, ${session.geoLabel}`;
   txt += `\n\n`;
   txt += `TIME IN THE WORD\n${elapsed(session.startTime, session.endTime, session.pausedMs)}\n\n`;
   txt += `${line}\n\n`;
@@ -487,7 +487,7 @@ function generateNoteText(session) {
 
   if (session.aiResult?.notes?.length) {
     txt += `FIELD NOTES\n`;
-    session.aiResult.notes.forEach(n => { txt += `— ${n}\n`; });
+    session.aiResult.notes.forEach(n => { txt += `· ${n}\n`; });
     txt += `\n${thin}\n\n`;
   }
 
@@ -502,7 +502,7 @@ function generateNoteText(session) {
   }
 
   txt += `${line}\nSelah by Midnight Ministries\n`;
-  txt += `Save in: Selah — Midnight Ministries (folder)\n`;
+  txt += `Save in: Selah · Midnight Ministries (folder)\n`;
   return txt;
 }
 
@@ -510,13 +510,13 @@ async function shareAsNote(session) {
   const text = generateNoteText(session);
   const dateStr = new Date(session.startTime).toISOString().slice(0,10);
   const passageShort = (session.passage||"Session").slice(0,40).replace(/[^a-zA-Z0-9 ]/g," ").trim();
-  const filename = `Selah — ${passageShort} — ${dateStr}.txt`;
+  const filename = `Selah · ${passageShort} · ${dateStr}.txt`;
   const blob = new Blob([text], { type: "text/plain" });
   const file = new File([blob], filename, { type: "text/plain" });
 
   if (navigator.share && navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: "Selah — "+passageShort, text: "Session: "+session.passage });
+      await navigator.share({ files: [file], title: "Selah · "+passageShort, text: "Session: "+session.passage });
       return "shared";
     } catch(e) {
       if (e.name === "AbortError") return "cancelled";
@@ -981,7 +981,7 @@ function ExportSheet({ session, onClose }) {
   // always reachable). The selected element rises to the front via its zIndex.
   function cycleSel(){ const vis=["cross","selah","body","mm"].filter(k=>layout.els[k]&&layout.els[k].show); if(vis.length<2) return; const i=vis.indexOf(sel); setSel(vis[(i+1)%vis.length]); setTool("color"); }
 
-  function handleShareImage(){ if(!shareFile) return; try{ if(navigator.share && navigator.canShare?.({files:[shareFile]})) navigator.share({files:[shareFile],title:"SELAH",text:`${session.passage} — Selah by Midnight Ministries`}).catch(()=>{}); else { const u=URL.createObjectURL(shareFile); const a=document.createElement("a"); a.href=u; a.download="selah-session.png"; a.click(); URL.revokeObjectURL(u);} }catch{} }
+  function handleShareImage(){ if(!shareFile) return; try{ if(navigator.share && navigator.canShare?.({files:[shareFile]})) navigator.share({files:[shareFile],title:"SELAH",text:`${session.passage} · Selah by Midnight Ministries`}).catch(()=>{}); else { const u=URL.createObjectURL(shareFile); const a=document.createElement("a"); a.href=u; a.download="selah-session.png"; a.click(); URL.revokeObjectURL(u);} }catch{} }
 
   const elName={ cross:"Cross", selah:"SELAH", body:"Verse", mm:"Ministry" };
   const renderEl=(key)=>{ const el=layout.els[key]; if(!el.show) return null;
@@ -1143,6 +1143,60 @@ function getDepthLevel(sessions, isKid=false) {
   return         { level:1, name:"Seed",    note:"New or early reader. Questions should be observation-focused. Notes plain and concrete. Application immediate and specific. No assumed vocabulary." };
 }
 
+// ── Reader-facing level copy (the walk-through). Honest, witness not trophy.
+// Each stage carries a short note and a verse. No dashes by design.
+const FLAME_PATH = "M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z";
+const LEVEL_COPY = {
+  kids: [
+    { name:"Spark", note:"It starts small. You opened God's Word and began, and that is how every fire starts, with one little spark. Read a little, then come back and tell the truth about what you saw.", ref:"Psalm 119:130", verse:"The entrance of your words gives light." },
+    { name:"Ember", note:"Your fire is catching. You keep coming back, and that is what keeps an ember warm and glowing. Even a little reading each day keeps it burning. Do not let it go cold.", ref:"Lamentations 3:23", verse:"His mercies are new every morning." },
+    { name:"Flame", note:"Now it is really burning. The questions get a little harder here, because you can handle more now. Read closely so you can answer them, and it is always okay to look back at the page.", ref:"2 Timothy 2:15", verse:"Rightly handle the word of truth." },
+    { name:"Torch", note:"A torch lights the way for other people. What God shows you is not just for you and the people at home. Carry it out the door. To your friends at school, to your team, to how you treat people when no one is making you. Let them see it.", ref:"Matthew 5:16", verse:"Let your light shine before others." },
+    { name:"Wildfire", note:"The biggest fire of all. This means you have been in God's Word for real, for a long time. It is not a prize you won. It is a sign that His Word is growing strong inside you, and now it shows everywhere you go. Help someone else start their spark.", ref:"2 Timothy 1:6", verse:"Fan into flame the gift of God." },
+  ],
+  adult: [
+    { name:"Seed", note:"The beginning. You opened the Word and showed up, and that is not small. A seed in the ground looks like nothing is happening. It is. Read honestly, answer honestly, come back. Everything starts here.", ref:"Zechariah 4:10", verse:"Do not despise the day of small beginnings." },
+    { name:"Root", note:"The habit is taking hold. You are returning, not just visiting. Roots grow unseen, in the dark, long before anything shows above ground. This is the quiet, unglamorous work that holds everything later. And none of it was ever only for you.", ref:"Colossians 2:7", verse:"Rooted and built up in Him." },
+    { name:"Branch", note:"You are reaching now. The questions sharpen here, and they will not let you skim. The context goes deeper. This is where reading becomes study, and study begins to cost you something. Good. It should.", ref:"John 15:5", verse:"I am the vine, you are the branches." },
+    { name:"Fruit", note:"It is showing now, and not to you. The people around you are not always hearing you talk. They are watching how you live, what you build, what you carry. They have witnessed your fruit. What you take in was never for the tree. It is for whoever is hungry.", ref:"Matthew 7:20", verse:"By their fruit you will know them." },
+    { name:"Harvest", note:"The weight of it. This is not a trophy. It is a witness, that His Word took root in you and held. What you have gathered was never only yours, and by now you already know that. So pick the Word back up. The ground always needs more seed. Continue. You do not get to coast, because the moment you look back, you begin to fall away.", ref:"Luke 9:62", verse:"No one who puts his hand to the plow and looks back is fit for the kingdom." },
+  ],
+};
+function LevelIcon({ track, i, size, lit, current }) {
+  const glow = lit ? `drop-shadow(0 0 6px ${track==="kids"?"rgba(245,137,74,0.9)":"rgba(168,131,42,0.85)"})` : "none";
+  if (track === "kids") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" style={{filter:glow}}>
+        <path d={FLAME_PATH} fill={lit?"#ffc05a":"none"} stroke={lit?"none":"var(--m5)"} strokeWidth={lit?0:1.5} strokeLinejoin="round"/>
+      </svg>
+    );
+  }
+  const col = current ? "#d8b25a" : (lit ? "#a8832a" : "var(--m5)");
+  let shapes;
+  if (i===0) shapes = <><line x1="5" y1="19" x2="19" y2="19"/><path d="M12 17 C 9 15 9 10 12 8 C 15 10 15 15 12 17 Z"/></>;
+  else if (i===1) shapes = <><line x1="12" y1="14" x2="12" y2="6"/><path d="M12 9 C 13 6 16 5 17 4"/><path d="M12 14 C 11 17 9 18 8 20"/><path d="M12 14 C 13 17 15 18 16 20"/><line x1="12" y1="14" x2="12" y2="20"/></>;
+  else if (i===2) shapes = <><path d="M12 21 L 12 5"/><path d="M12 13 C 9 12 7 9 6 7"/><path d="M12 10 C 15 9 17 6 18 4"/></>;
+  else if (i===3) shapes = <><path d="M5 6 C 10 5 15 6 19 9"/><line x1="9" y1="9" x2="9" y2="10.5"/><line x1="14" y1="11" x2="14" y2="12.5"/><path d="M16 7 C 18 6 19 5 20 4"/><circle cx="9" cy="12.4" r="2" fill={lit?col:"none"} stroke={col} strokeWidth="1.2"/><circle cx="14" cy="14.4" r="2" fill={lit?col:"none"} stroke={col} strokeWidth="1.2"/></>;
+  else shapes = <><path d="M12 20 C 11 14 9 9 8 4"/><path d="M12 20 L 12 3"/><path d="M12 20 C 13 14 15 9 16 4"/><line x1="9" y1="17" x2="15" y2="17"/></>;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{filter:glow}}>
+      <g fill="none" stroke={col} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{shapes}</g>
+    </svg>
+  );
+}
+function LevelReveal({ track, index }) {
+  const s = (LEVEL_COPY[track] || [])[index];
+  if (!s) return null;
+  return (
+    <div style={{marginTop:16,paddingTop:16,borderTop:"1px solid var(--border)",textAlign:"left"}}>
+      <p style={{fontFamily:"'Cinzel',serif",fontWeight:700,fontSize:18,letterSpacing:"0.06em",textTransform:"uppercase",color:track==="kids"?"#f5894a":"var(--accent)",marginBottom:10}}>{s.name}</p>
+      <p style={{fontSize:16,lineHeight:1.62,color:"var(--m1b)"}}>{s.note}</p>
+      <p style={{fontStyle:"italic",fontSize:15,color:"var(--m2)",marginTop:12,lineHeight:1.5}}>“{s.verse}”</p>
+      <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.12em",textTransform:"uppercase",color:"var(--accent)",marginTop:6}}>{s.ref}</p>
+    </div>
+  );
+}
+
 const FEEDBACK_PROMPT = `You are reviewing a reader's written answers to Scripture questions. For each answer respond with 1 to 3 sentences only.
 
 If the answer is theologically sound: briefly affirm it and add one observation that goes one layer deeper.
@@ -1154,6 +1208,7 @@ Rules:
 - No preamble. No markdown. No extra text. Just the JSON array.
 - 1 to 3 sentences per answer. Brief. No lectures. No flattery.
 - Strong nouns, active verbs. No therapy voice.
+- Never use em dashes or en dashes; use a comma or a period instead.
 - If an answer is blank or very short ("idk", "not sure", etc.) return an empty string for that index.`;
 
 // ── Collapsible answer input ─────────────────────────────────────────────
@@ -1294,8 +1349,8 @@ const VERSES_FUTURE = [
 function pickReadingItem(s) {
   const pool = [];
   if (s.personalNotes) pool.push({ label: "From This Reading", text: s.personalNotes });
-  (s.aiResult?.returnVerses || []).forEach(v => { if (v?.reason) pool.push({ label: "Come Back To — " + (v.ref||""), text: v.reason }); });
-  (s.aiResult?.questions || []).forEach((q, i) => { const a = s.questionAnswers?.[i]; if (q) pool.push({ label: "A Question", text: a ? q + "  —  " + a : q }); });
+  (s.aiResult?.returnVerses || []).forEach(v => { if (v?.reason) pool.push({ label: "Come Back To: " + (v.ref||""), text: v.reason }); });
+  (s.aiResult?.questions || []).forEach((q, i) => { const a = s.questionAnswers?.[i]; if (q) pool.push({ label: "A Question", text: a ? q + "  ·  " + a : q }); });
   if (s.aiResult?.summary) pool.push({ label: "In One Sentence", text: s.aiResult.summary });
   if (!pool.length) return null;
   return pool[Math.floor(Math.random() * pool.length)];
@@ -1384,7 +1439,7 @@ function DayModal({ date, session, onClose, onSessionClick, alarms, onSaveAlarm 
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(var(--accent-rgb),0.06)",border:"1px solid rgba(var(--accent-rgb),0.15)",borderRadius:6,padding:"10px 14px",marginBottom:10}}>
                 <div>
                   <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:2}}>Alarm Set</p>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"var(--m1)"}}>{existingAlarm.time} — {existingAlarm.repeat}</p>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"var(--m1)"}}>{existingAlarm.time} · {existingAlarm.repeat}</p>
                 </div>
                 <button onClick={()=>setShowAlarm(true)} style={{background:"transparent",border:"1px solid var(--border2)",borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m2)",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Edit</button>
               </div>
@@ -1489,7 +1544,7 @@ function EmptyDayPanel({ date, alarms, onSaveAlarm, suppressPast }) {
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(var(--accent-rgb),0.06)",border:"1px solid rgba(var(--accent-rgb),0.15)",borderRadius:6,padding:"10px 14px"}}>
               <div>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:2}}>Reminder Set</p>
-                <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"var(--m1)"}}>{existingAlarm.time} — {existingAlarm.repeat}</p>
+                <p style={{fontFamily:"'Crimson Text',serif",fontSize:15,color:"var(--m1)"}}>{existingAlarm.time} · {existingAlarm.repeat}</p>
               </div>
               <button onClick={()=>setShowAlarm(true)} style={{background:"transparent",border:"1px solid var(--border2)",borderRadius:4,padding:"5px 10px",fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m2)",letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer"}}>Edit</button>
             </div>
@@ -1633,7 +1688,7 @@ function SessionCalendar({ sessions, onDaySelect, alarms, onSaveAlarm, onFilterC
           const days = [];
           for (let i=0;i<7;i++) { const d=new Date(weekStart); d.setDate(weekStart.getDate()+i); days.push(d); }
           const wkNum = getISOWeek(weekStart);
-          const wkLabel = "Week "+wkNum+"  —  "+weekStart.toLocaleString("default",{month:"short"})+" "+weekStart.getDate();
+          const wkLabel = "Week "+wkNum+"  ·  "+weekStart.toLocaleString("default",{month:"short"})+" "+weekStart.getDate();
           function prevWeek() { const d=new Date(weekStart); d.setDate(d.getDate()-7); setWeekStart(d); }
           function nextWeek() { const d=new Date(weekStart); d.setDate(d.getDate()+7); setWeekStart(d); }
           return (
@@ -1967,6 +2022,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [expandedSession, setExpandedSession] = useState(null);
   const [openSection, setOpenSection] = useState({ q:true, n:true, v:true });
+  const [levelPeek, setLevelPeek] = useState(null);   // which level the reader is reading about (null = their current)
   const [ticker, setTicker] = useState(0);
   const [exportSession, setExportSession] = useState(null);
   const [questionAnswers, setQuestionAnswers] = useState({});
@@ -2513,7 +2569,7 @@ export default function App() {
     const planNote = plan
       ? ` This reader is following the "${plan.name}" reading plan${planCur ? `, on ${planCur.book} ${planCur.chapter} (reading ${planIndex + 1} of ${plan.readings.length})` : ""}${planPrev ? `; their previous reading was ${planPrev.book} ${planPrev.chapter}` : ""}. Use the plan as a calibration data point: set this passage within the plan's arc, connect it to where they have recently been, and where it fits, show the movement toward Christ across the plan. Honest, grounded encouragement only. Never flatter, and never change the content.`
       : "";
-    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}${isKid && kidAge ? ` (this reader is ${kidAge} years old — calibrate to that exact age)` : ""}. Depth level: ${depth.level} of 5 (${depth.name}) — ${depth.note}${kidNote}${nivNote}${bookNote}${genderNote}${engageNote}${planNote} Scale the depth and density of the context, the notes, and the questions to the depth level: at higher levels include more historical, literary, and theological grounding and connect to the surrounding chapters and books. Do not hand a beginner and a Harvest-level reader the same context for the same passage. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
+    const versionNote = `The reader is using the ${bibleVersion} translation. Gender: ${gender}. Age group: ${age}${isKid && kidAge ? ` (this reader is ${kidAge} years old, calibrate to that exact age)` : ""}. Depth level: ${depth.level} of 5 (${depth.name}). ${depth.note}${kidNote}${nivNote}${bookNote}${genderNote}${engageNote}${planNote} Scale the depth and density of the context, the notes, and the questions to the depth level: at higher levels include more historical, literary, and theological grounding and connect to the surrounding chapters and books. Do not hand a beginner and a Harvest-level reader the same context for the same passage. Do not alter the text or its meaning. His Word does not change. Framing and depth adjust.${isKid ? "" : " Never go below their demonstrated level. Aim one step ahead."}`;
     try {
       const resp = await fetch("/.netlify/functions/generate", {
         method:"POST", headers:{"Content-Type":"application/json"},
@@ -2971,7 +3027,7 @@ export default function App() {
                   Set a 6-digit code. When it is on, a young reader cannot leave their profile and switch into yours without it. Good for when they have the device.
                 </p>
                 {passcode ? (
-                  <button className="btn-ghost" style={{width:"100%",padding:"12px"}} onClick={()=>{ if(window.confirm("Remove the profile lock?")) setPasscode(""); }}>Lock is on — Remove</button>
+                  <button className="btn-ghost" style={{width:"100%",padding:"12px"}} onClick={()=>{ if(window.confirm("Remove the profile lock?")) setPasscode(""); }}>Lock is on · Remove</button>
                 ) : (
                   <>
                     <PinBoxes value={pcDraft} onChange={setPcDraft}/>
@@ -3025,26 +3081,25 @@ export default function App() {
             )}
             {isKidAge && (()=>{
               const d = getDepthLevel(visibleSessions, true);
-              const FLAME = "M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z";
-              const stages = [["Spark",22],["Ember",27],["Flame",32],["Torch",38],["Wildfire",46]];
+              const sizes = [22,27,32,38,46];
+              const shown = levelPeek!=null ? levelPeek : d.level-1;
               return (
                 <div className="card" style={{textAlign:"center"}}>
                   <p className="label">Your Fire</p>
                   <p style={{fontFamily:"'Cinzel',serif",fontSize:24,color:"#f5894a",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",margin:"2px 0 16px",textShadow:"0 0 18px rgba(245,137,74,0.55)"}}>{d.name}</p>
                   <div style={{display:"flex",alignItems:"flex-end",justifyContent:"center",gap:12}}>
-                    {stages.map(([name,size],i)=>{
+                    {LEVEL_COPY.kids.map((st,i)=>{
                       const lit = i < d.level, current = i === d.level-1;
                       return (
-                        <div key={name} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7}}>
-                          <svg width={size} height={size} viewBox="0 0 24 24" className={current?"pulse":""} style={{filter:lit?"drop-shadow(0 0 7px rgba(245,137,74,0.9))":"none"}}>
-                            <path d={FLAME} fill={lit?(current?"#ffc05a":"#f5894a"):"none"} stroke={lit?"none":"var(--m5)"} strokeWidth={lit?0:1.5} strokeLinejoin="round"/>
-                          </svg>
-                          <span style={{fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.03em",textTransform:"uppercase",color:lit?"#f5894a":"var(--m5)",fontWeight:current?700:400}}>{name}</span>
-                        </div>
+                        <button key={st.name} onClick={()=>setLevelPeek(i)} className={current?"pulse":""} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:7,opacity:i===shown?1:0.92}}>
+                          <LevelIcon track="kids" i={i} size={sizes[i]} lit={lit} current={current}/>
+                          <span style={{fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.03em",textTransform:"uppercase",color:i===shown?"#ffc05a":(lit?"#f5894a":"var(--m5)"),fontWeight:(current||i===shown)?700:400,borderBottom:i===shown?"1px solid #ffc05a":"1px solid transparent",paddingBottom:1}}>{st.name}</span>
+                        </button>
                       );
                     })}
                   </div>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m3)",marginTop:16}}>You're a {d.name}! Keep reading His Word and watch your fire grow.</p>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:12}}>Tap a flame to read it</p>
+                  <LevelReveal track="kids" index={shown}/>
                 </div>
               );
             })()}
@@ -3122,7 +3177,7 @@ export default function App() {
                   {activeSession.readingClosedAt ? (
                     <span style={{color:"var(--m4)",fontSize:10}}>■</span>
                   ) : activeSession.pausedAt ? (
-                    <span style={{color:"#c89a3a",fontSize:10}}>❚❚</span>
+                    <span style={{color:"var(--accent)",fontSize:10}}>❚❚</span>
                   ) : (
                     <span className="pulse" style={{color:"var(--accent)",fontSize:10}}>●</span>
                   )}
@@ -3134,7 +3189,7 @@ export default function App() {
             </div>
 
             <div style={{textAlign:"center",padding:"16px 0 20px"}}>
-              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>In the Word — {bibleVersion}</p>
+              <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:7}}>In the Word · {bibleVersion}</p>
               <p style={{fontFamily:"'Crimson Text',serif",fontSize:24,color:"var(--accent)"}}>
                 {activeSession.startBook} {activeSession.startChapter}{activeSession.startVerse?`:${activeSession.startVerse}`:""}
               </p>
@@ -3194,7 +3249,7 @@ export default function App() {
                   <p style={{fontSize:14,color:"var(--m2)",fontStyle:"italic",lineHeight:1.55,marginBottom:2,textAlign:"center"}}>This reading was closed after you stepped away. Log where you finished, then get your questions.</p>
                 ) : activeSession.pausedAt ? (
                   <>
-                    <p style={{fontSize:14,color:"#c89a3a",fontStyle:"italic",lineHeight:1.55,marginBottom:2,textAlign:"center"}}>Reading paused — the clock is stopped. Pick back up within 10 minutes, or the reading ends and you'll continue at the questions.</p>
+                    <p style={{fontSize:14,color:"var(--accent)",fontStyle:"italic",lineHeight:1.55,marginBottom:2,textAlign:"center"}}>Reading paused, the clock is stopped. Pick back up within 10 minutes, or the reading ends and you'll continue at the questions.</p>
                     <button className="btn-primary" onClick={resumeReadingClock}>Resume reading</button>
                   </>
                 ) : (
@@ -3262,7 +3317,7 @@ export default function App() {
                 <ShareIcon/> Save or Share This Session
               </button>
               <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m5)",textAlign:"center",lineHeight:1.5}}>
-                "Let the redeemed of the Lord tell their story." — Psalm 107:2
+                "Let the redeemed of the Lord tell their story." · Psalm 107:2
               </p>
             </div>
 
@@ -3316,7 +3371,7 @@ export default function App() {
                 <div style={{borderTop:"1px solid var(--border2)",padding:"14px 18px 18px"}}>
                   {result.notes?.map((n,i)=>(
                     <div key={i} style={{display:"flex",gap:12,marginBottom:14,alignItems:"flex-start"}}>
-                      <span style={{color:"rgba(var(--accent-rgb),0.4)",fontSize:18,minWidth:10,paddingTop:1,lineHeight:1}}>—</span>
+                      <span style={{color:"rgba(var(--accent-rgb),0.4)",fontSize:18,minWidth:10,paddingTop:1,lineHeight:1}}>·</span>
                       <p style={{fontSize:17,lineHeight:1.7,color:"var(--text3)"}}>{n}</p>
                     </div>
                   ))}
@@ -3544,7 +3599,7 @@ export default function App() {
                   <p style={{fontSize:15,color:"var(--m3)",lineHeight:1.6,marginBottom:6}}>Signed in as</p>
                   <p style={{fontFamily:"'Crimson Text',serif",fontSize:18,color:"var(--accent)",marginBottom:12,wordBreak:"break-all"}}>{account.email}</p>
                   <p style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:14,color:syncState==="error"?"#d98a8a":"var(--m4)"}}>
-                    {syncState==="saving" ? "Syncing…" : syncState==="error" ? "Sync failed — will retry" : "Log and settings synced"}
+                    {syncState==="saving" ? "Syncing…" : syncState==="error" ? "Sync failed, will retry" : "Log and settings synced"}
                   </p>
                   <button className="btn-ghost" style={{width:"100%",padding:"12px"}} onClick={handleSignOut}>Sign Out</button>
                   <p style={{fontFamily:"'Crimson Text',serif",fontSize:13,color:"var(--m4)",textAlign:"center",marginTop:10,lineHeight:1.5}}>Signing out leaves your log on this device. It stays safe in your account.</p>
@@ -3560,7 +3615,7 @@ export default function App() {
               <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--border)"}}>
                 <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--accent)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>What syncs, what stays</p>
                 <p style={{fontSize:15,color:"var(--m2)",lineHeight:1.65,marginBottom:8}}>
-                  An account exists for one reason: so your reading carries across your devices. It stores your reading log (passages, notes, questions, answers, return verses, times), your reading position, and your content settings — translation, age group, birthday, gender, reminders, clock and time zone.
+                  An account exists for one reason: so your reading carries across your devices. It stores your reading log (passages, notes, questions, answers, return verses, times), your reading position, and your content settings: translation, age group, birthday, gender, reminders, clock and time zone.
                 </p>
                 <p style={{fontSize:15,color:"var(--m2)",lineHeight:1.65}}>
                   Your photos and GPS location never leave this device. Brightness and text size are set per device, so each screen reads right in its own light. Nothing is sold, shared, or used for anything but syncing your account.
@@ -3774,7 +3829,7 @@ export default function App() {
               <p className="label">Storage</p>
               <p style={{fontSize:16,lineHeight:1.65,color:"var(--m2)",marginBottom:14}}>All sessions including photos are saved in your browser. Clearing browser data removes your log. Export to Notes or Files for permanent records.</p>
               <p style={{fontFamily:"'Cinzel',serif",fontSize:10,color:"var(--m4)",letterSpacing:"0.08em"}}>
-                {visibleSessions.length} session{visibleSessions.length!==1?"s":""} — {visibleSessions.filter(s=>s.photoData).length} with photos
+                {visibleSessions.length} session{visibleSessions.length!==1?"s":""} · {visibleSessions.filter(s=>s.photoData).length} with photos
               </p>
             </div>
 
@@ -3782,7 +3837,7 @@ export default function App() {
             {visibleSessions.length > 0 && (()=>{
               const d = getDepthLevel(visibleSessions, isKidAge);
               const totalMins = visibleSessions.reduce((a,s)=>a+Math.round((new Date(s.endTime)-new Date(s.startTime))/60000),0);
-              const levels = isKidAge ? ["Spark","Ember","Flame","Torch","Wildfire"] : ["Seed","Root","Branch","Fruit","Harvest"];
+              const shown = levelPeek!=null ? levelPeek : d.level-1;
               const nextLine = d.level >= 5
                 ? `You have reached ${d.name}, the deepest level. Keep gathering. The standard does not drop.`
                 : `This is where you are now, not a finish line. Growth comes at your own pace; the questions and notes deepen as you go, never softer.`;
@@ -3799,15 +3854,20 @@ export default function App() {
                       <p style={{fontFamily:"'Crimson Text',serif",fontSize:14,color:"var(--m3)"}}>{visibleSessions.length} sessions · {totalMins < 60 ? totalMins+"m" : Math.floor(totalMins/60)+"h"} in His Word</p>
                     </div>
                   </div>
-                  <div style={{display:"flex",gap:6}}>
-                    {levels.map((l,i)=>(
-                      <div key={l} style={{flex:1,textAlign:"center"}}>
-                        <div style={{height:5,borderRadius:3,background:i<d.level?"var(--accent)":"var(--border)",transition:"background 0.3s"}}/>
-                        <span style={{display:"block",marginTop:5,fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.03em",textTransform:"uppercase",color:i===d.level-1?"var(--accent)":"var(--m5)",fontWeight:i===d.level-1?700:400}}>{l}</span>
-                      </div>
-                    ))}
+                  <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-around",gap:6}}>
+                    {LEVEL_COPY[isKidAge?"kids":"adult"].map((st,i)=>{
+                      const lit=i<d.level, current=i===d.level-1, szs=[20,25,30,35,42];
+                      return (
+                        <button key={st.name} onClick={()=>setLevelPeek(i)} style={{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                          <LevelIcon track={isKidAge?"kids":"adult"} i={i} size={szs[i]} lit={lit} current={current}/>
+                          <span style={{fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.03em",textTransform:"uppercase",color:i===shown?"var(--accent)":(lit?"var(--accent2)":"var(--m5)"),fontWeight:(current||i===shown)?700:400,borderBottom:i===shown?"1px solid var(--accent)":"1px solid transparent",paddingBottom:1}}>{st.name}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginTop:12,lineHeight:1.5}}>
+                  <p style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"var(--m4)",letterSpacing:"0.08em",textTransform:"uppercase",marginTop:12,textAlign:"center"}}>Tap a stage to read it</p>
+                  <LevelReveal track={isKidAge?"kids":"adult"} index={shown}/>
+                  <p style={{fontFamily:"'Crimson Text',serif",fontStyle:"italic",fontSize:14,color:"var(--m4)",marginTop:14,lineHeight:1.5}}>
                     {nextLine}
                   </p>
                 </div>
@@ -3947,7 +4007,7 @@ export default function App() {
                 Take your time in here. Read the passage, sit with it, and answer honestly and fully. This is not a race. The care you bring to it is the care you get back.
               </p>
               <p style={{fontSize:14,color:"var(--m3)",lineHeight:1.6}}>
-                What you log — passages, notes, answers, and times — is saved on this device, and carries to your other devices if you made an account. Your photos and location never leave this device, and nothing is sold or shared.
+                What you log (passages, notes, answers, and times) is saved on this device, and carries to your other devices if you made an account. Your photos and location never leave this device, and nothing is sold or shared.
               </p>
             </div>
 
