@@ -18,7 +18,7 @@ const LOCATION_TYPES = [
 ];
 
 // Bump this on every deploy so you can confirm which build is live.
-const BUILD = "2026.05.24-b175";
+const BUILD = "2026.05.24-b177";
 
 const SYSTEM_PROMPT = `You are a Scripture analyst built for serious readers who take His word as final authority. No devotional fluff. No motivational coach language. No therapy voice. No flattery. His word stands on its own.
 
@@ -387,13 +387,13 @@ function composeCard(session, layout) {
     const crossEl = document.querySelector('img[src^="data:image/png;base64,iVBOR"]');
     const els = layout.els;
     function paintBg(){
-      const o = BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink")) || BG_OPTIONS[0];
-      let top=o[2], bot=o[3];
-      if(layout.bgRev){ const t=top; top=bot; bot=t; }
+      const c = layout.bgColor || "#14100a";
       const fade = layout.bgFade==null?0.5:layout.bgFade;
-      const end = mixHex(top, bot, fade);   // fade=0 -> solid top, fade=1 -> full bottom
-      if(top===end){ ctx.fillStyle=top; ctx.fillRect(0,0,W,H); }
-      else { const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,top); g.addColorStop(1,end); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+      const far = mixHex(c, "#000000", fade*0.8);   // fade=0 -> flat, fade=1 -> deep gradient
+      const dir = layout.bgDir||0;
+      if(c===far){ ctx.fillStyle=c; ctx.fillRect(0,0,W,H); return; }
+      let g; if(dir===1) g=ctx.createLinearGradient(0,H,0,0); else if(dir===2) g=ctx.createLinearGradient(0,0,W,0); else if(dir===3) g=ctx.createLinearGradient(W,0,0,0); else g=ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,c); g.addColorStop(1,far); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
     }
     function drawText(el){
       if(!el.show || !el.text) return;
@@ -918,11 +918,10 @@ function ExportSheet({ session, onClose }) {
   const fitRatio=Math.min(W/nat.w,H/nat.h);
   const minZoom=fitRatio/baseRatio;   // zoom-out limit: photo just fits inside frame
   const bgWpct=(nat.w*baseRatio*z)/W*100, bgHpct=(nat.h*baseRatio*z)/H*100;
-  const bgOpt=BG_OPTIONS.find(b=>b[0]===(layout.bg||"ink"))||BG_OPTIONS[0];
-  const selectedBgLabel=bgOpt[1];
-  const bgTop = layout.bgRev?bgOpt[3]:bgOpt[2], bgBot = layout.bgRev?bgOpt[2]:bgOpt[3];
-  const bgEnd = mixHex(bgTop, bgBot, layout.bgFade==null?0.5:layout.bgFade);
-  const stageBg = bgTop===bgEnd ? bgTop : `linear-gradient(180deg,${bgTop},${bgEnd})`;
+  const bgColor = layout.bgColor || "#14100a";
+  const BG_CSS_DIRS = ["180deg","0deg","90deg","270deg"];
+  const bgFar = mixHex(bgColor, "#000000", (layout.bgFade==null?0.5:layout.bgFade)*0.8);
+  const stageBg = bgColor===bgFar ? bgColor : `linear-gradient(${BG_CSS_DIRS[layout.bgDir||0]},${bgColor},${bgFar})`;
 
   function stageDown(e){
     ptrs.current.set(e.pointerId,{x:e.clientX,y:e.clientY}); stageRef.current?.setPointerCapture?.(e.pointerId);
@@ -1010,9 +1009,21 @@ function ExportSheet({ session, onClose }) {
   const applyRight=(p)=>{ if(!sel)return; if(rightMode==="color") setEl(sel,{color:hslHex(p*360)}); else setEl(sel,{rot:Math.round((0.5-p)*60)}); };
   const leftPos = selEl ? (leftMode==="fade" ? clamp(1-((selEl.opacity==null?1:selEl.opacity)-0.15)/0.85,0,1) : clamp(1-(selEl.glow||0),0,1)) : 0.5;
   const rightPos = selEl ? (rightMode==="color" ? clamp(hexHue(selEl.color)/360,0,1) : clamp(0.5-(selEl.rot||0)/60,0,1)) : 0.5;
-  const edgeLabel = { fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.5)",textShadow:"0 1px 3px rgba(0,0,0,0.45)",marginBottom:7,cursor:"pointer",whiteSpace:"nowrap" };
+  const edgeLabel = { fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",color:"rgba(255,255,255,0.6)",textShadow:"0 1px 4px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.7)",marginBottom:7,cursor:"pointer",whiteSpace:"nowrap" };
   const edgeKnob = (pos)=>({ position:"absolute",left:"50%",top:(pos*100)+"%",transform:"translate(-50%,-50%)",width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.5)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",border:"1px solid rgba(255,255,255,0.55)",boxShadow:"0 1px 5px rgba(0,0,0,0.35)",pointerEvents:"none" });
   const edgeTap = { position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:32,height:32,borderRadius:"50%",background:"radial-gradient(circle at 50% 50%,transparent 52%,rgba(247,244,238,0.16) 100%)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.5)",fontSize:14,textShadow:"0 1px 3px rgba(0,0,0,0.5)",cursor:"pointer" };
+  // background-mode slider helpers (when no element is selected)
+  const hslHexBg=(h)=>{ const s=0.5,l=0.32,a=s*Math.min(l,1-l); const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");}; return "#"+f(0)+f(8)+f(4); };
+  const applyLeftBg=(p)=>setLayout(L=>({...L,bgFade:clamp(1-p,0,1)}));
+  const applyRightBg=(p)=>setLayout(L=>({...L,bgColor:hslHexBg(p*360)}));
+  const SPEC="linear-gradient(180deg,#ec5b5b,#ecc14e,#7bd17b,#54bcd6,#7b78e0,#d36fb0,#ec5b5b)";
+  const DIRICON=["↓","↑","→","←"];
+  const leftCfg = selEl
+    ? { lbl:leftMode==="fade"?"Fade":"Glow", pos:leftPos, apply:applyLeft, tap:()=>setLeftMode(m=>m==="fade"?"glow":"fade"), tapIcon:"⇄", spectrum:false }
+    : { lbl:"Fade", pos:clamp(1-(layout.bgFade==null?0.5:layout.bgFade),0,1), apply:applyLeftBg, tap:()=>setLayout(L=>({...L,bgDir:((L.bgDir||0)+1)%4})), tapIcon:DIRICON[layout.bgDir||0], spectrum:false };
+  const rightCfg = selEl
+    ? { lbl:rightMode==="color"?"Color":"Rotate", pos:rightPos, apply:applyRight, tap:()=>setRightMode(m=>m==="color"?"rotate":"color"), tapIcon:"⇄", spectrum:rightMode==="color" }
+    : { lbl:"Color", pos:clamp(hexHue(layout.bgColor||"#14100a")/360,0,1), apply:applyRightBg, tap:null, tapIcon:"", spectrum:true };
 
   return (
     <div ref={containerRef} style={{position:"fixed",inset:0,zIndex:400,background:"#000",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",touchAction:"none"}}>
@@ -1025,6 +1036,10 @@ function ExportSheet({ session, onClose }) {
         {layout.photo.show && hasPhoto && <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"linear-gradient(180deg,rgba(10,8,4,0.5),rgba(10,8,4,0.22),rgba(10,8,4,0.62))"}}/>}
         {["cross","selah","body","mm"].map(renderEl)}
       </div>
+
+      {/* legibility scrim behind the controls so they read over any photo */}
+      {showChrome && <div style={{position:"absolute",top:0,left:0,right:0,height:150,background:"linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0))",pointerEvents:"none",zIndex:3}}/>}
+      {showChrome && <div style={{position:"absolute",bottom:0,left:0,right:0,height:96,background:"linear-gradient(0deg,rgba(0,0,0,0.42),rgba(0,0,0,0))",pointerEvents:"none",zIndex:3}}/>}
 
       {/* TOP-LEFT: close X (glow, no circle) */}
       <button onClick={onClose} aria-label="Close" style={{position:"absolute",top:"calc(env(safe-area-inset-top,0px) + 6px)",left:18,background:"transparent",border:"none",cursor:"pointer",fontSize:52,lineHeight:1,color:"var(--accent)",textShadow:"0 0 14px rgba(var(--accent-rgb),0.85), 0 0 4px rgba(0,0,0,0.8)",padding:0,fontWeight:300,zIndex:4}}>×</button>
@@ -1043,6 +1058,7 @@ function ExportSheet({ session, onClose }) {
             <button onClick={cycleContent} style={chip({fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:"0.02em",lineHeight:1.05,textAlign:"center",padding:3})}>{contentLabel}</button>
             {hasPhoto && <button onClick={()=>setPhoto({show:!layout.photo.show})} style={chip({fontFamily:"'Cinzel',serif",fontSize:6,letterSpacing:"0.02em",textAlign:"center",lineHeight:1.05,padding:2})}>{layout.photo.show?"Hide":"Show"}</button>}
             <button onClick={()=>switchAspect(layout.aspect==="square"?"story":"square")} style={chip({fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:"0.02em"})}>{layout.aspect==="square"?"1:1":"9:16"}</button>
+            <button onClick={()=>{ setSel(null); if(hasPhoto && layout.photo.show) setPhoto({show:false}); }} title="Background" style={chip({background:stageBg,border:"1.5px solid rgba(255,255,255,0.65)"})}/>
           </div>
         )}
       </div>
@@ -1055,27 +1071,29 @@ function ExportSheet({ session, onClose }) {
         </div>
       )}
 
-      {/* SELECTED ELEMENT — edge sliders: left fade/glow, right color/rotate */}
-      {selEl && showChrome && (
+      {/* EDGE SLIDERS — element when selected, background when nothing selected */}
+      {showChrome && (selEl || !hasPhoto || !layout.photo.show) && (
         <>
           <div style={{position:"absolute",left:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
-            <div onClick={()=>setLeftMode(m=>m==="fade"?"glow":"fade")} style={edgeLabel}>{leftMode==="fade"?"Fade":"Glow"}</div>
-            <div onPointerDown={e=>sliderDown(e,applyLeft)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
-              <div style={edgeKnob(leftPos)}/>
-              <div onPointerDown={e=>e.stopPropagation()} onClick={()=>setLeftMode(m=>m==="fade"?"glow":"fade")} style={edgeTap}>⇄</div>
+            <div onClick={leftCfg.tap} style={edgeLabel}>{leftCfg.lbl}</div>
+            <div onPointerDown={e=>sliderDown(e,leftCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:leftCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
+              <div style={edgeKnob(leftCfg.pos)}/>
+              {leftCfg.tap && <div onPointerDown={e=>e.stopPropagation()} onClick={leftCfg.tap} style={edgeTap}>{leftCfg.tapIcon}</div>}
             </div>
           </div>
           <div style={{position:"absolute",right:8,top:"52%",transform:"translateY(-50%)",height:"54%",width:46,display:"flex",flexDirection:"column",alignItems:"center",zIndex:4}}>
-            <div onClick={()=>setRightMode(m=>m==="color"?"rotate":"color")} style={edgeLabel}>{rightMode==="color"?"Color":"Rotate"}</div>
-            <div onPointerDown={e=>sliderDown(e,applyRight)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:rightMode==="color"?"linear-gradient(180deg,#ec5b5b,#ecc14e,#7bd17b,#54bcd6,#7b78e0,#d36fb0,#ec5b5b)":"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
-              <div style={edgeKnob(rightPos)}/>
-              <div onPointerDown={e=>e.stopPropagation()} onClick={()=>setRightMode(m=>m==="color"?"rotate":"color")} style={edgeTap}>⇄</div>
+            <div onClick={rightCfg.tap||undefined} style={edgeLabel}>{rightCfg.lbl}</div>
+            <div onPointerDown={e=>sliderDown(e,rightCfg.apply)} onPointerMove={sliderMove} onPointerUp={sliderUp} onPointerCancel={sliderUp} style={{position:"relative",flex:1,width:9,borderRadius:5,background:rightCfg.spectrum?SPEC:"rgba(247,244,238,0.42)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",touchAction:"none",cursor:"pointer"}}>
+              <div style={edgeKnob(rightCfg.pos)}/>
+              {rightCfg.tap && <div onPointerDown={e=>e.stopPropagation()} onClick={rightCfg.tap} style={edgeTap}>{rightCfg.tapIcon}</div>}
             </div>
           </div>
-          <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",display:"flex",justifyContent:"center",gap:8,zIndex:4}}>
-            {["cross","selah","body","mm"].filter(k=>layout.els[k]&&layout.els[k].show).length>1 && <button onClick={cycleSel} style={pillBtn}>Layer</button>}
-            <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{...pillBtn,color:"var(--text2)"}}>Hide</button>
-          </div>
+          {selEl && (
+            <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",display:"flex",justifyContent:"center",gap:8,zIndex:4}}>
+              {["cross","selah","body","mm"].filter(k=>layout.els[k]&&layout.els[k].show).length>1 && <button onClick={cycleSel} style={pillBtn}>Layer</button>}
+              <button onClick={()=>{ setEl(sel,{show:false}); setSel(null); }} style={{...pillBtn,color:"var(--text2)"}}>Hide</button>
+            </div>
+          )}
         </>
       )}
 
@@ -1086,28 +1104,7 @@ function ExportSheet({ session, onClose }) {
         </div>
       )}
 
-      {/* background picker (when no photo showing and nothing selected) — no box, floating */}
-      {!selEl && showChrome && (!hasPhoto || !layout.photo.show) && (bgOpen ? (
-        <div onPointerDown={e=>e.stopPropagation()} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom,0px) + 8px)",display:"flex",flexDirection:"column",alignItems:"center",gap:7,zIndex:4}}>
-          {/* small Fade + Flip row, frosted so the card shows through */}
-          <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(14,10,6,0.4)",backdropFilter:"blur(7px)",WebkitBackdropFilter:"blur(7px)",borderRadius:16,padding:"5px 11px"}}>
-            <span style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,color:"var(--accent)",letterSpacing:"0.08em",textTransform:"uppercase",textShadow:"0 1px 4px rgba(0,0,0,0.95)"}}>Fade</span>
-            <Slider value={layout.bgFade==null?0.5:layout.bgFade} min={0} max={1} step={0.02} onChange={v=>setLayout(L=>({...L,bgFade:v}))} width={120}/>
-            <button onClick={()=>setLayout(L=>({...L,bgRev:!L.bgRev}))} style={{borderRadius:14,padding:"6px 10px",background:layout.bgRev?"var(--accent)":"transparent",color:layout.bgRev?"var(--ink)":"var(--accent)",border:"1px solid var(--accent2)",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",cursor:"pointer"}}>Flip</button>
-          </div>
-          {/* swatch wheel pinned to the very bottom + Share-sized close */}
-          <div style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"0 12px"}}>
-            <div className="no-sb" style={{flex:1,display:"flex",flexWrap:"nowrap",gap:11,overflowX:"auto",padding:"4px 4px 6px",scrollSnapType:"x proximity",WebkitOverflowScrolling:"touch",touchAction:"pan-x"}}>
-              {BG_OPTIONS.map(([id,lbl,top,bot])=>{ const t=layout.bgRev?bot:top, b=layout.bgRev?top:bot; const on=(layout.bg||"ink")===id; return (
-                <button key={id} title={lbl} onClick={()=>setLayout(L=>({...L,bg:id}))} style={{flex:"0 0 auto",width:44,height:44,borderRadius:"50%",background:t===b?t:`linear-gradient(180deg,${t},${b})`,border:on?"3px solid #fff":"1.5px solid rgba(255,255,255,0.7)",boxShadow:on?"0 0 12px rgba(var(--accent-rgb),0.85)":"0 1px 6px rgba(0,0,0,0.7)",cursor:"pointer",padding:0,scrollSnapAlign:"center"}}/>
-              ); })}
-            </div>
-            <button onClick={()=>setBgOpen(false)} title="Done" style={circle({flex:"0 0 auto",fontSize:30,fontWeight:300,lineHeight:1})}>×</button>
-          </div>
-        </div>
-      ) : (
-        <button onClick={()=>setBgOpen(true)} title={"Background · "+selectedBgLabel} style={{position:"absolute",right:16,bottom:"calc(env(safe-area-inset-bottom,0px) + 16px)",width:46,height:46,borderRadius:"50%",background:bgTop===bgBot?bgTop:`linear-gradient(180deg,${bgTop},${bgBot})`,border:"2px solid rgba(255,255,255,0.85)",boxShadow:"0 0 12px rgba(0,0,0,0.6)",cursor:"pointer",padding:0,zIndex:4}}/>
-      ))}
+      {/* background is now edited via the edge sliders (right = color, left = fade + direction) when nothing is selected */}
     </div>
   );
 }
