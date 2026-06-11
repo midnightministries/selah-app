@@ -19,7 +19,13 @@
 
 import { getStore } from "@netlify/blobs";
 
-const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" };
+const headers = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Max-Age": "86400",
+};
 const J = (code, obj) => new Response(JSON.stringify(obj), { status: code, headers });
 const norm = (e) => String(e || "").trim().toLowerCase();
 
